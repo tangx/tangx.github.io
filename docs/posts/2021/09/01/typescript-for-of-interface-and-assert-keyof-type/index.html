@@ -1,0 +1,319 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>typescript vue3 项目容器化实战 | 老麦的书房</title><meta property="og:title" content="typescript vue3 项目容器化实战 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2021-09-01T00:00:00+08:00"><meta property="article:modified_time" content="2021-09-01T00:00:00+08:00"><meta name=Keywords content="[typescript]"><meta name=description content="typescript 获取 meta 信息并注入后端地址， 实现一次编译处处部署"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/2021/09/01/typescript-for-of-interface-and-assert-keyof-type/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div class=col-group><div class=col-8 id=main><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#1-html-文件-配置注入的-config-值>1. html 文件: 配置注入的 config 值</a></li><li><a href=#2-ts-文件-初始化-config-默认值与新值注入>2. ts 文件: 初始化 config 默认值与新值注入</a><ul><li><a href=#3-在-maints--中引入>3. 在 <code>main.ts</code> 中引入</a></li><li><a href=#4-在-vue3-中使用变量>4. 在 <code>vue3</code> 中使用变量</a></li><li><a href=#5-envsubst-通过环境变量注入>5. <code>envsubst</code> 通过环境变量注入</a></li></ul></li><li><a href=#编外-通过-objectkeys-获取所有字段与字段类型断言>编外: 通过 <code>Object.keys</code> 获取所有字段与字段类型断言</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>typescript vue3 项目容器化实战</h1></header><time datetime=2021-09-01T00:00:00Z class="post-meta meta-date dt-published">2021年9月1日</time><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=post-content><h1 id=typescript-vue3-项目容器化实战>typescript vue3 项目容器化实战</h1><p>在前端容器化的时候， 有一个绕不开的问题： <strong>容器返回的后端地址应该怎么设置</strong>。</p><p>静态编译到所有文件中， 肯定是不可取的， 总不能后端变更一个访问域名，前端都要重新构建一次镜像吧？</p><p>由于 <code>js</code> (<strong>typescript 编译后</strong> ) 实际是运行在 <strong>用户的浏览器上</strong>， 所以也不能像后端一样读取环境变量。</p><p>所以， 通过 <code>html &lt;meta></code> 标签传递信息是一个很好的方法。 只需要每次 <strong>容器启动的时候， 把 config 信息注入到 index.html</strong> 中就可以了。</p><h2 id=1-html-文件-配置注入的-config-值>1. html 文件: 配置注入的 config 值</h2><p>在 html 文件中使用自定义 <code>meta</code> 标签 。 <code>name</code> 为注入名称， <code>content</code> 为注入值， 使用 <code>k1=v1,k2=v2</code> 的方式。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span>  &lt;<span style=color:navy>meta</span> <span style=color:teal>name</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;devkit:config&#34;</span> <span style=color:teal>content</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;BaiduApi=//Dubai.api.com,QQapi=//QQ.com&#34;</span>&gt;
+</span></span></code></pre></td></tr></table></div></div><p>完整 html 如下</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span><span style=color:#999;font-weight:700;font-style:italic>&lt;!DOCTYPE html&gt;</span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>html</span> <span style=color:teal>lang</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;en&#34;</span>&gt;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>head</span>&gt;
+</span></span><span style=display:flex><span>  &lt;<span style=color:navy>meta</span> <span style=color:teal>charset</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;UTF-8&#34;</span>&gt;
+</span></span><span style=display:flex><span>  &lt;<span style=color:navy>meta</span> <span style=color:teal>http-equiv</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;X-UA-Compatible&#34;</span> <span style=color:teal>content</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;IE=edge&#34;</span>&gt;
+</span></span><span style=display:flex><span>  &lt;<span style=color:navy>meta</span> <span style=color:teal>name</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;viewport&#34;</span> <span style=color:teal>content</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;width=device-width, initial-scale=1.0&#34;</span>&gt;
+</span></span><span style=display:flex><span>  <span style=color:#998;font-style:italic>&lt;!-- --&gt;</span>
+</span></span><span style=display:flex><span>  &lt;<span style=color:navy>meta</span> <span style=color:teal>name</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;devkit:config&#34;</span> <span style=color:teal>content</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;BaiduApi=//Dubai.api.com,QQapi=//QQ.com&#34;</span>&gt;
+</span></span><span style=display:flex><span>  &lt;<span style=color:navy>title</span>&gt;Document&lt;/<span style=color:navy>title</span>&gt;
+</span></span><span style=display:flex><span>  &lt;<span style=color:navy>script</span> <span style=color:teal>src</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;../dist/06-workflow/for-interface.js&#34;</span>&gt;&lt;/<span style=color:navy>script</span>&gt;
+</span></span><span style=display:flex><span>&lt;/<span style=color:navy>head</span>&gt;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>body</span>&gt;&lt;/<span style=color:navy>body</span>&gt;
+</span></span><span style=display:flex><span>&lt;/<span style=color:navy>html</span>&gt;
+</span></span></code></pre></td></tr></table></div></div><h2 id=2-ts-文件-初始化-config-默认值与新值注入>2. ts 文件: 初始化 config 默认值与新值注入</h2><ol><li><code>interface AppConfig</code> 定义 <code>Config</code> 字段</li><li><code>const appConfig:AppConfig = {}</code> 初始化 配置</li><li><code>function injectConfig(){}</code> 执行函数注入信息<ol><li><code>document.getElementsByTagName('meta')</code> 获取所有 meta 标签</li><li><code>const item = metas.namedItem('devkit:config')</code> 根据 <code>meta name</code> 获取 meta 标签</li><li><code>item?.content</code> 中 <code>item?</code> 忽略 null 情况</li><li><code>content.split(',')</code> 字符串分割</li></ol></li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ts data-lang=ts><span style=display:flex><span><span style=color:#998;font-style:italic>// config.ts
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// 定义 Config 字段
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>interface</span> AppConfig {
+</span></span><span style=display:flex><span>    BaiduApi?: <span style=color:#458;font-weight:700>string</span>
+</span></span><span style=display:flex><span>    AliApi: <span style=color:#458;font-weight:700>string</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// 实例化 config 并赋予默认值
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>//   外部导入时  import { appConfig } from &#39;@/apis/config.ts&#39;
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>export</span> <span style=color:#000;font-weight:700>const</span> appConfig: <span style=color:#458;font-weight:700>AppConfig</span> <span style=color:#000;font-weight:700>=</span> {
+</span></span><span style=display:flex><span>    BaiduApi<span style=color:#000;font-weight:700>:</span> <span style=color:#d14>&#34;https://api.baidu.com&#34;</span>,
+</span></span><span style=display:flex><span>    AliApi<span style=color:#000;font-weight:700>:</span> <span style=color:#d14>&#34;https://api.aliyun.com&#34;</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>function</span> injectConfig() {
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  	<span style=color:#998;font-style:italic>// 获取所有 metas
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#000;font-weight:700>const</span> metas <span style=color:#000;font-weight:700>=</span> <span style=color:#0086b3>document</span>.getElementsByTagName(<span style=color:#d14>&#39;meta&#39;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>// // 01. 使用 meta 的 id 获取, 与 meta 所在的相对位置有关。
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#998;font-style:italic>// const item = metas.item(3)
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#998;font-style:italic>// console.log(item);
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>// // 02. 使用 meta name 获取
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#000;font-weight:700>const</span> item <span style=color:#000;font-weight:700>=</span> metas.namedItem(<span style=color:#d14>&#39;devkit:config&#39;</span>)
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>// console.log(&#34;item=&gt; &#34;, item);
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>const</span> content <span style=color:#000;font-weight:700>=</span> item<span style=color:#000;font-weight:700>?</span>.content
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>// console.log(&#34;content =&gt; &#34;, content);
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>if</span> (content) {
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>const</span> pairs <span style=color:#000;font-weight:700>=</span> content.split(<span style=color:#d14>&#39;,&#39;</span>)
+</span></span><span style=display:flex><span>        <span style=color:#998;font-style:italic>// console.log(&#34;pairs=&gt;&#34;, pairs);
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>        
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>for</span> (<span style=color:#000;font-weight:700>const</span> pair <span style=color:#000;font-weight:700>of</span> pairs) {
+</span></span><span style=display:flex><span>            <span style=color:#000;font-weight:700>const</span> parts <span style=color:#000;font-weight:700>=</span> pair.split(<span style=color:#d14>&#39;=&#39;</span>)
+</span></span><span style=display:flex><span>            <span style=color:#000;font-weight:700>const</span> key <span style=color:#000;font-weight:700>=</span> &lt;<span style=color:navy>keyof</span> <span style=color:teal>AppConfig</span>&gt;parts[<span style=color:#099>0</span>]
+</span></span><span style=display:flex><span>            <span style=color:#000;font-weight:700>const</span> value <span style=color:#000;font-weight:700>=</span> &lt;<span style=color:navy>string</span>&gt;parts[<span style=color:#099>1</span>]
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            <span style=color:#998;font-style:italic>// 没有 key 或者 没有 value 则跳过
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>            <span style=color:#000;font-weight:700>if</span> (<span style=color:#000;font-weight:700>!</span>value <span style=color:#000;font-weight:700>||</span> <span style=color:#000;font-weight:700>!</span>key) {
+</span></span><span style=display:flex><span>                <span style=color:#000;font-weight:700>continue</span>
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            <span style=color:#998;font-style:italic>// 赋值 或 创建
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>            appConfig[key] <span style=color:#000;font-weight:700>=</span> value
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>// console.log(&#34;appConfig=&gt;&#34;, appConfig);
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// 执行
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>export</span> <span style=color:#000;font-weight:700>default</span> injectConfig()
+</span></span></code></pre></td></tr></table></div></div><h3 id=3-在-maints--中引入>3. 在 <code>main.ts</code> 中引入</h3><p>只需要执行， 因此不需要赋值任何变量。 直接 import 导入即可</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ts data-lang=ts><span style=display:flex><span><span style=color:#998;font-style:italic>// main.ts
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// 只需要执行， 因此不需要赋值任何变量。 直接 import 导入即可
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>import</span> <span style=color:#d14>&#39;./apis/config&#39;</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=4-在-vue3-中使用变量>4. 在 <code>vue3</code> 中使用变量</h3><p>正常写，<code> import ts</code> 文件即可。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- Hello.vue --&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>template</span>&gt;
+</span></span><span style=display:flex><span>  &lt;<span style=color:navy>h3</span>&gt;Hello&lt;/<span style=color:navy>h3</span>&gt;
+</span></span><span style=display:flex><span>  &lt;<span style=color:navy>div</span>&gt;
+</span></span><span style=display:flex><span>    &lt;<span style=color:navy>span</span>&gt;AliApi :&lt;/<span style=color:navy>span</span>&gt;
+</span></span><span style=display:flex><span>    &lt;<span style=color:navy>input</span> <span style=color:teal>type</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;text&#34;</span> <span style=color:teal>:value</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;appConfig.AliApi&#34;</span> /&gt;
+</span></span><span style=display:flex><span>  &lt;/<span style=color:navy>div</span>&gt;
+</span></span><span style=display:flex><span>&lt;/<span style=color:navy>template</span>&gt;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>script</span> <span style=color:teal>setup</span> <span style=color:teal>lang</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;ts&#34;</span>&gt;
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>import</span> { appConfig } from <span style=color:#d14>&#39;@/apis/config&#39;</span>
+</span></span><span style=display:flex><span>&lt;/<span style=color:navy>script</span>&gt;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>style</span> <span style=color:teal>scoped</span>&gt;
+</span></span><span style=display:flex><span>&lt;/<span style=color:navy>style</span>&gt;
+</span></span></code></pre></td></tr></table></div></div><h3 id=5-envsubst-通过环境变量注入>5. <code>envsubst</code> 通过环境变量注入</h3><ol><li>假设， 前端代码打包后的 <code>index.html</code> 文件名为 <code>index.html.tmpl</code>， 启动包含 <code>${APP_CONFIG}</code> 占位符， 以便注入 <strong>真实</strong> 的值</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- index.html.tmpl --&gt;</span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>meta</span> <span style=color:teal>name</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;devkit:config&#34;</span> <span style=color:teal>content</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;${APP_CONFIG}&#34;</span>&gt;
+</span></span></code></pre></td></tr></table></div></div><ol start=2><li>使用 <code>envsubst</code> 注入环境变量。 这里， 可以使用任何替换的工具和方法。</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic>## env</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># APP_CONFIG=BaiduApi=//Dubai.api.com,QQapi=//QQ.com</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>envsubst &lt; index.html.tmpl &gt; index.html
+</span></span></code></pre></td></tr></table></div></div><ol start=3><li>启动 nginx</li></ol><h2 id=编外-通过-objectkeys-获取所有字段与字段类型断言>编外: 通过 <code>Object.keys</code> 获取所有字段与字段类型断言</h2><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ts data-lang=ts><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// 通过 keys 获取 config 所有字段
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>function</span> initial() {
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>// 获取 interface 的 所有 key
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#000;font-weight:700>const</span> keys <span style=color:#000;font-weight:700>=</span> <span style=color:#0086b3>Object</span>.keys(appConfig)
+</span></span><span style=display:flex><span>    console.log(keys)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>// 便利 所有 key
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#000;font-weight:700>for</span> (<span style=color:#000;font-weight:700>const</span> key <span style=color:#000;font-weight:700>of</span> keys) {
+</span></span><span style=display:flex><span>        <span style=color:#998;font-style:italic>// https://stackoverflow.com/questions/56568423/typescript-no-index-signature-with-a-parameter-of-type-string-was-found-on-ty/56569217
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>        <span style=color:#998;font-style:italic>// key 类型断言
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>        <span style=color:#998;font-style:italic>// const keyname = &lt;keyof AppConfig&gt;key // 方式1
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>        <span style=color:#000;font-weight:700>const</span> keyname <span style=color:#000;font-weight:700>=</span> key <span style=color:#000;font-weight:700>as</span> <span style=color:#000;font-weight:700>keyof</span> AppConfig <span style=color:#998;font-style:italic>// 方式2
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>        console.log(<span style=color:#d14>&#34;keyname=&#34;</span>, keyname);
+</span></span><span style=display:flex><span>        console.log(<span style=color:#d14>&#34;value=&#34;</span>, appConfig[keyname]);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2021/09/01/typescript-for-of-interface-and-assert-keyof-type/>https://tangx.in/posts/2021/09/01/typescript-for-of-interface-and-assert-keyof-type/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2021/09/01/typescript-use-alias-path/>typescript 中使用 @ 路径别名</a></li><li><a href=/posts/2021/08/26/typescript-const-assertions/>typescript 中的 const 断言</a></li><li><a href=/posts/2021/08/25/typescript-time-operation/>typescript 中的时间处理</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/typescript target=_blank>typescript</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2022/12/30/vscode-shfmt/ title="Linux 工具命令(02): shfmt 格式化 shell 脚本" target=_blank>Linux 工具命令(02): shfmt 格式化 shell 脚本</a></li><li><a href=https://tangx.in/posts/2022/12/29/dos2unix-and-unix2dos/ title="Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦" target=_blank>Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦</a></li><li><a href=https://tangx.in/posts/2022/12/28/kustz-1-1-introduce/ title="从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-image-compress/ title="Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?" target=_blank>Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-cdn-http-referer/ title="Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站" target=_blank>Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-dns-shunting/ title="Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速" target=_blank>Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-cdn/ title="Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站" target=_blank>Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-render-markdown-image-url/ title="Hugo 网站优化(1)： 渲染 Markdown 图片引用地址" target=_blank>Hugo 网站优化(1)： 渲染 Markdown 图片引用地址</a></li><li><a href=https://tangx.in/posts/2022/12/23/aliyun-sls-trace-configuration/ title="Golang 配置并接入 Aliyun SLS Trace 服务" target=_blank>Golang 配置并接入 Aliyun SLS Trace 服务</a></li><li><a href=https://tangx.in/posts/2022/12/21/docker-container-set-timezone/ title="在 Docker 容器中设置时区原来这么简单" target=_blank>在 Docker 容器中设置时区原来这么简单</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/tuiguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li><li><a href=https://www.aliyun.com/daily-act/ecs/activity_selection?userCode:bs5uqsfi title=【阿里云】服务器0元试用，首购低至0.9元/月起 target=_blank style=color:red><img src=/tuiguang/aliyun.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (5)</a></li><li><a href=https://tangx.in/categories/books/>books (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (1)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/container/>container</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubernetes/>kubernetes</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

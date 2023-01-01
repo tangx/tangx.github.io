@@ -1,0 +1,208 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>easy vue3 - 00 使用 vite 初始化 vue3 项目 | 老麦的书房</title><meta property="og:title" content="easy vue3 - 00 使用 vite 初始化 vue3 项目 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2022-03-22T07:29:16+08:00"><meta property="article:modified_time" content="2022-03-22T07:29:16+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="easy vue3 - 00 使用 vite 初始化 vue3 项目"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/2022/03/22/easy-vue3-00-initial-a-vue3-vite-project/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div class=col-group><div class=col-8 id=main><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#项目初始化>项目初始化</a></li><li><a href=#项目目录>项目目录</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>easy vue3 - 00 使用 vite 初始化 vue3 项目</h1></header><time datetime=2022-03-21T23:29:16Z class="post-meta meta-date dt-published">2022年3月22日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/vue3 target=_blank>vue3</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><p>vite 是 vue 官方出品的一款静态服务器， 不仅可以根据多种预设模版快速创建项目， 还可以按需构建变化页面， 速度非常快。</p><blockquote><p><a href=https://cn.vitejs.dev/guide/ target=_blank rel=noopener>https://cn.vitejs.dev/guide/</a></p></blockquote><h2 id=项目初始化>项目初始化</h2><p>使用如下命令，根据操作提示进行</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>
+</span></span><span style=display:flex><span>yarn create vite
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># yarn create v1.22.11</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># [1/4] 🔍  Resolving packages...</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># [2/4] 🚚  Fetching packages...</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># [3/4] 🔗  Linking dependencies...</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># [4/4] 🔨  Building fresh packages...</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># success Installed &#34;create-vite@2.8.0&#34; with binaries:</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#       - create-vite</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#       - cva</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>### 输入项目名称</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># ? Project name: › my-vite-project</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>### 选择框架</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># ? Select a framework: › - Use arrow-keys. Return to submit.</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#     vanilla</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># ❯   vue</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#     react</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#     preact</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#     lit</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#     svelte</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>### 选择语言模式， </span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># ? Select a variant: › - Use arrow-keys. Return to submit.</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#     vue     # js 语言</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># ❯   vue-ts  # ts 语言</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>### 创建成功</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># Scaffolding project in /private/tmp/my-vite-project...</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># Done. Now run:</span>
+</span></span></code></pre></td></tr></table></div></div><p>随后根据提示， 进入项目目录， 执行命令安装依赖启动服务即可</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#0086b3>cd</span> my-vite-project
+</span></span><span style=display:flex><span>yarn
+</span></span><span style=display:flex><span>yarn dev
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#   vite v2.8.6 dev server running at:</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#   &gt; Local: http://localhost:300/</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#   &gt; Network: use `--host` to expose</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#   ready in 302ms.</span>
+</span></span></code></pre></td></tr></table></div></div><p>访问 <code>http://localhost:3000/</code> 即可访问页面</p><p><img class=mx-auto alt=20220322074048 src=https://static.tangx.in/posts/2022/03/22/20220322074048-fs8.png></p><h2 id=项目目录>项目目录</h2><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>
+</span></span><span style=display:flex><span>./main.ts <span style=color:#998;font-style:italic># 项目入口</span>
+</span></span><span style=display:flex><span>./App.vue <span style=color:#998;font-style:italic># 页面入口</span>
+</span></span><span style=display:flex><span>./components/*.vue <span style=color:#998;font-style:italic># 组件库</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>./package.json   <span style=color:#998;font-style:italic># es 配置</span>
+</span></span><span style=display:flex><span>./tsconfig.json  <span style=color:#998;font-style:italic># ts 配置</span>
+</span></span><span style=display:flex><span>./vite.config.ts <span style=color:#998;font-style:italic># vite 配置</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## vscode vue3 插件</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>+ vscode-typescript-vue-plugin: https://marketplace.visualstudio.com/items?itemName<span style=color:#000;font-weight:700>=</span>johnsoncodehk.vscode-typescript-vue-plugin
+</span></span><span style=display:flex><span>+ volar : https://marketplace.visualstudio.com/items?itemName<span style=color:#000;font-weight:700>=</span>johnsoncodehk.volar
+</span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2022/03/22/easy-vue3-00-initial-a-vue3-vite-project/>https://tangx.in/posts/2022/03/22/easy-vue3-00-initial-a-vue3-vite-project/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2022/03/22/easy-vue3-01-template-syntax/>easy vue3 - 01 模版语法</a></li><li><a href=/posts/2022/03/04/pass-an-environment-variable-to-another-job/>Gitlab 在不同 job 之间传递变量</a></li><li><a href=/links/>友情链接</a></li><li><a href=/search/>搜索</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/vue3 target=_blank>vue3</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2022/12/30/vscode-shfmt/ title="Linux 工具命令(02): shfmt 格式化 shell 脚本" target=_blank>Linux 工具命令(02): shfmt 格式化 shell 脚本</a></li><li><a href=https://tangx.in/posts/2022/12/29/dos2unix-and-unix2dos/ title="Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦" target=_blank>Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦</a></li><li><a href=https://tangx.in/posts/2022/12/28/kustz-1-1-introduce/ title="从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-image-compress/ title="Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?" target=_blank>Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-cdn-http-referer/ title="Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站" target=_blank>Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-dns-shunting/ title="Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速" target=_blank>Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-cdn/ title="Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站" target=_blank>Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-render-markdown-image-url/ title="Hugo 网站优化(1)： 渲染 Markdown 图片引用地址" target=_blank>Hugo 网站优化(1)： 渲染 Markdown 图片引用地址</a></li><li><a href=https://tangx.in/posts/2022/12/23/aliyun-sls-trace-configuration/ title="Golang 配置并接入 Aliyun SLS Trace 服务" target=_blank>Golang 配置并接入 Aliyun SLS Trace 服务</a></li><li><a href=https://tangx.in/posts/2022/12/21/docker-container-set-timezone/ title="在 Docker 容器中设置时区原来这么简单" target=_blank>在 Docker 容器中设置时区原来这么简单</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/tuiguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li><li><a href=https://www.aliyun.com/daily-act/ecs/activity_selection?userCode:bs5uqsfi title=【阿里云】服务器0元试用，首购低至0.9元/月起 target=_blank style=color:red><img src=/tuiguang/aliyun.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (5)</a></li><li><a href=https://tangx.in/categories/books/>books (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (1)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/container/>container</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubernetes/>kubernetes</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

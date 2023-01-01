@@ -1,0 +1,347 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>Linux 下的几个命令行下载工具 | 老麦的书房</title><meta property="og:title" content="Linux 下的几个命令行下载工具 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2017-11-05T00:00:00+08:00"><meta property="article:modified_time" content="2017-11-05T00:00:00+08:00"><meta name=Keywords content="[keyword1,keyword2]"><meta name=description content="Linux 下的几个命令行下载工具 支持多线程以及 BT 和 磁力"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/2017/11/05/cli-download-tools-for-linux/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div class=col-group><div class=col-8 id=main><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#axel>axel</a></li><li><a href=#aria2>aria2</a><ul><li><a href=#aria2-配置文件>aria2 配置文件</a></li></ul></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>Linux 下的几个命令行下载工具</h1></header><time datetime=2017-11-05T00:00:00Z class="post-meta meta-date dt-published">2017年11月5日</time><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=post-content><h1 id=linux-下的几个命令行下载工具>Linux 下的几个命令行下载工具</h1><p>linux 下最常用的 <code>wget</code> 是单线程的。虽然好用，但不够用。例如在下载阿里云的数据库备份文件，单线程最多能达到 10Mbps，即使是走内网。</p><p>因此，有必要换一下其他的。</p><h2 id=axel>axel</h2><blockquote><p><a href=https://github.com/axel-download-accelerator/axel target=_blank rel=noopener>https://github.com/axel-download-accelerator/axel</a></p></blockquote><p><code>axel</code> 相较 <code>wget</code> 最大的优点就是支持多线程。</p><p>在 <code>ubuntu 16.04 LST</code> 上安装非常简单，已经加入了官方源。 CentOS 系列的话，就去
+<a href=https://pkgs.org/download/axel target=_blank rel=noopener>pkgs.org</a>
+上找到对应版本的安装源。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>sudo apt-get install axel
+</span></span></code></pre></td></tr></table></div></div><p><strong>常用参数</strong></p><ul><li><code>-c</code> : 断电续传</li><li><code>-n number</code> : number 为线程数。</li><li><code>-o filename</code> : 指定保存文件名。</li><li><code>-a</code> : 将下载进度合成一条。默认为不断刷屏。</li><li><code>-q</code> : 静默模式，即不现实下载进度。</li></ul><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>axel -c <span style=color:#d14>&#34;URL&#34;</span> -o download.zip
+</span></span><span style=display:flex><span>axel -q -n <span style=color:#099>5</span> -c <span style=color:#d14>&#34;URL&#34;</span>
+</span></span><span style=display:flex><span>axel -a -n <span style=color:#099>5</span> -c <span style=color:#d14>&#34;URL&#34;</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=aria2>aria2</h2><blockquote><p><a href=https://github.com/aria2/aria2 target=_blank rel=noopener>https://github.com/aria2/aria2</a></p></blockquote><p><code>aria2</code> 是一个非常强大的工具，不仅支持常规的 <code>URL</code> 下载，还支持 <code>BT</code> 和 <code>磁力</code> 下载。现在网上也有很多交织将 aria2 作为替代迅雷的一个下载工具使用。</p><p>在 <code>ubuntu 16.04 LST</code> 上安装非常简单，已经加入了官方源。 CentOS 系列的话，就去
+<a href=https://pkgs.org/download/aria2 target=_blank rel=noopener>pkgs.org</a>
+上找到对应版本的安装源。</p><p>需要注意的是，在 CentOS6.x 上，如果你通过 <code>YUM</code> 安装的话， aria2 以来的 nettle-devel 版本比较低。最好使用 <code>pkgs.org</code> 的方法安装。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>sudo apt-get install aria2
+</span></span></code></pre></td></tr></table></div></div><p><strong>常用参数</strong></p><ul><li><code>-xN</code> : 指定为 N 线程下载</li><li><code>-sN</code> : 为下载指定 N 个下载源，貌似与 <code>-xN</code> 冲突</li><li><code>-c</code> : 继续下载。</li></ul><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># 断点续传</span>
+</span></span><span style=display:flex><span>aria2c -c <span style=color:#d14>&#34;URL&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 多线程下载， 5 表示指定的线程数。</span>
+</span></span><span style=display:flex><span>aria2c -c -x5 <span style=color:#d14>&#34;URL&#34;</span>
+</span></span></code></pre></td></tr></table></div></div><p>更多下载参数和命令，参考</p><ul><li><a href=https://aria2.github.io target=_blank rel=noopener>https://aria2.github.io</a></li><li><a href=https://linux.cn/article-7982-1.html target=_blank rel=noopener>https://linux.cn/article-7982-1.html</a></li></ul><h3 id=aria2-配置文件>aria2 配置文件</h3><p>之前说了 aria2 可以作成一个 web 端的下载工具。
+<a href=https://static.tangx.in/attachments/2017/aria2.conf target=_blank rel=noopener>配置文件</a>
+如下:</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 48
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 51
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 52
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 53
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 54
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 55
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 56
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 57
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 58
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 59
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 60
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 61
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 62
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 63
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 64
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 65
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 66
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 67
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 68
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 69
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 70
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 71
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 72
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 73
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 74
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 75
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 76
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 77
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 78
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 79
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 80
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 81
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 82
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 83
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 84
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 85
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 86
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 87
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 88
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 89
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 90
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 91
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 92
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 93
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 94
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 95
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 96
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 97
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 98
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 99
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">100
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">101
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">102
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">103
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">104
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">105
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">106
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">107
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">108
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">109
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">110
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">111
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">112
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">113
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">114
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">115
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic>## &#39;#&#39;开头为注释内容, 选项都有相应的注释说明, 根据需要修改 ##</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## 被注释的选项填写的是默认值, 建议在需要修改时再取消注释  ##</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## 文件保存相关 ##</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 文件的保存路径(可使用绝对路径或相对路径), 默认: 当前启动位置</span>
+</span></span><span style=display:flex><span><span style=color:teal>dir</span><span style=color:#000;font-weight:700>=</span>F:<span style=color:#d14>\D</span>ownloads
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 启用磁盘缓存, 0为禁用缓存, 需1.16以上版本, 默认:16M</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#disk-cache=32M</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 文件预分配方式, 能有效降低磁盘碎片, 默认:prealloc</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 预分配所需时间: none &lt; falloc ? trunc &lt; prealloc</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># falloc和trunc则需要文件系统和内核支持</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># NTFS建议使用falloc, EXT3/4建议trunc, MAC 下需要注释此项</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#file-allocation=none</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 断点续传</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>continue</span><span style=color:#000;font-weight:700>=</span><span style=color:#0086b3>true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## 下载连接相关 ##</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 最大同时下载任务数, 运行时可修改, 默认:5</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#max-concurrent-downloads=5</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 同一服务器连接数, 添加时可指定, 默认:1</span>
+</span></span><span style=display:flex><span>max-connection-per-server<span style=color:#000;font-weight:700>=</span><span style=color:#099>5</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 最小文件分片大小, 添加时可指定, 取值范围1M -1024M, 默认:20M</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 假定size=10M, 文件为20MiB 则使用两个来源下载; 文件为15MiB 则使用一个来源下载</span>
+</span></span><span style=display:flex><span>min-split-size<span style=color:#000;font-weight:700>=</span>10M
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 单个任务最大线程数, 添加时可指定, 默认:5</span>
+</span></span><span style=display:flex><span><span style=color:teal>split</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>10</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 整体下载速度限制, 运行时可修改, 默认:0</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#max-overall-download-limit=0</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 单个任务下载速度限制, 默认:0</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#max-download-limit=0</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 整体上传速度限制, 运行时可修改, 默认:0</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#max-overall-upload-limit=0</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 单个任务上传速度限制, 默认:0</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#max-upload-limit=0</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 禁用IPv6, 默认:false</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#disable-ipv6=true</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 连接超时时间, 默认:60</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#timeout=60</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 最大重试次数, 设置为0表示不限制重试次数, 默认:5</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#max-tries=5</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 设置重试等待的秒数, 默认:0</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#retry-wait=0</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## 进度保存相关 ##</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 从会话文件中读取下载任务</span>
+</span></span><span style=display:flex><span>input-file<span style=color:#000;font-weight:700>=</span>aria2.session
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 在Aria2退出时保存`错误/未完成`的下载任务到会话文件</span>
+</span></span><span style=display:flex><span>save-session<span style=color:#000;font-weight:700>=</span>aria2.session
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 定时保存会话, 0为退出时才保存, 需1.16.1以上版本, 默认:0</span>
+</span></span><span style=display:flex><span>save-session-interval<span style=color:#000;font-weight:700>=</span><span style=color:#099>5</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## RPC相关设置 ##</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 启用RPC, 默认:false</span>
+</span></span><span style=display:flex><span>enable-rpc<span style=color:#000;font-weight:700>=</span><span style=color:#0086b3>true</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 允许所有来源, 默认:false</span>
+</span></span><span style=display:flex><span>rpc-allow-origin-all<span style=color:#000;font-weight:700>=</span><span style=color:#0086b3>true</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 允许非外部访问, 默认:false</span>
+</span></span><span style=display:flex><span>rpc-listen-all<span style=color:#000;font-weight:700>=</span><span style=color:#0086b3>true</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 事件轮询方式, 取值:[epoll, kqueue, port, poll, select], 不同系统默认值不同</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#event-poll=select</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># RPC监听端口, 端口被占用时可以修改, 默认:6800</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#rpc-listen-port=6800</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 设置的RPC授权令牌, v1.18.4新增功能, 取代 --rpc-user 和 --rpc-passwd 选项</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#rpc-secret=&lt;TOKEN&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 设置的RPC访问用户名, 此选项新版已废弃, 建议改用 --rpc-secret 选项</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#rpc-user=&lt;USER&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 设置的RPC访问密码, 此选项新版已废弃, 建议改用 --rpc-secret 选项</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#rpc-passwd=&lt;PASSWD&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 是否启用 RPC 服务的 SSL/TLS 加密,</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 启用加密后 RPC 服务需要使用 https 或者 wss 协议连接</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#rpc-secure=true</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 在 RPC 服务中启用 SSL/TLS 加密时的证书文件,</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 使用 PEM 格式时，您必须通过 --rpc-private-key 指定私钥</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#rpc-certificate=/path/to/certificate.pem</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 在 RPC 服务中启用 SSL/TLS 加密时的私钥文件</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#rpc-private-key=/path/to/certificate.key</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## BT/PT下载相关 ##</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 当下载的是一个种子(以.torrent结尾)时, 自动开始BT任务, 默认:true</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#follow-torrent=true</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># BT监听端口, 当端口被屏蔽时使用, 默认:6881-6999</span>
+</span></span><span style=display:flex><span>listen-port<span style=color:#000;font-weight:700>=</span><span style=color:#099>51413</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 单个种子最大连接数, 默认:55</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#bt-max-peers=55</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 打开DHT功能, PT需要禁用, 默认:true</span>
+</span></span><span style=display:flex><span>enable-dht<span style=color:#000;font-weight:700>=</span><span style=color:#0086b3>false</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 打开IPv6 DHT功能, PT需要禁用</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#enable-dht6=false</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># DHT网络监听端口, 默认:6881-6999</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#dht-listen-port=6881-6999</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 本地节点查找, PT需要禁用, 默认:false</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#bt-enable-lpd=false</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 种子交换, PT需要禁用, 默认:true</span>
+</span></span><span style=display:flex><span>enable-peer-exchange<span style=color:#000;font-weight:700>=</span><span style=color:#0086b3>false</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 每个种子限速, 对少种的PT很有用, 默认:50K</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#bt-request-peer-speed-limit=50K</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 客户端伪装, PT需要</span>
+</span></span><span style=display:flex><span>peer-id-prefix<span style=color:#000;font-weight:700>=</span>-TR2770-
+</span></span><span style=display:flex><span>user-agent<span style=color:#000;font-weight:700>=</span>Transmission/2.77
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 当种子的分享率达到这个数时, 自动停止做种, 0为一直做种, 默认:1.0</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># seed-ratio=1</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 强制保存会话, 即使任务已经完成, 默认:false</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 较新的版本开启后会在任务完成后依然保留.aria2文件</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#force-save=false</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># BT校验相关, 默认:true</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#bt-hash-check-seed=true</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 继续之前的BT任务时, 无需再次校验, 默认:false</span>
+</span></span><span style=display:flex><span>bt-seed-unverified<span style=color:#000;font-weight:700>=</span><span style=color:#0086b3>true</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 保存磁力链接元数据为种子文件(.torrent文件), 默认:false</span>
+</span></span><span style=display:flex><span>bt-save-metadata<span style=color:#000;font-weight:700>=</span><span style=color:#0086b3>true</span>
+</span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2017/11/05/cli-download-tools-for-linux/>https://tangx.in/posts/2017/11/05/cli-download-tools-for-linux/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2016/12/16/cron-tips-lock-timeout/>cron 定时任务小技巧 进程锁与超时</a></li><li><a href=/posts/2016/12/30/mysql56-57-password-issue/>Mysql 5.6 与5.7 密码权限问题</a></li><li><a href=/posts/2017/11/05/sshpass/>使用 sshpass 传递密码</a></li><li><a href=/posts/2017/09/02/lvs-thoery/>LVS 基本信息介绍</a></li><li><a href=/posts/2017/08/31/iptables-basic-theory-and-useage/>iptables 基础知识和基本用法</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/linux target=_blank>linux</a></li><li><a href=/tags/download target=_blank>download</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2022/12/30/vscode-shfmt/ title="Linux 工具命令(02): shfmt 格式化 shell 脚本" target=_blank>Linux 工具命令(02): shfmt 格式化 shell 脚本</a></li><li><a href=https://tangx.in/posts/2022/12/29/dos2unix-and-unix2dos/ title="Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦" target=_blank>Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦</a></li><li><a href=https://tangx.in/posts/2022/12/28/kustz-1-1-introduce/ title="从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-image-compress/ title="Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?" target=_blank>Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-cdn-http-referer/ title="Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站" target=_blank>Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-dns-shunting/ title="Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速" target=_blank>Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-cdn/ title="Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站" target=_blank>Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-render-markdown-image-url/ title="Hugo 网站优化(1)： 渲染 Markdown 图片引用地址" target=_blank>Hugo 网站优化(1)： 渲染 Markdown 图片引用地址</a></li><li><a href=https://tangx.in/posts/2022/12/23/aliyun-sls-trace-configuration/ title="Golang 配置并接入 Aliyun SLS Trace 服务" target=_blank>Golang 配置并接入 Aliyun SLS Trace 服务</a></li><li><a href=https://tangx.in/posts/2022/12/21/docker-container-set-timezone/ title="在 Docker 容器中设置时区原来这么简单" target=_blank>在 Docker 容器中设置时区原来这么简单</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/tuiguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li><li><a href=https://www.aliyun.com/daily-act/ecs/activity_selection?userCode:bs5uqsfi title=【阿里云】服务器0元试用，首购低至0.9元/月起 target=_blank style=color:red><img src=/tuiguang/aliyun.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (5)</a></li><li><a href=https://tangx.in/categories/books/>books (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (1)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/container/>container</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubernetes/>kubernetes</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

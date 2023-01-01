@@ -1,0 +1,410 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>LVM 磁盘管理与在线扩容 | 老麦的书房</title><meta property="og:title" content="LVM 磁盘管理与在线扩容 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2017-08-25T00:00:00+08:00"><meta property="article:modified_time" content="2017-08-25T00:00:00+08:00"><meta name=Keywords content="[LVM,disk,fdisk]"><meta name=description content="LVM 管理"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/2017/08/25/lvm-management-and-online-extend/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div class=col-group><div class=col-8 id=main><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#在线扩容>在线扩容</a><ul><li><a href=#扩容步骤>扩容步骤</a></li><li><a href=#扩容案例>扩容案例</a></li></ul></li><li><a href=#创建-lvm-卷>创建 LVM 卷</a><ul><li><a href=#格式化硬盘>格式化硬盘</a></li><li><a href=#创建-lvm-卷-1>创建 LVM 卷</a></li><li><a href=#向逻辑卷组中加入物理卷>向逻辑卷组中加入物理卷</a></li><li><a href=#从逻辑卷组中删除物理卷>从逻辑卷组中删除物理卷</a></li><li><a href=#调整逻辑卷大小>调整逻辑卷大小</a></li><li><a href=#应用扩容方案>应用扩容方案</a></li><li><a href=#删除-lvm-卷>删除 LVM 卷</a></li><li><a href=#显示-lvm-卷信息>显示 LVM 卷信息</a></li></ul></li><li><a href=#记一次-lvm-在线扩容>记一次 lvm 在线扩容</a><ul><li><a href=#命令总结>命令总结</a></li><li><a href=#命令记录>命令记录</a></li></ul></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>LVM 磁盘管理与在线扩容</h1></header><time datetime=2017-08-25T00:00:00Z class="post-meta meta-date dt-published">2017年8月25日</time><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=post-content><h1 id=lvm-磁盘管理与在线扩容>LVM 磁盘管理与在线扩容</h1><p>不上 LVM 的服务器都是耍流氓</p><h2 id=在线扩容>在线扩容</h2><p>通过 LVM 扩容的时候，</p><ul><li>被扩容的逻辑卷 <code>不需要重新格式化</code></li><li>被扩容的逻辑卷 <code>不需要被 umount</code></li><li>被扩容的逻辑卷上的业务 <code>不受影响</code></li></ul><blockquote><p>在执行 <code>resize2fs 或 xfs_growfs</code> 的时候，会有一定等待时间，属于正常显现。</p></blockquote><p>虽然扩容还是很安全的，不过，有条件的话，最好还是进行必要的备份</p><h3 id=扩容步骤>扩容步骤</h3><ol><li>创建物理卷</li></ol><ul><li><code>fdisk /dev/xvdk</code></li><li><code>pvcreate /dev/xvdk1</code></li></ul><ol start=2><li>虚拟卷组扩容</li></ol><ul><li><code>vgextend vg_groupname /dev/xvdg1</code></li></ul><ol start=3><li>逻辑卷扩容</li></ol><ul><li>ext4 扩容<ul><li><code>lvextend -l +100%FREE /dev/vg_groupname/lv_name</code></li></ul></li></ul><ol start=4><li>执行扩容<ul><li>ext4: <code>resize2fs /dev/vg_groupname/lv_name</code></li><li>xfs : <code>xfs_growfs /dev/vg_groupname/lv_name</code></li></ul></li></ol><h3 id=扩容案例>扩容案例</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># vgextend vg_groupname /dev/xvdk1</span>
+</span></span><span style=display:flex><span>  No physical volume label <span style=color:#0086b3>read</span> from /dev/xvdk1
+</span></span><span style=display:flex><span>  Physical volume <span style=color:#d14>&#34;/dev/xvdk1&#34;</span> successfully created
+</span></span><span style=display:flex><span>  Volume group <span style=color:#d14>&#34;vg_groupname&#34;</span> successfully extended
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># lvextend  -l +100%FREE /dev/vg_groupname/lv_name</span>
+</span></span><span style=display:flex><span>  Extending logical volume lv_name to 1.95 TiB
+</span></span><span style=display:flex><span>  Logical volume lv_name successfully resized
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># resize2fs  /dev/vg_groupname/lv_name</span>
+</span></span><span style=display:flex><span>resize2fs 1.41.12 <span style=color:#000;font-weight:700>(</span>17-May-2010<span style=color:#000;font-weight:700>)</span>
+</span></span><span style=display:flex><span>Filesystem at /dev/vg_groupname/lv_name is mounted on /data; on-line resizing required
+</span></span><span style=display:flex><span>old <span style=color:teal>desc_blocks</span> <span style=color:#000;font-weight:700>=</span> 94, <span style=color:teal>new_desc_blocks</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#099>125</span>
+</span></span><span style=display:flex><span>Performing an on-line resize of /dev/vg_groupname/lv_name to <span style=color:#099>524279808</span> <span style=color:#000;font-weight:700>(</span>4k<span style=color:#000;font-weight:700>)</span> blocks.
+</span></span><span style=display:flex><span>The filesystem on /dev/vg_groupname/lv_name is now <span style=color:#099>524279808</span> blocks long.
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># df -h</span>
+</span></span><span style=display:flex><span>Filesystem            Size  Used Avail Use% Mounted on
+</span></span><span style=display:flex><span>/dev/mapper/VolGroup-lv_root
+</span></span><span style=display:flex><span>                       50G  7.1G   40G  16% /
+</span></span><span style=display:flex><span>tmpfs                 7.8G   12K  7.8G   1% /dev/shm
+</span></span><span style=display:flex><span>/dev/mapper/vg_groupname-lv_name
+</span></span><span style=display:flex><span>                      2.0T  754G  1.1T  41% /data
+</span></span><span style=display:flex><span>/dev/mapper/3ddbbackvg-3ddbbacklv
+</span></span><span style=display:flex><span>                      1.9T  1.3T  574G  69% /data1
+</span></span><span style=display:flex><span>/dev/xvda1            485M   32M  428M   7% /boot
+</span></span></code></pre></td></tr></table></div></div><h2 id=创建-lvm-卷>创建 LVM 卷</h2><h3 id=格式化硬盘>格式化硬盘</h3><p>在格式化硬盘后，需要将分区类型设置为 LVM 。
+LVM 类型的编号为： <code>8e</code></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>Command <span style=color:#000;font-weight:700>(</span>m <span style=color:#000;font-weight:700>for</span> <span style=color:#0086b3>help</span><span style=color:#000;font-weight:700>)</span>: t <span style=color:#998;font-style:italic># 使用 t 修改分区类型</span>
+</span></span><span style=display:flex><span>Selected partition <span style=color:#099>1</span>    <span style=color:#998;font-style:italic># 选择 分区</span>
+</span></span><span style=display:flex><span>Hex code <span style=color:#000;font-weight:700>(</span><span style=color:#0086b3>type</span> L to list codes<span style=color:#000;font-weight:700>)</span>: 8e <span style=color:#998;font-style:italic># 8e表示为LVM # 设置分区</span>
+</span></span><span style=display:flex><span>Changed system <span style=color:#0086b3>type</span> of partition <span style=color:#099>1</span> to 8e <span style=color:#000;font-weight:700>(</span>Linux LVM<span style=color:#000;font-weight:700>)</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=创建-lvm-卷-1>创建 LVM 卷</h3><h4 id=创建物理卷>创建物理卷</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># pvcreate /dev/sdb1</span>
+</span></span><span style=display:flex><span>  Physical volume <span style=color:#d14>&#34;/dev/sdb1&#34;</span> successfully created
+</span></span></code></pre></td></tr></table></div></div><h4 id=创建逻辑卷组>创建逻辑卷组</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># vgcreate vgdata /dev/sdb1</span>
+</span></span><span style=display:flex><span>Volume group <span style=color:#d14>&#34;vg_groupname&#34;</span> successfully created
+</span></span></code></pre></td></tr></table></div></div><h4 id=创建逻辑卷>创建逻辑卷</h4><p>逻辑卷被创建之后，和普通分区一样，需要格式化后才能被挂载</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># lvcreate -L 1G -n lv_data1 vgdata</span>
+</span></span><span style=display:flex><span>Logical volume <span style=color:#d14>&#34;lv_name&#34;</span> created.
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># mkfs.ext4 /dev/mapper/vg_groupname-lv_name</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># mount /dev/mapper/vg_groupname-lv_name /mnt</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=向逻辑卷组中加入物理卷>向逻辑卷组中加入物理卷</h3><p><code>vgextend vg_groupname /dev/sdb1 /dev/sdc1 /dev/sdd1</code></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># vgextend VolGroup /dev/sdb2</span>
+</span></span><span style=display:flex><span>  Volume group <span style=color:#d14>&#34;VolGroup&#34;</span> successfully extended
+</span></span><span style=display:flex><span>You have new mail in /var/spool/mail/root
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># pvs</span>
+</span></span><span style=display:flex><span>  PV     VG     Fmt  Attr PSize  PFree
+</span></span><span style=display:flex><span>  /dev/sda2  VolGroup lvm2 a--u 39.51g  <span style=color:#099>0</span>
+</span></span><span style=display:flex><span>  /dev/sdb1  vgdata   lvm2 a--u  5.36g 5.26g
+</span></span><span style=display:flex><span>  /dev/sdb2  VolGroup lvm2 a--u  4.63g 4.63g
+</span></span></code></pre></td></tr></table></div></div><h3 id=从逻辑卷组中删除物理卷>从逻辑卷组中删除物理卷</h3><p><code>vgreduce vg_groupname /dev/sdb1 /dev/sdc1 /dev/sdd1</code></p><pre tabindex=0><code>[root@localhost ~]# vgreduce VolGroup /dev/sdb2
+  Removed &#34;/dev/sdb2&#34; from volume group &#34;VolGroup&#34;
+[root@localhost ~]# pvs
+  PV     VG     Fmt  Attr PSize  PFree
+  /dev/sda2  VolGroup lvm2 a--u 39.51g  0
+  /dev/sdb1  vgdata   lvm2 a--u  5.36g 5.26g
+  /dev/sdb2       lvm2 ----  4.63g 4.63g
+</code></pre><h3 id=调整逻辑卷大小>调整逻辑卷大小</h3><ul><li><p>容量增加至固定大小 1G : <code>lvextend -L 1G /dev/vg_groupname/lv_name</code></p></li><li><p>容量额外增加 300M : <code>lvextend -L +300M /dev/vg_groupname/lv_name</code></p></li><li><p>容量减小至固定大小 : <code>lvreduce -L 500M /dev/vg_groupname/lv_name</code></p></li><li><p>容量额外减少 200M : <code>lvreduce -L -200M /dev/vg_groupname/lv_name</code></p></li><li><p>按剩余百分增加 : <code>lvextend -l +100%FREE /dev/vg_groupname/lv_name</code></p></li></ul><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># lvextend -L 300M /dev/vgdata/lv_data1</span>
+</span></span><span style=display:flex><span>  Size of logical volume vgdata/lv_data1 changed from 200.00 MiB <span style=color:#000;font-weight:700>(</span><span style=color:#099>50</span> extents<span style=color:#000;font-weight:700>)</span> to 300.00 MiB <span style=color:#000;font-weight:700>(</span><span style=color:#099>75</span> extents<span style=color:#000;font-weight:700>)</span>.
+</span></span><span style=display:flex><span>  Logical volume lv_data1 successfully resized.
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># lvextend -L +300M /dev/vgdata/lv_data1</span>
+</span></span><span style=display:flex><span>  Size of logical volume vgdata/lv_data1 changed from 300.00 MiB <span style=color:#000;font-weight:700>(</span><span style=color:#099>75</span> extents<span style=color:#000;font-weight:700>)</span> to 600.00 MiB <span style=color:#000;font-weight:700>(</span><span style=color:#099>150</span> extents<span style=color:#000;font-weight:700>)</span>.
+</span></span><span style=display:flex><span>  Logical volume lv_data1 successfully resized.
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># resize2fs /dev/vgdata/lv_data1</span>
+</span></span><span style=display:flex><span>resize2fs 1.41.12 <span style=color:#000;font-weight:700>(</span>17-May-2010<span style=color:#000;font-weight:700>)</span>
+</span></span><span style=display:flex><span>Resizing the filesystem on /dev/vgdata/lv_data1 to <span style=color:#099>614400</span> <span style=color:#000;font-weight:700>(</span>1k<span style=color:#000;font-weight:700>)</span> blocks.
+</span></span><span style=display:flex><span>The filesystem on /dev/vgdata/lv_data1 is now <span style=color:#099>614400</span> blocks long.
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># lvreduce -L 500M /dev/vgdata/lv_data1</span>
+</span></span><span style=display:flex><span>  WARNING: Reducing active logical volume to 500.00 MiB.
+</span></span><span style=display:flex><span>  THIS MAY DESTROY YOUR DATA <span style=color:#000;font-weight:700>(</span>filesystem etc.<span style=color:#000;font-weight:700>)</span>
+</span></span><span style=display:flex><span>Do you really want to reduce vgdata/lv_data1? <span style=color:#000;font-weight:700>[</span>y/n<span style=color:#000;font-weight:700>]</span>: y
+</span></span><span style=display:flex><span>  Size of logical volume vgdata/lv_data1 changed from 600.00 MiB <span style=color:#000;font-weight:700>(</span><span style=color:#099>150</span> extents<span style=color:#000;font-weight:700>)</span> to 500.00 MiB <span style=color:#000;font-weight:700>(</span><span style=color:#099>125</span> extents<span style=color:#000;font-weight:700>)</span>.
+</span></span><span style=display:flex><span>  Logical volume lv_data1 successfully resized.
+</span></span><span style=display:flex><span>You have new mail in /var/spool/mail/root
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># lvreduce -L -50M /dev/vgdata/lv_data1</span>
+</span></span><span style=display:flex><span>  Rounding size to boundary between physical extents: 48.00 MiB.
+</span></span><span style=display:flex><span>  WARNING: Reducing active logical volume to 452.00 MiB.
+</span></span><span style=display:flex><span>  THIS MAY DESTROY YOUR DATA <span style=color:#000;font-weight:700>(</span>filesystem etc.<span style=color:#000;font-weight:700>)</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=应用扩容方案>应用扩容方案</h3><ul><li>ext4: <code>resize2fs /dev/vg_groupname/lv_name</code></li><li>xfs : <code>xfs_growfs /dev/vg_groupname/lv_name</code></li></ul><h3 id=删除-lvm-卷>删除 LVM 卷</h3><p>销毁一个 LVM 卷的时候，顺序与创建的时候相反</p><h4 id=删除逻辑卷>删除逻辑卷</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># lvremove /dev/vg_groupname/lv_name        </span>
+</span></span><span style=display:flex><span>Do you really want to remove active logical volume lv_data1? <span style=color:#000;font-weight:700>[</span>y/n<span style=color:#000;font-weight:700>]</span>: y
+</span></span><span style=display:flex><span>  Logical volume <span style=color:#d14>&#34;lv_data1&#34;</span> successfully removed
+</span></span></code></pre></td></tr></table></div></div><h4 id=删除逻辑卷组>删除逻辑卷组</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># vgremove vg_groupname</span>
+</span></span><span style=display:flex><span>  Volume group <span style=color:#d14>&#34;vgdata&#34;</span> successfully removed
+</span></span></code></pre></td></tr></table></div></div><h4 id=删除物理卷>删除物理卷</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@localhost ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># pvremove /dev/sdb1</span>
+</span></span><span style=display:flex><span>  Labels on physical volume <span style=color:#d14>&#34;/dev/sdb1&#34;</span> successfully wiped
+</span></span></code></pre></td></tr></table></div></div><h3 id=显示-lvm-卷信息>显示 LVM 卷信息</h3><h4 id=显示物理卷信息>显示物理卷信息</h4><ul><li><code>pvdisplay</code></li><li><code>pvdisplay /dev/sdb1</code></li></ul><pre tabindex=0><code>[root@s001-bastion ~]# pvdisplay /dev/sdc1
+  --- Physical volume ---
+  PV Name               /dev/sdc1
+  VG Name               vgtest
+  PV Size               2.00 GiB / not usable 3.32 MiB
+  Allocatable           yes (but full)
+  PE Size               4.00 MiB
+  Total PE              511
+  Free PE               0
+  Allocated PE          511
+  PV UUID               AkXkkl-aYCb-Incz-lAVg-PP4Y-Yycw-r1a5an
+</code></pre><h4 id=显示逻辑卷组信息>显示逻辑卷组信息</h4><ul><li><code>vgdisplay</code></li><li><code>vgdisplay vg_groupname</code></li></ul><pre tabindex=0><code>[root@s001-bastion ~]# vgdisplay  vg_groupname
+  --- Volume group ---
+  VG Name               vg_groupname
+  System ID             
+  Format                lvm2
+  Metadata Areas        4
+  Metadata Sequence No  9
+  VG Access             read/write
+  VG Status             resizable
+  MAX LV                0
+  Cur LV                1
+  Open LV               1
+  Max PV                0
+  Cur PV                4
+  Act PV                4
+  VG Size               3.99 GiB
+  PE Size               4.00 MiB
+  Total PE              1021
+  Alloc PE / Size       1021 / 3.99 GiB
+  Free  PE / Size       0 / 0   
+  VG UUID               FxKZRi-mkjD-OVJf-dh1k-VN0w-GjzA-4DVxf7
+</code></pre><h4 id=显示逻辑卷组信息-1>显示逻辑卷组信息</h4><ul><li><code>lvdisplay</code></li><li><code>lvdisplay /dev/vg_groupname/lv_name</code></li></ul><pre tabindex=0><code>[root@s001-bastion ~]# lvdisplay /dev/vg_groupname/lv_name
+  --- Logical volume ---
+  LV Path                /dev/vg_groupname/lv_name
+  LV Name                lv_name
+  VG Name                vg_groupname
+  LV UUID                k2I7oG-y3q9-1Dmc-MZ5v-D2it-NBeK-jVpOE7
+  LV Write Access        read/write
+  LV Creation host, time s001-bastion, 2017-08-16 16:57:29 +0800
+  LV Status              available
+  # open                 1
+  LV Size                3.99 GiB
+  Current LE             1021
+  Segments               4
+  Allocation             inherit
+  Read ahead sectors     auto
+  - currently set to     256
+  Block device           253:2
+</code></pre><h2 id=记一次-lvm-在线扩容>记一次 lvm 在线扩容</h2><p>之前案例不同， 这次实在 Aliyun 上直接 <strong>扩容原磁盘大小</strong> ， 而非新加磁盘。</p><p>因此，核心点在于如何对 <code>物理卷</code> 扩容。</p><blockquote><p>需要注意的是： 物理卷扩容并
+<a href="https://help.aliyun.com/document_detail/25452.html?spm=5176.2020520101.0.0.457c4df5f8vH9j" target=_blank rel=noopener>不需要和普通分区一样，先删除再重建</a>
+。 直接 <code>pvresize</code> 即可。</p></blockquote><h3 id=命令总结>命令总结</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># pvresize /dev/vdb</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># lvextend -l +100%FREE /dev/mapper/docker-bootstrap</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># resize2fs /dev/mapper/docker-bootstrap</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=命令记录>命令记录</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@iZ2ze0ky5ovykfx08vvmsxZ ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># df -h |grep boot</span>
+</span></span><span style=display:flex><span>/dev/mapper/docker-bootstrap   40G  2.2G   36G   6% /var/lib/docker
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@iZ2ze0ky5ovykfx08vvmsxZ ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># pvresize --help</span>
+</span></span><span style=display:flex><span>  pvresize: Resize physical volume<span style=color:#000;font-weight:700>(</span>s<span style=color:#000;font-weight:700>)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>pvresize
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>[</span>--commandprofile ProfileName<span style=color:#000;font-weight:700>]</span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>[</span>-d|--debug<span style=color:#000;font-weight:700>]</span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>[</span>-h|-?|--help<span style=color:#000;font-weight:700>]</span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>[</span>--reportformat <span style=color:#000;font-weight:700>{</span>basic|json<span style=color:#000;font-weight:700>}]</span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>[</span>--setphysicalvolumesize PhysicalVolumeSize<span style=color:#000;font-weight:700>[</span>bBsSkKmMgGtTpPeE<span style=color:#000;font-weight:700>]</span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>[</span>-t|--test<span style=color:#000;font-weight:700>]</span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>[</span>-v|--verbose<span style=color:#000;font-weight:700>]</span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>[</span>--version<span style=color:#000;font-weight:700>]</span>
+</span></span><span style=display:flex><span>	PhysicalVolume <span style=color:#000;font-weight:700>[</span>PhysicalVolume...<span style=color:#000;font-weight:700>]</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@iZ2ze0ky5ovykfx08vvmsxZ ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># pvchange --help^C</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@iZ2ze0ky5ovykfx08vvmsxZ ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># pvresize /dev/vdb</span>
+</span></span><span style=display:flex><span>  Physical volume <span style=color:#d14>&#34;/dev/vdb&#34;</span> changed
+</span></span><span style=display:flex><span>  <span style=color:#099>1</span> physical volume<span style=color:#000;font-weight:700>(</span>s<span style=color:#000;font-weight:700>)</span> resized / <span style=color:#099>0</span> physical volume<span style=color:#000;font-weight:700>(</span>s<span style=color:#000;font-weight:700>)</span> not resized
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@iZ2ze0ky5ovykfx08vvmsxZ ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># pvdisplay</span>
+</span></span><span style=display:flex><span>  --- Physical volume ---
+</span></span><span style=display:flex><span>  PV Name               /dev/vdb
+</span></span><span style=display:flex><span>  VG Name               docker
+</span></span><span style=display:flex><span>  PV Size               300.00 GiB / not usable 3.00 MiB
+</span></span><span style=display:flex><span>  Allocatable           yes
+</span></span><span style=display:flex><span>  PE Size               4.00 MiB
+</span></span><span style=display:flex><span>  Total PE              <span style=color:#099>76799</span>
+</span></span><span style=display:flex><span>  Free PE               <span style=color:#099>51204</span>
+</span></span><span style=display:flex><span>  Allocated PE          <span style=color:#099>25595</span>
+</span></span><span style=display:flex><span>  PV UUID               Cqxbco-9dJ7-uOot-SxRm-gUft-aVM8-Dj2ilE
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@iZ2ze0ky5ovykfx08vvmsxZ ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># lvextend -l ^C</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@iZ2ze0ky5ovykfx08vvmsxZ ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># # lvextend -l +100%FREE /dev/mapper/docker-bootstrap</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@iZ2ze0ky5ovykfx08vvmsxZ ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic>#</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@iZ2ze0ky5ovykfx08vvmsxZ ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># # lvextend -l +100%FREE /dev/mapper/docker-bootstrap</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@iZ2ze0ky5ovykfx08vvmsxZ ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># lvextend -l +100%FREE /dev/mapper/docker-bootstrap</span>
+</span></span><span style=display:flex><span>  Size of logical volume docker/bootstrap changed from 40.00 GiB <span style=color:#000;font-weight:700>(</span><span style=color:#099>10239</span> extents<span style=color:#000;font-weight:700>)</span> to 240.01 GiB <span style=color:#000;font-weight:700>(</span><span style=color:#099>61443</span> extents<span style=color:#000;font-weight:700>)</span>.
+</span></span><span style=display:flex><span>  Logical volume docker/bootstrap successfully resized.
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@iZ2ze0ky5ovykfx08vvmsxZ ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># resize2fs /dev/mapper/docker-bootstrap</span>
+</span></span><span style=display:flex><span>resize2fs 1.42.9 <span style=color:#000;font-weight:700>(</span>28-Dec-2013<span style=color:#000;font-weight:700>)</span>
+</span></span><span style=display:flex><span>Filesystem at /dev/mapper/docker-bootstrap is mounted on /var/lib/docker; on-line resizing required
+</span></span><span style=display:flex><span><span style=color:teal>old_desc_blocks</span> <span style=color:#000;font-weight:700>=</span> 5, <span style=color:teal>new_desc_blocks</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#099>31</span>
+</span></span><span style=display:flex><span>The filesystem on /dev/mapper/docker-bootstrap is now <span style=color:#099>62917632</span> blocks long.
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>root@iZ2ze0ky5ovykfx08vvmsxZ ~<span style=color:#000;font-weight:700>]</span><span style=color:#998;font-style:italic># df -h |grep /dev/mapper/docker-bootstrap</span>
+</span></span><span style=display:flex><span>/dev/mapper/docker-bootstrap  237G  2.2G  224G   1% /var/lib/docker
+</span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2017/08/25/lvm-management-and-online-extend/>https://tangx.in/posts/2017/08/25/lvm-management-and-online-extend/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2017/07/12/proxy-for-linux-software/>为 linux 系统软件配置代理</a></li><li><a href=/posts/2017/03/06/%E7%A3%81%E7%9B%98IOPS%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/>使用 FIO 测试磁盘 IOPS 性能</a></li><li><a href=/posts/2016/12/16/cron-tips-lock-timeout/>cron 定时任务小技巧 进程锁与超时</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/linux target=_blank>linux</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2022/12/30/vscode-shfmt/ title="Linux 工具命令(02): shfmt 格式化 shell 脚本" target=_blank>Linux 工具命令(02): shfmt 格式化 shell 脚本</a></li><li><a href=https://tangx.in/posts/2022/12/29/dos2unix-and-unix2dos/ title="Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦" target=_blank>Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦</a></li><li><a href=https://tangx.in/posts/2022/12/28/kustz-1-1-introduce/ title="从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-image-compress/ title="Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?" target=_blank>Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-cdn-http-referer/ title="Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站" target=_blank>Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-dns-shunting/ title="Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速" target=_blank>Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-cdn/ title="Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站" target=_blank>Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-render-markdown-image-url/ title="Hugo 网站优化(1)： 渲染 Markdown 图片引用地址" target=_blank>Hugo 网站优化(1)： 渲染 Markdown 图片引用地址</a></li><li><a href=https://tangx.in/posts/2022/12/23/aliyun-sls-trace-configuration/ title="Golang 配置并接入 Aliyun SLS Trace 服务" target=_blank>Golang 配置并接入 Aliyun SLS Trace 服务</a></li><li><a href=https://tangx.in/posts/2022/12/21/docker-container-set-timezone/ title="在 Docker 容器中设置时区原来这么简单" target=_blank>在 Docker 容器中设置时区原来这么简单</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/tuiguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li><li><a href=https://www.aliyun.com/daily-act/ecs/activity_selection?userCode:bs5uqsfi title=【阿里云】服务器0元试用，首购低至0.9元/月起 target=_blank style=color:red><img src=/tuiguang/aliyun.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (5)</a></li><li><a href=https://tangx.in/categories/books/>books (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (1)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/container/>container</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubernetes/>kubernetes</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

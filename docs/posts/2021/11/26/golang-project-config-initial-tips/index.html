@@ -1,0 +1,214 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>配置文件初始化思路一二三 | 老麦的书房</title><meta property="og:title" content="配置文件初始化思路一二三 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2021-11-26T00:00:00+08:00"><meta property="article:modified_time" content="2021-11-26T00:00:00+08:00"><meta name=Keywords content="[golang,config]"><meta name=description content="如何处理程序配置文件才能在程序启动时适配更多情况"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/2021/11/26/golang-project-config-initial-tips/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div class=col-group><div class=col-8 id=main><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#config-文件>Config 文件</a></li><li><a href=#config-字段>Config 字段</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>配置文件初始化思路一二三</h1></header><time datetime=2021-11-26T00:00:00Z class="post-meta meta-date dt-published">2021年11月26日</time><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=post-content><h1 id=配置文件初始化思路要点一二三>配置文件初始化思路要点一二三</h1><p>配置文件字段如下</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> Config <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	Server    Server            <span style=color:#d14>`json:&#34;server,omitempty&#34; yaml:&#34;server,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>	Ingresses netv1.IngressSpec <span style=color:#d14>`json:&#34;ingresses,omitempty&#34; yaml:&#34;ingresses,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>完整配置如下</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:navy>server</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>port</span>:<span style=color:#bbb> </span><span style=color:#099>8080</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>ingresses</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>rules</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>- <span style=color:navy>host</span>:<span style=color:#bbb> </span>www.baidu.com<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>http</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>paths</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>- <span style=color:navy>backend</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>service</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>              </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>/search<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>              </span><span style=color:navy>port</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>                </span><span style=color:navy>number</span>:<span style=color:#bbb> </span><span style=color:#099>80</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>pathType</span>:<span style=color:#bbb> </span>ImplementationSpecific<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:#998;font-style:italic># pathType: Exact</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:#998;font-style:italic># pathType: Prefix</span><span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><h2 id=config-文件>Config 文件</h2><p>读取多个文件后合并最终结果。 可以将不同的功能配置放在不同的文件中， 在数据内容多的情况下更有利于操作。</p><p>除此之外， 还可以按照环境读取不同的配置文件( <code>config.master.yml</code> / <code>config.develop.yml</code> )， 这种方式在 CICD 中就可以体现出优势了。</p><p>例如， 之后在读取 k8s 信息渲染路由配置文件时， 可以只更改 <code>config.ing.yml</code> 文件。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (cfg <span style=color:#000;font-weight:700>*</span>Config) <span style=color:#900;font-weight:700>ReadConfig</span>() {
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>for</span> _, f <span style=color:#000;font-weight:700>:=</span> <span style=color:#000;font-weight:700>range</span> []<span style=color:#458;font-weight:700>string</span>{<span style=color:#d14>&#34;config.default.yml&#34;</span>, <span style=color:#d14>&#34;config.yml&#34;</span>, <span style=color:#d14>&#34;config.server.yml&#34;</span>, <span style=color:#d14>&#34;config.ing.yml&#34;</span>} {
+</span></span><span style=display:flex><span>		err <span style=color:#000;font-weight:700>:=</span> cfg.<span style=color:#900;font-weight:700>readconfig</span>(f)
+</span></span><span style=display:flex><span>		<span style=color:#000;font-weight:700>if</span> err <span style=color:#000;font-weight:700>!=</span> <span style=color:#000;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>			logrus.<span style=color:#900;font-weight:700>Warnf</span>(<span style=color:#d14>&#34;read file %s failed: %v&#34;</span>, f, err)
+</span></span><span style=display:flex><span>			<span style=color:#000;font-weight:700>continue</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (cfg <span style=color:#000;font-weight:700>*</span>Config) <span style=color:#900;font-weight:700>readconfig</span>(file <span style=color:#458;font-weight:700>string</span>) <span style=color:#458;font-weight:700>error</span> {
+</span></span><span style=display:flex><span>	b, err <span style=color:#000;font-weight:700>:=</span> os.<span style=color:#900;font-weight:700>ReadFile</span>(file)
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>if</span> err <span style=color:#000;font-weight:700>!=</span> <span style=color:#000;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>		logrus.<span style=color:#900;font-weight:700>Warnf</span>(<span style=color:#d14>&#34;read config failed: %v&#34;</span>, err)
+</span></span><span style=display:flex><span>		<span style=color:#000;font-weight:700>return</span> err
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> yaml.<span style=color:#900;font-weight:700>Unmarshal</span>(b, cfg)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>除了读取配置文件之外， <strong>生成</strong> 默认的配置文件也是非常重要的。
+为所设计的 <strong>配置字段</strong> 创建一个默认值， 在程序启动的时候生成默认配置， 如此任何配置字段的都会在程序启动时体现出来， 而不必再花时间进行文档整理。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>NewConfig</span>() <span style=color:#000;font-weight:700>*</span>Config {
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>&amp;</span>Config{
+</span></span><span style=display:flex><span>		Server: Server{
+</span></span><span style=display:flex><span>			Port: <span style=color:#099>8080</span>,
+</span></span><span style=display:flex><span>		},
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (cfg <span style=color:#000;font-weight:700>*</span>Config) <span style=color:#900;font-weight:700>Initial</span>() <span style=color:#000;font-weight:700>*</span>Config {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	b, _ <span style=color:#000;font-weight:700>:=</span> yaml.<span style=color:#900;font-weight:700>Marshal</span>(cfg)
+</span></span><span style=display:flex><span>	f, _ <span style=color:#000;font-weight:700>:=</span> os.<span style=color:#900;font-weight:700>OpenFile</span>(<span style=color:#d14>&#34;config.default.yml&#34;</span>, os.O_CREATE|os.O_RDWR|os.O_TRUNC, <span style=color:#099>0644</span>)
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>defer</span> f.<span style=color:#900;font-weight:700>Close</span>()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	f.<span style=color:#900;font-weight:700>Write</span>(b)
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> cfg
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h2 id=config-字段>Config 字段</h2><p>config 字段在设计的时候直接使用了 k8s 的 Ingress 字段。 方便之后直接使用，不再做转换。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> Config <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	Server    Server            <span style=color:#d14>`json:&#34;server,omitempty&#34; yaml:&#34;server,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>	Ingresses netv1.IngressSpec <span style=color:#d14>`json:&#34;ingresses,omitempty&#34; yaml:&#34;ingresses,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2021/11/26/golang-project-config-initial-tips/>https://tangx.in/posts/2021/11/26/golang-project-config-initial-tips/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2021/09/18/golang-cobra-flag-binder/>golang 使用反射绑定 cobra flag 参数</a></li><li><a href=/posts/2021/08/30/golang-array-and-slice/>一道 golang 切片面试题</a></li><li><a href=/posts/2021/07/28/ioc-by-gin-context/>golang gin 使用 context 实现 ioc</a></li><li><a href=/posts/2021/07/27/ioc-by-golang-context/>golang 使用 Context 实现 IoC 容器</a></li><li><a href=/posts/2021/06/22/golang-block/>Golang Block 到底是什么？ 怎么就能解决闭包变量冲突了？</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/golang target=_blank>golang</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2022/12/30/vscode-shfmt/ title="Linux 工具命令(02): shfmt 格式化 shell 脚本" target=_blank>Linux 工具命令(02): shfmt 格式化 shell 脚本</a></li><li><a href=https://tangx.in/posts/2022/12/29/dos2unix-and-unix2dos/ title="Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦" target=_blank>Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦</a></li><li><a href=https://tangx.in/posts/2022/12/28/kustz-1-1-introduce/ title="从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-image-compress/ title="Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?" target=_blank>Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-cdn-http-referer/ title="Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站" target=_blank>Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-dns-shunting/ title="Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速" target=_blank>Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-cdn/ title="Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站" target=_blank>Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-render-markdown-image-url/ title="Hugo 网站优化(1)： 渲染 Markdown 图片引用地址" target=_blank>Hugo 网站优化(1)： 渲染 Markdown 图片引用地址</a></li><li><a href=https://tangx.in/posts/2022/12/23/aliyun-sls-trace-configuration/ title="Golang 配置并接入 Aliyun SLS Trace 服务" target=_blank>Golang 配置并接入 Aliyun SLS Trace 服务</a></li><li><a href=https://tangx.in/posts/2022/12/21/docker-container-set-timezone/ title="在 Docker 容器中设置时区原来这么简单" target=_blank>在 Docker 容器中设置时区原来这么简单</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/tuiguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li><li><a href=https://www.aliyun.com/daily-act/ecs/activity_selection?userCode:bs5uqsfi title=【阿里云】服务器0元试用，首购低至0.9元/月起 target=_blank style=color:red><img src=/tuiguang/aliyun.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (5)</a></li><li><a href=https://tangx.in/categories/books/>books (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (1)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/container/>container</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubernetes/>kubernetes</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

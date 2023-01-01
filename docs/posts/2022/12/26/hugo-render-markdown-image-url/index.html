@@ -1,0 +1,260 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>Hugo 网站优化(1)： 渲染 Markdown 图片引用地址 | 老麦的书房</title><meta property="og:title" content="Hugo 网站优化(1)： 渲染 Markdown 图片引用地址 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2022-12-26T14:21:42+08:00"><meta property="article:modified_time" content="2022-12-26T14:21:42+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="Hugo 网站优化(1)： 渲染 Markdown 图片引用地址"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/2022/12/26/hugo-render-markdown-image-url/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div class=col-group><div class=col-8 id=main><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#优化渲染-markdown-图片引用地址>优化渲染 Markdown 图片引用地址</a><ul><li><a href=#hugo-配置如下>Hugo 配置如下</a></li><li><a href=#render-imagehtml-文件优化如下><code>render-image.html</code> 文件优化如下</a></li></ul></li><li><a href=#被玩崩了的-jsdelivr-cdn>被玩崩了的 <code>jsdelivr</code> CDN</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>Hugo 网站优化(1)： 渲染 Markdown 图片引用地址</h1></header><time datetime=2022-12-26T06:21:42Z class="post-meta meta-date dt-published">2022年12月26日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/blog target=_blank>blog</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=hugo-网站优化1-渲染-markdown-图片引用地址>Hugo 网站优化(1)： 渲染 Markdown 图片引用地址</h1><blockquote><p>大家好， 我是老麦
+欢迎 <strong>关注公众号</strong> <code>maitalking</code> 或 <strong>订阅网站</strong> <code>https://tangx.in/</code> 。
+第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</p></blockquote><p>作为一个技术人员， 使用 Markdown 写文章确实很方便。</p><p>引用图片通常有如下三种</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">9
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-markdown data-lang=markdown><span style=display:flex><span><span style=color:#999># 1. 相对路径
+</span></span></span><span style=display:flex><span><span style=color:#999></span>![](image.png)   # 本文不讨论
+</span></span><span style=display:flex><span>![](./image.png)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#999># 2. 工程目录绝对路径
+</span></span></span><span style=display:flex><span><span style=color:#999></span>![](/static/logo/image.png) 
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#999># 3. 外部引用
+</span></span></span><span style=display:flex><span><span style=color:#999></span>![](http://example.com/logo/image.png) 
+</span></span></code></pre></td></tr></table></div></div><p>但如果通过 <code>hugo</code>, <code>jekyll</code> 等引擎编译后，</p><p><strong>相对路径</strong>： 由于 <code>my-post.md</code> 文件被编译成 <code>my-post/index.html</code>。 最终网站静态目录如下</p><pre tabindex=0><code>.
+├── image.png
+└── my-post
+    └── index.html
+</code></pre><p><strong>工程目录绝对路径</strong> ： <code>/static</code> 是一个关键字， 其子文件在编译后， 才存在于 <strong>一级</strong> 目录</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-markdown data-lang=markdown><span style=display:flex><span><span style=color:#aaa>## 编译前
+</span></span></span><span style=display:flex><span><span style=color:#aaa></span>.
+</span></span><span style=display:flex><span>└── static
+</span></span><span style=display:flex><span>    └── logo
+</span></span><span style=display:flex><span>        └── avatar.png
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#aaa>## 编译后
+</span></span></span><span style=display:flex><span><span style=color:#aaa></span>public  # 网站目录
+</span></span><span style=display:flex><span>└── logo # 一级目录
+</span></span><span style=display:flex><span>    └── avatar.png
+</span></span></code></pre></td></tr></table></div></div><blockquote><p><strong>1. 相对路径</strong> 和 <strong>2. 工程目录绝对路径</strong> 通常会出现渲染后的路径错误。</p></blockquote><h2 id=优化渲染-markdown-图片引用地址>优化渲染 Markdown 图片引用地址</h2><p>一切为了保证 <strong>原始文件</strong> markdown 本身展示图片可用。</p><p>决定在渲染模版中，做一些逻辑判断操作。</p><h3 id=hugo-配置如下>Hugo 配置如下</h3><p>在 <code>config.toml</code> 中新增如下两个配置文件</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">9
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#998;font-style:italic># 去除工程目录 prefix 文件路径</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>[params.static_prefix]<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>name = &#34;/static&#34;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#998;font-style:italic># 外部 CDN 加速图片， 将图片地址替换成外部前缀</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>[params.image_cdn]<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>enable = false <span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>host = &#34;https://cdn.example.com<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#998;font-style:italic># host = &#34;https://cdn.jsdelivr.net/gh/user/user.github.io&#34;</span><span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><h3 id=render-imagehtml-文件优化如下><code>render-image.html</code> 文件优化如下</h3><p>渲染逻辑如下。</p><ol><li>通过 <code>.Destination</code> 拿到图片在 markdown 中的地址， 并保存在变量 <code>$img_dest</code> 中</li><li>判断 <code>static_prefix</code> 参数是否设置。<ol><li><strong>是</strong>: 去除 <code>$img_dest</code> 中的 prefix</li></ol></li><li>将 <strong>相对路径</strong> 修改为 <strong>绝对路径</strong>。<ol><li>这里以 <code>./</code> 作为相对路径的 <strong>关键字</strong> 进行判断。</li><li>因此优化操作不能识别 <code>image.png</code> 和 <code>../image.png</code> 这两种形式。 需要要求个人书写习惯。</li></ol></li><li>判断 <strong>image_cdn</strong> 是否设置。<ol><li><strong>是</strong>: 在 <strong>绝对路径</strong> 前添加 <strong>外部 CDN 地址</strong>。</li></ol></li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 1. 变量赋值 --&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 1.1. 默认情况， 获取图片的定义地址 --&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- ./image.png --&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- /static/img/image.png --&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- http://example.com/path/to/image.png --&gt;</span>
+</span></span><span style=display:flex><span>{{- $img_dest := .Destination -}}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 1.2. 网站 BaseURL 与 文件相对路径 --&gt;</span>
+</span></span><span style=display:flex><span>{{- $site_url := .Page.Site.BaseURL -}}
+</span></span><span style=display:flex><span>{{- $rel_url := $site_url | relURL}}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 2. 去除 prefix， 并添加 **没有域名的 BaseURL ** --&gt;</span>
+</span></span><span style=display:flex><span>{{ if and (isset .Page.Site.Params &#34;static_prefix&#34;) }}
+</span></span><span style=display:flex><span>{{ $prefix := .Page.Site.Params.static_prefix.name }}
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- img_dest = /prefix/static/image.png --&gt;</span>
+</span></span><span style=display:flex><span>{{ if (hasPrefix $img_dest $prefix )}}
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- img_dest = /static/image.png --&gt;</span>
+</span></span><span style=display:flex><span>{{ $img_dest = (strings.TrimPrefix $prefix $img_dest ) }}
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- img_dest = /path/to/static/image.png --&gt;</span>
+</span></span><span style=display:flex><span>{{ $img_dest = (print (path.Join $rel_url $img_dest))}}
+</span></span><span style=display:flex><span>{{ end }}
+</span></span><span style=display:flex><span>{{ end }}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 3. 计算文件绝对路径 --&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- dest = ./image.png --&gt;</span>
+</span></span><span style=display:flex><span>{{ if (hasPrefix $img_dest &#34;./&#34;) }}
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- img_dest = .././image.png --&gt;</span>
+</span></span><span style=display:flex><span>{{ $img_dest = (print &#34;../&#34; (path.Join $img_dest)) }}
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- img_dest = /posts/&lt;year&gt;/&lt;month&gt;/&lt;date&gt;/&lt;post_name&gt;/.././image.png --&gt;</span>
+</span></span><span style=display:flex><span>{{ $img_dest = (print (path.Join .Page.RelPermalink $img_dest))}}
+</span></span><span style=display:flex><span>{{ end }}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 4.  开启 CDN --&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 是否开启 CDN 选项 --&gt;</span>
+</span></span><span style=display:flex><span>{{- if (and .Page.Site.Params.image_cdn.enable (not .Page.Site.IsServer)) -}}
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 文件不以 http 开头 --&gt;</span>
+</span></span><span style=display:flex><span>{{ if not (hasPrefix $img_dest &#34;http&#34;) }}
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- image_cdn + /path/to/image.png --&gt;</span>
+</span></span><span style=display:flex><span>{{ $img_dest = (print .Page.Site.Params.image_cdn.host (path.Join $img_dest)) }}
+</span></span><span style=display:flex><span>{{ end }}
+</span></span><span style=display:flex><span>{{- end -}}
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- CDN END --&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>img</span> 
+</span></span><span style=display:flex><span>    <span style=color:teal>src</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;{{ $img_dest | safeURL }}&#34;</span> 
+</span></span><span style=display:flex><span>    <span style=color:teal>alt</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;{{ .Text }}&#34;</span> 
+</span></span><span style=display:flex><span>    <span style=color:#a61717;background-color:#e3d2d2>{{</span> <span style=color:teal>with</span> <span style=color:#a61717;background-color:#e3d2d2>.</span><span style=color:teal>Title</span> <span style=color:#a61717;background-color:#e3d2d2>}}</span> 
+</span></span><span style=display:flex><span>        <span style=color:teal>title</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;{{ . }}&#34;</span> 
+</span></span><span style=display:flex><span>    <span style=color:#a61717;background-color:#e3d2d2>{{</span> <span style=color:teal>end</span> <span style=color:#a61717;background-color:#e3d2d2>}}</span> 
+</span></span><span style=display:flex><span>/&gt;
+</span></span><span style=display:flex><span>{{- /* Drop trailing newlines */ -}}
+</span></span></code></pre></td></tr></table></div></div><h2 id=被玩崩了的-jsdelivr-cdn>被玩崩了的 <code>jsdelivr</code> CDN</h2><p><code>jsdelivr</code> CDN 已经被玩坏了。</p><p>对于 <code>github</code> 个人用户的资源加速已经， 目前只能在国外有效。 国内 IP 访问， 将被重定向到 <code>github raw</code> 页面， 然而这个地址被墙了， 无法访问。</p></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2022/12/26/hugo-render-markdown-image-url/>https://tangx.in/posts/2022/12/26/hugo-render-markdown-image-url/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2022/12/23/aliyun-sls-trace-configuration/>Golang 配置并接入 Aliyun SLS Trace 服务</a></li><li><a href=/posts/2022/12/21/docker-container-set-timezone/>在 Docker 容器中设置时区原来这么简单</a></li><li><a href=/posts/2022/03/28/redis-persistence-rdb-and-aof/>Redis 持久化方式 - RDB 和 AOF</a></li><li><a href=/posts/2022/03/28/redis-delete-the-big-key/>Redis 删除大 key 时候的注意事项</a></li><li><a href=/posts/2022/03/25/manage-hbase-by-systemd/>使用 systemd 启动 hbase master 和 regionserver</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/hugo target=_blank>hugo</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2022/12/30/vscode-shfmt/ title="Linux 工具命令(02): shfmt 格式化 shell 脚本" target=_blank>Linux 工具命令(02): shfmt 格式化 shell 脚本</a></li><li><a href=https://tangx.in/posts/2022/12/29/dos2unix-and-unix2dos/ title="Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦" target=_blank>Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦</a></li><li><a href=https://tangx.in/posts/2022/12/28/kustz-1-1-introduce/ title="从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-image-compress/ title="Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?" target=_blank>Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-cdn-http-referer/ title="Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站" target=_blank>Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-dns-shunting/ title="Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速" target=_blank>Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-cdn/ title="Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站" target=_blank>Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-render-markdown-image-url/ title="Hugo 网站优化(1)： 渲染 Markdown 图片引用地址" target=_blank>Hugo 网站优化(1)： 渲染 Markdown 图片引用地址</a></li><li><a href=https://tangx.in/posts/2022/12/23/aliyun-sls-trace-configuration/ title="Golang 配置并接入 Aliyun SLS Trace 服务" target=_blank>Golang 配置并接入 Aliyun SLS Trace 服务</a></li><li><a href=https://tangx.in/posts/2022/12/21/docker-container-set-timezone/ title="在 Docker 容器中设置时区原来这么简单" target=_blank>在 Docker 容器中设置时区原来这么简单</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/tuiguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li><li><a href=https://www.aliyun.com/daily-act/ecs/activity_selection?userCode:bs5uqsfi title=【阿里云】服务器0元试用，首购低至0.9元/月起 target=_blank style=color:red><img src=/tuiguang/aliyun.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (5)</a></li><li><a href=https://tangx.in/categories/books/>books (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (1)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/container/>container</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubernetes/>kubernetes</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

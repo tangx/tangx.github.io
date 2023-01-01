@@ -1,0 +1,213 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>使用 docker buildx 实现多平台编译 - 案例篇 | 老麦的书房</title><meta property="og:title" content="使用 docker buildx 实现多平台编译 - 案例篇 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2020-11-07T00:00:00+08:00"><meta property="article:modified_time" content="2020-11-07T00:00:00+08:00"><meta name=Keywords content="[docker,cpu,usage,example]"><meta name=description content="使用 docker buildx 构建镜像的案例分享"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/2020/11/07/docker-buildx-examples/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div class=col-group><div class=col-8 id=main><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#0x00-先说结论>0x00 先说结论</a></li><li><a href=#0x01-远端-builder>0x01 远端 builder</a><ul><li><a href=#执行环境>执行环境</a></li><li><a href=#创建-remotebuilder>创建 remotebuilder</a></li><li><a href=#执行镜像构建>执行镜像构建</a></li></ul></li><li><a href=#0x02-配置优化>0x02 配置优化</a><ul><li><a href=#使用镜像加速优化>使用镜像加速优化</a></li><li><a href=#使用默认参数不使用镜像优化>使用默认参数，不使用镜像优化</a></li></ul></li><li><a href=#0x03-dockerfile-案例>0x03 Dockerfile 案例</a><ul><li><a href=#sync>sync</a></li><li><a href=#combine>combine</a></li></ul></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>使用 docker buildx 实现多平台编译 - 案例篇</h1></header><time datetime=2020-11-07T00:00:00Z class="post-meta meta-date dt-published">2020年11月7日</time><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=post-content><h1 id=使用-docker-buildx-实现多平台编译---案例篇>使用 docker buildx 实现多平台编译 - 案例篇</h1><p>之前的文章中
+<a href=https://tangx.in/2020/06/10/docker-buildx/ target=_blank rel=noopener>使用 docker buildx 实现多平台编译 - 环境篇</a>
+介绍了如何部署 docker buildx 环境。</p><p>笔者本文将要分享自身在使用中的几个比较有意义的案例</p><h2 id=0x00-先说结论>0x00 先说结论</h2><ol><li><code>docker buildx</code> 本身运行于容器环境， 所以 <strong>scheduler</strong> 和 <strong>builder</strong> 本机配置（ex, <code>/etc/hosts</code>, <code>/etc/docker/daemon.json</code> ） 的大部分配置和场景 其实是不可用的。</li><li>使用 <code>ssh://user@host</code> 可以方便的执行远程构建， 尤其是在构建最基础的镜像，需要海外镜像时。</li><li><code>docker buildx</code> 现在仍然处于实验阶段，在不断的更新。 尤其是在 Dockerfile 的使用上有很多新特性， 可以参考
+<a href=https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/experimental.md target=_blank rel=noopener>dockerfile experimental</a></li><li>转存和合并镜像非常方便， 结合 <code>github action</code> 可以完全托管。</li></ol><h2 id=0x01-远端-builder>0x01 远端 builder</h2><p>之前的文章中， 我们通过 <code>qemu</code> 模拟了多架构的环境。 但实际在使用中， 在模拟架构中执行工作效率是特别低的， 如果已经执行某些项目编译， 那你就应该感同身受了。</p><p>如笔者之前维护的 opencv 双架构的项目， 通过 <em>github action</em> 进行跨平台编译， 长达三四小时。而在本架构下只需要短短的10几分钟。</p><p><img class=mx-auto alt=opencv-multi-arch-github-action.jpg src=https://static.tangx.in/posts/2020/11/07/opencv-multi-arch-github-action.jpg></p><p>因此， 在同架构下执行编译或其他工作的需求就特别迫切了。</p><ol><li>好在 <code>docker buildx</code> 可以支持 <em>专机专用</em> - 根据机器架构执行对应的任务。</li><li>另外， <code>docker</code> 本身也支持基于 <code>ssh://user@host</code> 协议的远程调用。 通过免密码证书， 非常容易管理。</li></ol><h3 id=执行环境>执行环境</h3><p>假设有三台机器, 且 scheduler 能通过证书免密码登录两台 builder。</p><table><thead><tr><th>用途</th><th>主机地址</th><th>CPU 架构</th></tr></thead><tbody><tr><td>scheduler</td><td>10.100.100.10</td><td>-</td></tr><tr><td>arm64 builder</td><td>192.168.100.101</td><td>arm64 / aarch64</td></tr><tr><td>amd64 builder</td><td>192.168.100.102</td><td>amd64 / x86_64</td></tr></tbody></table><h3 id=创建-remotebuilder>创建 remotebuilder</h3><p>在 <strong>scheduler(10.100.100.10)</strong> 创建 remotebuilder , 命令如下</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:teal>ARM64</span><span style=color:#000;font-weight:700>=</span>ssh://root@192.168.100.101
+</span></span><span style=display:flex><span><span style=color:teal>AMD64</span><span style=color:#000;font-weight:700>=</span>ssh://root@192.168.100.102
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## 注意: 这里指定名称 remotebuilder</span>
+</span></span><span style=display:flex><span><span style=color:teal>DOCKER_HOST</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>${</span><span style=color:teal>AMD64</span><span style=color:#d14>}</span> docker buildx create --name remotebuilder --node hk-amd64 --platform<span style=color:#000;font-weight:700>=</span>amd64
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>### --append 表示追加， 而非重新创建</span>
+</span></span><span style=display:flex><span><span style=color:teal>DOCKER_HOST</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>${</span><span style=color:teal>ARM64</span><span style=color:#d14>}</span> docker buildx create --append --name remotebuilder --node hk-arm64 --platform<span style=color:#000;font-weight:700>=</span>arm64
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## 使用 remotebuilder</span>
+</span></span><span style=display:flex><span>docker buildx use remotebuilder
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## 查看 remotebuilder 状态</span>
+</span></span><span style=display:flex><span>docker buildx ls --builder remotebuilder
+</span></span></code></pre></td></tr></table></div></div><p>到此位置， <code>remote builder</code> 及创建成功了。</p><p>当我们在本地执行 <code>docker buildx build ...</code> 任务的时候， 任务就会分发到对应 cpu 架构的主机上。</p><h3 id=执行镜像构建>执行镜像构建</h3><ol><li>创建 Dockerfile</li></ol><p>这里 <code>Dockerfile</code> 非常简单， 仅仅就是拉取 <code>centos:8</code> 镜像。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>mkdir -p centos/ <span style=color:#000;font-weight:700>&amp;&amp;</span> <span style=color:#0086b3>cd</span> centos/ 
+</span></span><span style=display:flex><span><span style=color:#0086b3>echo</span> <span style=color:#d14>&#34;FROM centos:8&#34;</span> &gt; Dockerfile
+</span></span><span style=display:flex><span>tree
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic># .</span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic># └── Dockerfile</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic># 0 directories, 1 file</span>
+</span></span></code></pre></td></tr></table></div></div><ol start=2><li>使用 <code>docker buildx</code> 命令拉取镜像。</li></ol><blockquote><p>注意: 这里我们没有使用 <code>--tag</code> 指定目标镜像名称。</p></blockquote><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>docker buildx build --platform<span style=color:#000;font-weight:700>=</span>linux/amd64,linux/arm64 .
+</span></span></code></pre></td></tr></table></div></div><p><img class=mx-auto alt=remote-builder.jpg src=https://static.tangx.in/posts/2020/11/07/remote-builder.jpg></p><ol start=3><li>重新执行 <code>docker buildx</code> 命令。</li></ol><blockquote><p>注意: 这次我们使用了 <code>--tag</code> 和 <code>--push</code>， 在构建完成后，会推送到目标 <code>docker registry</code></p></blockquote><blockquote><p>注意2: 如果要执行 <code>--push</code> 成功， 只需要在 <strong>scheduler</strong> 主机上执行 <code>docker login</code> 即可， <strong>builder</strong> 上并无登录需求。</p></blockquote><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>docker buildx build --platform<span style=color:#000;font-weight:700>=</span>linux/amd64,linux/arm64 --tag tangx/centos:8 --push .
+</span></span></code></pre></td></tr></table></div></div><p><img class=mx-auto alt=remote-builder.jpg src=https://static.tangx.in/posts/2020/11/07/remote-build-push.jpg></p><p>注意红框位置， 这次直接结果 ， 多了 <code>exporting</code> 和 <code>merging</code></p><p>当任务执行换成之后，所构建的 <code>layer</code> 缓存会存在与 <strong><code>remote builder</code></strong> 上， 同时 <strong>scheduler</strong> 上会保存多架构的 manifest 信息。</p><p>输出结果
+<a href=https://hub.docker.com/r/tangx/centos/tags target=_blank rel=noopener>tangx/centos:8</a>
+可以在 dockerhub 上看到。</p><h2 id=0x02-配置优化>0x02 配置优化</h2><p>在国内使用 <code>docker buildx</code> 有一个最大的问题，就是网络。</p><p>由于 <code>driver</code> 是有运行在容器中， 参考官方文档
+<a href=https://github.com/docker/buildx/blob/master/README.md#buildx-create-options-contextendpoint target=_blank rel=noopener>buildx - github.com</a>
+， 很多本机的配置因此而不能生效。</p><p>诸如 <code>docker.io</code> 这样国外官方镜像， 拉取速度就非常不理想了。</p><h3 id=使用镜像加速优化>使用镜像加速优化</h3><ol><li>新建配置文件 <code>buildkitd.toml</code></li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-toml data-lang=toml><span style=display:flex><span><span style=color:#998;font-style:italic># buildkitd.toml</span>
+</span></span><span style=display:flex><span>[registry.<span style=color:#d14>&#34;docker.io&#34;</span>]
+</span></span><span style=display:flex><span>  mirrors = [<span style=color:#d14>&#34;wlzfs4t4.mirror.aliyuncs.com&#34;</span>]
+</span></span></code></pre></td></tr></table></div></div><p>并创建本地 <code>builder</code></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic>### create builder with mirror</span>
+</span></span><span style=display:flex><span>docker buildx create --use --name localbuilder --platform<span style=color:#000;font-weight:700>=</span>linux/amd64,linux/arm64 --config<span style=color:#000;font-weight:700>=</span>buildkitd.toml
+</span></span></code></pre></td></tr></table></div></div><ol start=2><li>新建 <code>Dockerfile</code></li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Dockerfile data-lang=Dockerfile><span style=display:flex><span><span style=color:#998;font-style:italic># Dockerfile</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span><span style=color:#000;font-weight:700>FROM</span><span style=color:#d14> centos:8</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span></code></pre></td></tr></table></div></div><p>并构建镜像</p><pre tabindex=0><code>### build a image
+docker buildx build --platform=linux/amd64,linux/arm64 .
+</code></pre><p><img class=mx-auto alt=builder-with-mirror.png src=https://static.tangx.in/posts/2020/11/07/builder-with-mirror-fs8.png></p><p>结果如上图所示， 耗时约 14s 左右</p><h3 id=使用默认参数不使用镜像优化>使用默认参数，不使用镜像优化</h3><ol><li>创建不使用镜像优化的 mirror， 并执行构建</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic>### without mirror</span>
+</span></span><span style=display:flex><span>docker buildx create --use --name localbuilder-no-mirror --platform<span style=color:#000;font-weight:700>=</span>linux/amd64,linux/arm64 
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>### build a image</span>
+</span></span><span style=display:flex><span>docker buildx build --platform<span style=color:#000;font-weight:700>=</span>linux/amd64,linux/arm64 .
+</span></span></code></pre></td></tr></table></div></div><p><img class=mx-auto alt=builder-without-mirror.png src=https://static.tangx.in/posts/2020/11/07/builder-without-mirror-fs8.png></p><p>从图片中可以看到， 在没有 mirror 的情况下， 出现了网络问题。</p><blockquote><p>这是因为 builder 运行在容器类， 并没有使用宿主机的 <code>/etc/docker/daemon.json</code> 配置 (<strong>假设宿主机已经配置了 mirror</strong>), 即相当于国内<strong>直连 <code>docker.io</code></strong> 拉去镜像。</p></blockquote><h2 id=0x03-dockerfile-案例>0x03 Dockerfile 案例</h2><p>如果你实现阅读了
+<a href=https://tangx.in/2020/11/06/dockerfiles-args-scope/ target=_blank rel=noopener>Dockerfile <code>ARG</code> 使用及作用域的分析</a>
+， 那么以下两个 <code>Dockerfile</code> 就很简单了。</p><h3 id=sync>sync</h3><p><strong>唯一作用: 对镜像重命名</strong>, 通过参数的方式实现了不通镜像的同步。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Dockerfile data-lang=Dockerfile><span style=display:flex><span><span style=color:#000;font-weight:700>ARG</span> IMAGE<span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span><span style=color:#000;font-weight:700>FROM</span><span style=color:#d14> ${IMAGE}</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span></code></pre></td></tr></table></div></div><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:teal>image</span><span style=color:#000;font-weight:700>=</span>tangx/alpine
+</span></span><span style=display:flex><span><span style=color:teal>tag</span><span style=color:#000;font-weight:700>=</span>3.12
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>docker buildx build --platform<span style=color:#000;font-weight:700>=</span>linux/amd64,linux/arm64 <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>  --tag <span style=color:#d14>${</span><span style=color:teal>image</span><span style=color:#d14>}</span>:<span style=color:#d14>${</span><span style=color:teal>tag</span><span style=color:#d14>}</span> <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>  --file Dockerfile
+</span></span><span style=display:flex><span>  --build-arg <span style=color:teal>IMAGE</span><span style=color:#000;font-weight:700>=</span>alpine:3.12 <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>  .
+</span></span></code></pre></td></tr></table></div></div><h3 id=combine>combine</h3><p>这里通过 <strong>多阶</strong> 构建中 <code>别名</code> 及 <code>${TARGETARCH}</code> 的方式， 将两个独立 tag 镜像合并成一个。
+例如
+<a href=https://hub.docker.com/r/minio/minio/tags target=_blank rel=noopener><code>minio/minio</code></a>
+的镜像。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Dockerfile data-lang=Dockerfile><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span><span style=color:#000;font-weight:700>FROM</span><span style=color:#d14> example.com/alpine:3.12-arm64 as arm64</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span><span style=color:#000;font-weight:700>FROM</span><span style=color:#d14> example.com/alpine:3.12-amd64 as amd64</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span><span style=color:#000;font-weight:700>FROM</span><span style=color:#d14> ${TARGETARCH}</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span></code></pre></td></tr></table></div></div><blockquote><p>注意，</p><blockquote><ol><li><code>TARGETARCH</code> 在 <code>FROM</code> 中使用不需要预先声明 <code>ARG TARGETARCH</code> 。</li><li><code>TARGETARCH</code> 在 body 中使用必须预先声明 <code>ARG TARGETARCH</code> 。</li></ol></blockquote></blockquote><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>docker buildx build --platform<span style=color:#000;font-weight:700>=</span>linux/amd64,linux/arm64 <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>  --tag example.in/alpine:3.12 <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>  --file Dockerfile
+</span></span><span style=display:flex><span>  --build-arg <span style=color:teal>IMAGE</span><span style=color:#000;font-weight:700>=</span>alpine:3.12 <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>  .
+</span></span></code></pre></td></tr></table></div></div><p><img class=mx-auto alt src=https://static.tangx.in/posts/2020/11/07/buildx-bake-hcl-demo-fs8.png></p></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2020/11/07/docker-buildx-examples/>https://tangx.in/posts/2020/11/07/docker-buildx-examples/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2020/11/06/dockerfiles-args-scope/>Dockerfile 中 ARG 的使用与其的作用域探究</a></li><li><a href=/posts/2019/04/24/docker-daemon-json/>dokcer daemon.json</a></li><li><a href=/posts/2019/03/26/how-to-build-a-image-with-dockerfile/>使用 Dockerfile 构建镜像注意事项</a></li><li><a href=/posts/2016/11/18/dockerfile-commonds-usage/>Dockerfile 基础命令</a></li><li><a href=/posts/2016/11/03/docker/>docker官方文档，中文汉化项目</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/docker target=_blank>docker</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2022/12/30/vscode-shfmt/ title="Linux 工具命令(02): shfmt 格式化 shell 脚本" target=_blank>Linux 工具命令(02): shfmt 格式化 shell 脚本</a></li><li><a href=https://tangx.in/posts/2022/12/29/dos2unix-and-unix2dos/ title="Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦" target=_blank>Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦</a></li><li><a href=https://tangx.in/posts/2022/12/28/kustz-1-1-introduce/ title="从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-image-compress/ title="Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?" target=_blank>Hugo 网站优化(5)： 穷的还剩 8 分钱， 还能从 CDN 里面优化成本?</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-cdn-http-referer/ title="Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站" target=_blank>Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-dns-shunting/ title="Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速" target=_blank>Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-cdn/ title="Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站" target=_blank>Hugo 网站优化(2)： 使用腾讯云 CDN 加速网站</a></li><li><a href=https://tangx.in/posts/2022/12/26/hugo-render-markdown-image-url/ title="Hugo 网站优化(1)： 渲染 Markdown 图片引用地址" target=_blank>Hugo 网站优化(1)： 渲染 Markdown 图片引用地址</a></li><li><a href=https://tangx.in/posts/2022/12/23/aliyun-sls-trace-configuration/ title="Golang 配置并接入 Aliyun SLS Trace 服务" target=_blank>Golang 配置并接入 Aliyun SLS Trace 服务</a></li><li><a href=https://tangx.in/posts/2022/12/21/docker-container-set-timezone/ title="在 Docker 容器中设置时区原来这么简单" target=_blank>在 Docker 容器中设置时区原来这么简单</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/tuiguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li><li><a href=https://www.aliyun.com/daily-act/ecs/activity_selection?userCode:bs5uqsfi title=【阿里云】服务器0元试用，首购低至0.9元/月起 target=_blank style=color:red><img src=/tuiguang/aliyun.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (5)</a></li><li><a href=https://tangx.in/categories/books/>books (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (1)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/container/>container</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubernetes/>kubernetes</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
