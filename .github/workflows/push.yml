@@ -32,5 +32,8 @@ jobs:
       - name: Build
         run: |
           make push
+        env:
+          CDN_ACCESS_ID: ${{ secrets.CDN_ACCESS_ID }}
+          CDN_ACCESS_KEY: ${{ secrets.CDN_ACCESS_KEY }}
 
 
