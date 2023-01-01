@@ -1,0 +1,36 @@
+name: hugo-book auto build 
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  schedule:
+    # CST with set-timezone
+    # 早上 8 点到 24 点， 每小时预热一次， 
+    # 每天消耗配额 16*100
+    - cron: "01 8/1 * * *"  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    steps:
+      # https://github.com/szenius/set-timezone
+      - uses: szenius/set-timezone@v1.0
+        with:
+          timezoneLinux: "Asia/Shanghai"
+      # go 环境
+      - name: Set up Go 1.17
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.19
+        id: go
+
+      # checkout 仓库
+      - uses: actions/checkout@v3
+
+      - name: Build
+        run: |
+          make push
+
+
