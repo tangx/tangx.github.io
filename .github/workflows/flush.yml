@@ -1,4 +1,4 @@
-name: hugo-book auto build 
+name: flush site 
 
 on:
   push:
@@ -30,6 +30,7 @@ jobs:
 
       - name: Build
         run: |
+          sleep 120
           make purge
           make push
         env:

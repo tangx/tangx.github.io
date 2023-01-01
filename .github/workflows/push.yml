@@ -1,4 +1,4 @@
-name: hugo-book auto build 
+name: push site
 
 on:
   push:
@@ -7,9 +7,8 @@ on:
       - main
   schedule:
     # CST with set-timezone
-    # 早上 8 点到 24 点， 每小时预热一次， 
-    # 每天消耗配额 16*100
-    - cron: "01 8/1 * * *"  
+    # 早上 8 点到 22 点， 每2时预热一次， 每次消耗配额 100 点
+    - cron: "01 8-22/2 * * *"  
 
 jobs:
   deploy:
