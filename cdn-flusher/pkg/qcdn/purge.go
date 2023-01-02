@@ -32,7 +32,7 @@ func PurgeSite(client *cdn.Client, urls []string) string {
 	}
 
 	// 输出json格式的字符串回包
-	fmt.Printf("%s", response.ToJsonString())
+	fmt.Println("刷新 URL:", response.ToJsonString())
 
 	taskid := response.Response.TaskId
 	return *taskid
@@ -51,7 +51,7 @@ func IsPurgeTaskDone(client *cdn.Client, id string) bool {
 		panic(err)
 	}
 	// 输出json格式的字符串回包
-	fmt.Printf("%s", response.ToJsonString())
+	fmt.Printf("查询刷新结果: %s\n", response.ToJsonString())
 
 	// response.Response.PurgeLogs
 	if len(response.Response.PurgeLogs) == 0 {

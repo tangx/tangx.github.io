@@ -24,5 +24,5 @@ func PushSite(client *cdn.Client, urls []string) {
 		panic(err)
 	}
 	// 输出json格式的字符串回包
-	fmt.Printf("%s", response.ToJsonString())
+	fmt.Println("预热 URL:", response.ToJsonString())
 }

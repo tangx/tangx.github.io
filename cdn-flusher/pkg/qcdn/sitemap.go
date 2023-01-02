@@ -3,7 +3,6 @@ package qcdn
 import (
 	"encoding/xml"
 	"os"
-	"strings"
 )
 
 type SiteMap struct {
@@ -30,17 +29,10 @@ func mustURLs(flag *Flag) []string {
 		panic(err)
 	}
 
-	// urls := make([]string, len(sitemap.URLs))
-	// for i, u := range sitemap.URLs {
-	// 	urls[i] = u.Loc
-	// }
-
-	urls := []string{}
-	for _, u := range sitemap.URLs {
-		if strings.Contains(u.Loc, "posts") {
-			continue
-		}
-		urls = append(urls, u.Loc)
+	urls := make([]string, len(sitemap.URLs))
+	for i, u := range sitemap.URLs {
+		urls[i] = u.Loc
 	}
+
 	return urls
 }

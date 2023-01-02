@@ -2,6 +2,7 @@ package qcdn
 
 import (
 	"context"
+	"strings"
 
 	cdn "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cdn/v20180606"
 )
@@ -26,6 +27,7 @@ func Do(flag *Flag) {
 	}
 
 	if flag.Purge {
+		urls := exclude(urls, "posts")
 		// 刷新 URL
 		_ = PurgeSite(client, urls)
 
@@ -49,4 +51,16 @@ func isPurgeOK(ctx context.Context, client *cdn.Client, purgeId string) bool {
 		}
 		return false
 	}
+}
+
+func exclude(urls []string, str string) []string {
+	result := []string{}
+	for _, u := range urls {
+		if strings.Contains(u, "posts") {
+			continue
+		}
+		result = append(result, u)
+	}
+
+	return result
 }
