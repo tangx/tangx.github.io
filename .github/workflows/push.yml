@@ -7,18 +7,23 @@ on:
       - main
   schedule:
     # CST with set-timezone
-    # 早上 8 点到 22 点， 每2时预热一次， 每次消耗配额 100 点
-    - cron: "01 8-22/2 * * *"  
+    # 早上 9 点到 12 点， 每1时预热一次， 每次消耗配额 100 点
+    - cron: "1 9-12/1 * * *"
 
+# https://github.com/actions/runner/issues/1423
+env:
+  TZ: "Asia/Shanghai"
+  # LOCAL_TIME: "12:00"
+  
 jobs:
   deploy:
     runs-on: ubuntu-22.04
     steps:
-      # https://github.com/szenius/set-timezone
-      - uses: szenius/set-timezone@v1.1
-        with:
-          timezoneLinux: "Asia/Shanghai"
-          timezoneMacos: "Asia/Shanghai"
+      # # https://github.com/szenius/set-timezone
+      # - uses: szenius/set-timezone@v1.1
+      #   with:
+      #     timezoneLinux: "Asia/Shanghai"
+      #     timezoneMacos: "Asia/Shanghai"
       # go 环境
       - name: Set up Go 1.17
         uses: actions/setup-go@v1
