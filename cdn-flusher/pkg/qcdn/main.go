@@ -11,6 +11,7 @@ var (
 	preset = []string{
 		"https://tangx.in/index.xml",
 		"https://tangx.in/sitemap.xml",
+		"https://tangx.in/css/style.css",
 	}
 )
 
