@@ -8,7 +8,7 @@ on:
   schedule:
     # CST with set-timezone
     # 早上 9 点到 12 点， 每1时预热一次， 每次消耗配额 100 点
-    - cron: "1 9-12/1 * * *"
+    - cron: "12,43 0/3 * * *"
 
 # https://github.com/actions/runner/issues/1423
 env:
@@ -33,6 +33,10 @@ jobs:
 
       # checkout 仓库
       - uses: actions/checkout@v3
+
+      - name: Show date time
+        run: |
+          date
 
       - name: Build
         run: |
