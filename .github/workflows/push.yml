@@ -8,7 +8,7 @@ on:
   schedule:
     # CST with set-timezone
     # 早上 9 点到 12 点， 每1时预热一次， 每次消耗配额 100 点
-    - cron: "12,43 0/3 * * *"
+    - cron: "1,31 0/1 * * *"
 
 # https://github.com/actions/runner/issues/1423
 env:
