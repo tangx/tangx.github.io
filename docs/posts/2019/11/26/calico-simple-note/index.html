@@ -46,7 +46,7 @@
 
 
 
-<img class="mx-auto" alt="" src="https://static.tangx.in%e8%bf%99%e9%87%8c%e6%9c%89%e5%9b%be-fs8.png" />
+<img class="mx-auto" alt="" src="https://static.tangx.in%e8%bf%99%e9%87%8c%e6%9c%89%e5%9b%be-fs8.png!v1" />
 ' src=https://m.tangx.in/images/2019-11-26/2019-11-26-calico-simple-note/![]%28%e8%bf%99%e9%87%8c%e6%9c%89%e5%9b%be.png%29></p></li><li><p><code>ipipMode=CrossSubnet</code>: BGP 和 Overlay 的混合模型。通过策略控制在指定的子网内使用 BGP 模型。出子网则使用 overlay。 <em>注意，具体设置还没看，可能是指定的使用 overlay，其他使用 bgp</em></p></li></ol><h2 id=calico-的缺陷>calico 的缺陷</h2><blockquote><p><a href=https://www.cnblogs.com/kevingrace/p/6864804.html target=_blank rel=noopener>https://www.cnblogs.com/kevingrace/p/6864804.html</a></p></blockquote><p>由于calico的通信机制是完全基于三层的，这种机制也带来了一些缺陷，例如：</p><ol><li>calico目前只支持TCP、UDP、ICMP、ICMPv6协议，如果使用其他四层协议（例如NetBIOS协议），建议使用weave、原生overlay等其他overlay网络实现。</li><li>基于三层实现通信，在二层上没有任何加密包装，因此只能在私有的可靠网络上使用。</li><li>流量隔离基于iptables实现，并且从etcd中获取需要生成的隔离规则，有一些性能上的隐患。（待商榷）</li></ol><h2 id=calico-与-flannel-等对比>calico 与 flannel 等对比</h2><h3 id=性能对比>性能对比</h3><blockquote><p><a href=https://blog.csdn.net/ganpuzhong42/article/details/77853131 target=_blank rel=noopener>https://blog.csdn.net/ganpuzhong42/article/details/77853131</a>
 整个过程中始终都是根据iptables规则进行路由转发，并没有进行封包，解包的过程，这和flannel比起来效率就会快多了。</p></blockquote><p>** calico 原理**
 <img class=mx-auto alt=2019-11-26/2019-11-26-calico-simple-note/20191126224011.png src=https://m.tangx.in/images/2019-11-26/2019-11-26-calico-simple-note/20191126224011.png></p><p>** flannel 原理**
