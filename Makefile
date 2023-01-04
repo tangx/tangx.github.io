@@ -1,11 +1,11 @@
 
 App_Flusher ?= ./cdn-flusher/
 
-run:
-	go run $(App_Flusher) 
+purge: download
+	./qcloud-cdn-flusher -c flusher.yml
 
-purge:
-	go run $(App_Flusher) --purge=true
+push: download
+	./qcloud-cdn-flusher -c flusher.yml
 
-push:
-	go run $(App_Flusher) --push=true
+download:
+	wget -c https://github.com/tangx/qcloud-cdn-flusher/releases/latest/download/qcloud-cdn-flusher-linux-amd64 -O ./qcloud-cdn-flusher && chmod +x ./qcloud-cdn-flusher

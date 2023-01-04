@@ -24,13 +24,7 @@ jobs:
       #   with:
       #     timezoneLinux: "Asia/Shanghai"
       #     timezoneMacos: "Asia/Shanghai"
-      # go 环境
-      - name: Set up Go 1.17
-        uses: actions/setup-go@v1
-        with:
-          go-version: 1.19
-        id: go
-
+      
       # checkout 仓库
       - uses: actions/checkout@v3
 
