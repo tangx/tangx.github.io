@@ -1,0 +1,241 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>Hugo 网站优化(8): 书房装上了小电视， 使用 hugo shortcodes 支持 bilibili 视频播放 | 老麦的书房</title><meta property="og:title" content="Hugo 网站优化(8): 书房装上了小电视， 使用 hugo shortcodes 支持 bilibili 视频播放 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2023-01-04T15:23:28+08:00"><meta property="article:modified_time" content="2023-01-04T15:23:28+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="Hugo 网站优化(8): 书房装上了小电视， 使用 hugo shortcodes 支持 bilibili 视频播放"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/2023/01/04/hugo-bilibili-support/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#hugo-短代码shortcodes-模版>hugo 短代码(shortcodes) 模版</a></li><li><a href=#bilibili-视频引用语法>Bilibili 视频引用语法</a><ul><li><a href=#支持两个参数>支持两个参数</a></li><li><a href=#支持两种语法>支持两种语法</a></li></ul></li><li><a href=#代码实现>代码实现</a></li><li><a href=#测试视频-跟着王老师作牛肉饼>测试视频: 跟着王老师作牛肉饼</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>Hugo 网站优化(8): 书房装上了小电视， 使用 hugo shortcodes 支持 bilibili 视频播放</h1></header><time datetime=2023-01-04T07:23:28Z class="post-meta meta-date dt-published">2023年1月4日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/blog target=_blank>blog</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=hugo-网站优化8-书房装上了小电视-使用-hugo-shortcodes-支持-bilibili-视频播放>Hugo 网站优化(8): 书房装上了小电视， 使用 hugo shortcodes 支持 bilibili 视频播放</h1><blockquote><p><strong>原文链接:</strong>
+<a href=https://tangx.in/posts/2023/01/04/hugo-bilibili-support/ target=_blank rel=noopener>https://tangx.in/posts/2023/01/04/hugo-bilibili-support/</a></p></blockquote><p>在学习的时候希望资料和笔记内容都能在一起。 这样 <strong>查阅、回顾</strong> 起来就更方便了。</p><h2 id=hugo-短代码shortcodes-模版>hugo 短代码(shortcodes) 模版</h2><p>在搜索的时候， 找到
+<a href=https://www.bilibili.com/read/cv15198621 title=利用hugo的短代码功能插入b站视频并且自适应 target=_blank rel=noopener>利用hugo的短代码功能插入b站视频并且自适应</a>
+了这篇文章， 实现了嵌入 Bilibili 的播放器。</p><p>进一步查询
+<a href=https://gohugo.io/content-management/shortcodes/ title="hugo - 短代码" target=_blank rel=noopener>hugo - 短代码</a>
+和
+<a href=https://gohugo.io/templates/shortcode-templates/ title="hugo - 自定义段代码模版" target=_blank rel=noopener>hugo - 自定义段代码模版</a>
+， 并参考原文。</p><p>终于实现了， 在书房看电视的方案。</p><h2 id=bilibili-视频引用语法>Bilibili 视频引用语法</h2><p>在书房中看电视的语法规则。</p><h3 id=支持两个参数>支持两个参数</h3><ol><li><strong>视频ID</strong> 或 <strong>视频地址</strong></li><li>合集视频中的 <strong>第N集</strong>， 默认值为 1。</li></ol><h3 id=支持两种语法>支持两种语法</h3><ol><li>具名语法， 根据参数名传递。<ul><li><code>src</code>: 视频ID 或 地址</li><li><code>page</code>: 分集</li></ul></li></ol><p><img class=mx-auto alt=named-grammar src=https://static.tangx.in/posts/2023/01/04/hugo-bilibili-support/named-bilibili-shortcodes-grammar-fs8.png></p><blockquote><p>建议使用 <strong>具名语法</strong>， 这样在 markdown 中跳转更方便。</p></blockquote><ol start=2><li>匿名语法， 根据参数位置传递。<ul><li>参数1: 视频ID 或 地址</li><li>参数2: 分集</li></ul></li></ol><p><img class=mx-auto alt=unnamed-grammar src=https://static.tangx.in/posts/2023/01/04/hugo-bilibili-support/unnamed-bilibili-shortcodes-grammar-fs8.png></p><blockquote><p>仅仅是为了保留语法与兼容性考虑。</p></blockquote><h2 id=代码实现>代码实现</h2><ol><li><p>在 <strong>主题</strong> 代码中， 添加 <code>layouts/shortcodes/&lt;name>.html</code> 。 这里的 <strong>name</strong> 就是以后 <code>Markdown</code> 中的引用名字。 例如， <code>bilibili.html</code></p></li><li><p>复制代码</p></li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">56
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">57
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">58
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">59
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">60
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">61
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">62
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">63
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">64
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">65
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">66
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">67
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 语法规则
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>    1. 匿名模式
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>        &lt;bilibili BV1Wg411t7EE 233&gt;
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>    2. 具名模式
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>        &lt;bilibili 
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>            src=&#34;https://www.bilibili.com/video/BV1RK41117eY/&#34; 
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>            page=&#34;332&#34;
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>        &gt;
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>--&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 获取第一个参数 作为视频地址 --&gt;</span>
+</span></span><span style=display:flex><span>{{- $dest := ( .Get 0) -}}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 如果是具名模式， 获取 src --&gt;</span>
+</span></span><span style=display:flex><span>{{ if .IsNamedParams }}
+</span></span><span style=display:flex><span>    {{ $dest = (.Get &#34;src&#34;) }}
+</span></span><span style=display:flex><span>{{ end }}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 判断是否为 全路径， 是则获取视频ID --&gt;</span>
+</span></span><span style=display:flex><span>{{ if (hasPrefix $dest &#34;http&#34; )}}
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- https://www.bilibili.com/video/BV1RK41117eY/ --&gt;</span>
+</span></span><span style=display:flex><span>    {{ $dest = (strings.TrimPrefix &#34;http&#34; $dest ) }}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 解析 URL --&gt;</span>
+</span></span><span style=display:flex><span>    {{ $url := urls.Parse $dest }}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- /video/BV1RK41117eY/ --&gt;</span>
+</span></span><span style=display:flex><span>    {{ $dest = $url.Path }}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- BV1RK41117eY --&gt;</span>
+</span></span><span style=display:flex><span>    {{ $dest = (path.BaseName $dest) }}
+</span></span><span style=display:flex><span>{{ end }}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 获取专辑中的视频 ID --&gt;</span>
+</span></span><span style=display:flex><span>{{- $page := (.Get 1) -}}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>{{ if .IsNamedParams }}
+</span></span><span style=display:flex><span>    {{ $page = (.Get &#34;page&#34;) }}
+</span></span><span style=display:flex><span>{{ end }}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 默认值为 1 --&gt;</span>
+</span></span><span style=display:flex><span>{{ if (not $page) }}
+</span></span><span style=display:flex><span>    {{ $page = 1 }}
+</span></span><span style=display:flex><span>{{ end }}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 嵌入 bilibili 播放框 --&gt;</span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>div</span> <span style=color:teal>style</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;margin: 10px 0 20px 0;&#34;</span>&gt;
+</span></span><span style=display:flex><span>  <span style=color:#998;font-style:italic>&lt;!-- &lt;h3&gt;视频ID: {{ $dest }} - {{ $page }} &lt;/h3&gt; --&gt;</span>
+</span></span><span style=display:flex><span>  &lt;<span style=color:navy>div</span> <span style=color:teal>style</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;margin: 5px 0;&#34;</span>&gt;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    &lt;<span style=color:navy>span</span>&gt;本视频一切权利归 &lt;<span style=color:navy>strong</span>&gt;bilibili&lt;/<span style=color:navy>strong</span>&gt; 及 &lt;<span style=color:navy>strong</span>&gt;原作者所有&lt;/<span style=color:navy>strong</span>&gt;&lt;/<span style=color:navy>span</span>&gt;
+</span></span><span style=display:flex><span>    &lt;<span style=color:navy>span</span>&gt;如果觉得好， 请点击跳转到 &lt;<span style=color:navy>strong</span>&gt;bilibili&lt;/<span style=color:navy>strong</span>&gt;给予支持&lt;/<span style=color:navy>span</span>&gt;
+</span></span><span style=display:flex><span>    &lt;<span style=color:navy>a</span> <span style=color:teal>href</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;https://www.bilibili.com/video/{{ $dest }}/&#34;</span>&gt;{{ $dest }}&lt;/<span style=color:navy>a</span>&gt;
+</span></span><span style=display:flex><span>  &lt;/<span style=color:navy>div</span>&gt;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  &lt;<span style=color:navy>div</span> <span style=color:teal>style</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;position:relative; padding-bottom:75%; width:100%; height:0&#34;</span>&gt;
+</span></span><span style=display:flex><span>    &lt;<span style=color:navy>iframe</span> <span style=color:teal>src</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;//player.bilibili.com/player.html?bvid={{ $dest }}&amp;page={{ $page }}&#34;</span>       
+</span></span><span style=display:flex><span>        <span style=color:teal>scrolling</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;no&#34;</span> <span style=color:teal>border</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;0&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:teal>frameborder</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;no&#34;</span> 
+</span></span><span style=display:flex><span>        <span style=color:teal>framespacing</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;0&#34;</span> 
+</span></span><span style=display:flex><span>        <span style=color:teal>allowfullscreen</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;true&#34;</span> 
+</span></span><span style=display:flex><span>        <span style=color:teal>style</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;position:absolute; height: 100%; width: 100%;&#34;</span>&gt;
+</span></span><span style=display:flex><span>    &lt;/<span style=color:navy>iframe</span>&gt;
+</span></span><span style=display:flex><span>  &lt;/<span style=color:navy>div</span>&gt;
+</span></span><span style=display:flex><span>&lt;/<span style=color:navy>div</span>&gt;
+</span></span></code></pre></td></tr></table></div></div><p>这里面使用了几个内置函数</p><ol><li>hugo 解析字符串 URL:
+<a href=https://gohugo.io/functions/urls.parse/ target=_blank rel=noopener>https://gohugo.io/functions/urls.parse/</a></li><li>hugo 获取 BaseName:
+<a href=https://gohugo.io/functions/path.basename/ target=_blank rel=noopener>https://gohugo.io/functions/path.basename/</a></li></ol><h2 id=测试视频-跟着王老师作牛肉饼>测试视频: 跟着王老师作牛肉饼</h2><div style="margin:10px 0 20px"><div style="margin:5px 0"><span>本视频一切权利归 <strong>bilibili</strong> 及 <strong>原作者所有</strong></span>
+<span>如果觉得好， 请点击跳转到 <strong>bilibili</strong>给予支持</span>
+<a href=https://www.bilibili.com/video/BV1B44y1h7wh/>BV1B44y1h7wh</a></div><div style=position:relative;padding-bottom:75%;width:100%;height:0><iframe src="//player.bilibili.com/player.html?bvid=BV1B44y1h7wh&page=1" scrolling=no border=0 frameborder=no framespacing=0 allowfullscreen style=position:absolute;height:100%;width:100%></iframe></div></div><p>还是很安逸了</p></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2023/01/04/hugo-bilibili-support/>https://tangx.in/posts/2023/01/04/hugo-bilibili-support/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2023/01/02/hugo-use-upyun-cdn-for-static-site/>Hugo 网站优化(7): 把我图床搬到又拍云 (upyun) 了， 做图床真的很好用</a></li><li><a href=/posts/2023/01/01/no-referrer-when-downgrade-image/no-referrer-when-downgrade-image/>Hugo 网站优化(6): 博客图片不能显示全怪 Adblock。 Referrer Policy: no-referrer-when-downgrade</a></li><li><a href=/posts/2022/12/27/hugo-image-compress/>Hugo 网站优化(5)： 穷的还剩 8 分钱， 还是再压缩一下图片节约流量吧</a></li><li><a href=/posts/2022/12/27/hugo-cdn-http-referer/>Hugo 网站优化(4)： 为了防盗链， 不得不部署了两个网站</a></li><li><a href=/posts/2022/12/27/hugo-dns-shunting/>Hugo 网站优化(3)： 我用 DnsPod 给网站实现了全球加速</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/hugo target=_blank>hugo</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2023/01/04/hugo-qcloud-cdn-purge-andpush/ title="Hugo 网站优化(9): 预热网站， 使用 Github Action 主动刷新 DNS 缓存" target=_blank>Hugo 网站优化(9): 预热网站， 使用 Github Action 主动刷新 DNS 缓存</a></li><li><a href=https://tangx.in/posts/2023/01/04/hugo-bilibili-support/ title="Hugo 网站优化(8): 书房装上了小电视， 使用 hugo shortcodes 支持 bilibili 视频播放" target=_blank>Hugo 网站优化(8): 书房装上了小电视， 使用 hugo shortcodes 支持 bilibili 视频播放</a></li><li><a href=https://tangx.in/posts/2023/01/03/kubernetes-upgrade-strategy-and-qos/ title="Kubernetes 不同的升级策略是如何影响服务质量 QoS 的" target=_blank>Kubernetes 不同的升级策略是如何影响服务质量 QoS 的</a></li><li><a href=https://tangx.in/posts/2023/01/02/pgsql-dump-and-restore/ title="Pgsql数据库: psql 命令非交互式备份与恢复" target=_blank>Pgsql数据库: psql 命令非交互式备份与恢复</a></li><li><a href=https://tangx.in/posts/2023/01/02/hugo-use-upyun-cdn-for-static-site/ title="Hugo 网站优化(7): 把我图床搬到又拍云 (upyun) 了， 做图床真的很好用" target=_blank>Hugo 网站优化(7): 把我图床搬到又拍云 (upyun) 了， 做图床真的很好用</a></li><li><a href=https://tangx.in/posts/2023/01/01/no-referrer-when-downgrade-image/no-referrer-when-downgrade-image/ title="Hugo 网站优化(6): 博客图片不能显示全怪 Adblock。 Referrer Policy: no-referrer-when-downgrade" target=_blank>Hugo 网站优化(6): 博客图片不能显示全怪 Adblock。 Referrer Policy: no-referrer-when-downgrade</a></li><li><a href=https://tangx.in/posts/2022/12/30/vscode-shfmt/ title="Linux 工具命令(02): shfmt 格式化 shell 脚本， vscode 神插件" target=_blank>Linux 工具命令(02): shfmt 格式化 shell 脚本， vscode 神插件</a></li><li><a href=https://tangx.in/posts/2022/12/29/dos2unix-and-unix2dos/ title="Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦" target=_blank>Linux 基础命令(01): dos2unix 搞定 Linux 和 Windows 换行符的噩梦</a></li><li><a href=https://tangx.in/posts/2022/12/28/kustz-1-1-introduce/ title="从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具（1） - kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/2022/12/27/hugo-image-compress/ title="Hugo 网站优化(5)： 穷的还剩 8 分钱， 还是再压缩一下图片节约流量吧" target=_blank>Hugo 网站优化(5)： 穷的还剩 8 分钱， 还是再压缩一下图片节约流量吧</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (9)</a></li><li><a href=https://tangx.in/categories/books/>books (1)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (3)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li><li><a href=https://tangx.in/categories/%E4%BA%91%E5%8E%9F%E7%94%9F/>云原生 (1)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/github/>github</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubernetes/>kubernetes</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/pgsql/>pgsql</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qcloud/>qcloud</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/qos/>qos</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
