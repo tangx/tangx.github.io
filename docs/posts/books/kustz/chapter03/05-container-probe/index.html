@@ -1,0 +1,231 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>从零开始写 k8s 发布工具 - 3.5. 为 Container 添加健康检查方法 | 老麦的书房</title><meta property="og:title" content="从零开始写 k8s 发布工具 - 3.5. 为 Container 添加健康检查方法 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2023-01-05T13:28:03+08:00"><meta property="article:modified_time" content="2023-01-05T13:28:03+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="从零开始写 k8s 发布工具 - 3.5. 为 Container 添加健康检查方法"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/books/kustz/chapter03/05-container-probe/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#kubernetes-的健康检查>Kubernetes 的健康检查</a></li><li><a href=#kustzyml-配置><code>kustz.yml</code> 配置</a></li><li><a href=#编码>编码</a><ul><li><a href=#数据结构定义>数据结构定义</a></li><li><a href=#处理-action-生成-handler>处理 Action 生成 Handler</a></li><li><a href=#为-container-添加健康检查>为 Container 添加健康检查</a></li></ul></li><li><a href=#测试>测试</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>从零开始写 k8s 发布工具 - 3.5. 为 Container 添加健康检查方法</h1></header><time datetime=2023-01-05T05:28:03Z class="post-meta meta-date dt-published">2023年1月5日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/kubernetes target=_blank>kubernetes</a>
+<a href=/categories/books target=_blank>books</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=35-为-container-添加健康检查方法>3.5. 为 Container 添加健康检查方法</h1><p><img class=mx-auto alt=logo src=https://static.tangx.in/assets/topic/kustz.jpg></p><p>kustz 终于到了准生产的地步了。 今天的健康检查接口， 就为我们解决这个问题。</p><p>我们要知道， 确定一个应用能不能对外提供服务之前， 需要进行一个 <strong>可用性</strong> 检测。 而这个检测通常被我们称为 <strong>健康检查</strong>。</p><h2 id=kubernetes-的健康检查>Kubernetes 的健康检查</h2><p>在 Kubernetes 中， 为我们提供了 <strong>主要</strong> 的 <strong>3类状态</strong> 的健康检查。</p><ol><li>startup: 等待探针。 如果执行成功， 则再执行 liveness, readienss。 如果执行失败， 则遵循 <code>restartPolicy</code> 规则。</li><li>liveness: 存活探针， 如果失败， 服务将被重新发布(redeploy)。</li><li>readiness: 就绪探针， 如果失败， 服务不会加入到 <strong>service backend endpoints</strong> 中对外提供服务。</li></ol><blockquote><p><a href=https://kubebyexample.com/learning-paths/application-development-kubernetes/lesson-4-customize-deployments-application-2 target=_blank rel=noopener>https://kubebyexample.com/learning-paths/application-development-kubernetes/lesson-4-customize-deployments-application-2</a></p></blockquote><p><img class=mx-auto alt=probes src=https://static.tangx.in/posts/books/kustz/chapter03/container-probes-fs8.png!v1></p><p>此外， Kubernetes 支持 <strong>4种类型</strong> 的检查方式</p><ol><li>httpGet: 检查 GET 接口返回值。</li><li>tcp: tcp 端口是否打开。</li><li>exec: 命令执行是否成功。</li><li>grpc: grpc 端口是否打开。</li></ol><h2 id=kustzyml-配置><code>kustz.yml</code> 配置</h2><p>一如既往， 我们需要抽象一个简单明了的方法定义健康检查方法。 剩下的就交给 kustz 处理。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#998;font-style:italic># kustz.yml</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>service</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>probes</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>liveness</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>action</span>:<span style=color:#bbb> </span>http://:8080/healthy<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>headers</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>token</span>:<span style=color:#bbb> </span><span style=color:#d14>&#34;token123&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>initialDelaySeconds</span>:<span style=color:#bbb> </span><span style=color:#099>30</span><span style=color:#bbb> 
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>readiness</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>action</span>:<span style=color:#bbb> </span>tcp://0.0.0.0:8080<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>startup</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>action</span>:<span style=color:#bbb> </span>cat /tmp/healthy<span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><p>从配置中可以看到， 通过 action 我们提供了其中三种检查方法 <code>httpGet, tcp, exec</code>。</p><blockquote><p>grpc 现在还属于 1.24 还 beta 状态。 对于 grpc 我也不熟， 所以就不讨论了。</p></blockquote><h2 id=编码>编码</h2><p>这节不难</p><h3 id=数据结构定义>数据结构定义</h3><p>对应的在 <code>/pkg/kustz/kustz.go</code> 中添加如下结构。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> Service <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	Probes    ContainerProbes   <span style=color:#d14>`json:&#34;probes,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> ContainerProbe <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	ProbeHandler                  <span style=color:#d14>`json:&#34;,inline&#34;`</span>
+</span></span><span style=display:flex><span>	InitialDelaySeconds           <span style=color:#458;font-weight:700>int32</span>  <span style=color:#d14>`json:&#34;initialDelaySeconds,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>	TimeoutSeconds                <span style=color:#458;font-weight:700>int32</span>  <span style=color:#d14>`json:&#34;timeoutSeconds,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>	PeriodSeconds                 <span style=color:#458;font-weight:700>int32</span>  <span style=color:#d14>`json:&#34;periodSeconds,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>	SuccessThreshold              <span style=color:#458;font-weight:700>int32</span>  <span style=color:#d14>`json:&#34;successThreshold,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>	FailureThreshold              <span style=color:#458;font-weight:700>int32</span>  <span style=color:#d14>`json:&#34;failureThreshold,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>	TerminationGracePeriodSeconds <span style=color:#000;font-weight:700>*</span><span style=color:#458;font-weight:700>int64</span> <span style=color:#d14>`json:&#34;terminationGracePeriodSeconds,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>其中 <code>ContainerProbe</code> 基本上就是从 <code>corev1.Probe</code> 中直接复制过来的， 但又对 <code>ProbeHandler</code> 进行了一些本地化处理。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> ProbeHandler <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	Action  <span style=color:#458;font-weight:700>string</span>            <span style=color:#d14>`json:&#34;action,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>	Headers <span style=color:#000;font-weight:700>map</span>[<span style=color:#458;font-weight:700>string</span>]<span style=color:#458;font-weight:700>string</span> <span style=color:#d14>`json:&#34;headers,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h3 id=处理-action-生成-handler>处理 Action 生成 Handler</h3><p>对于 <code>Action</code> 的值， 我们需要进行类型处理， 并返回相应的 <code>corev1.ProbeHandler</code>。</p><p>在 <code>/pkg/tokube/container_probe.go</code> 中, 定义函数 <code>ProbeHandler</code> 处理 <code>action</code> 和 <code>headers</code> 的值并返回结果。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#998;font-style:italic>// ProbeHandler action
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>//
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// http(s)://:8080/healthy
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// tcp://:8080
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// cat /tmp/healthy
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>ProbeHandler</span>(action <span style=color:#458;font-weight:700>string</span>, headers <span style=color:#000;font-weight:700>map</span>[<span style=color:#458;font-weight:700>string</span>]<span style=color:#458;font-weight:700>string</span>) corev1.ProbeHandler {
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>if</span> strings.<span style=color:#900;font-weight:700>HasPrefix</span>(action, <span style=color:#d14>&#34;tcp://&#34;</span>) {
+</span></span><span style=display:flex><span>		<span style=color:#000;font-weight:700>return</span> <span style=color:#900;font-weight:700>toTCPProbeHandler</span>(action)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>if</span> strings.<span style=color:#900;font-weight:700>HasPrefix</span>(action, <span style=color:#d14>&#34;http://&#34;</span>) <span style=color:#000;font-weight:700>||</span> strings.<span style=color:#900;font-weight:700>HasSuffix</span>(action, <span style=color:#d14>&#34;https://&#34;</span>) {
+</span></span><span style=display:flex><span>		<span style=color:#000;font-weight:700>return</span> <span style=color:#900;font-weight:700>toHTTPProbeHandler</span>(action, headers)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> <span style=color:#900;font-weight:700>toExecProbeHandler</span>(action)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>可以看到， 通过判断 <code>action</code> 的前缀字符串的值， 确认了健康检查的方法。 而只有 <code>httpGet</code> 方法接受了 headers 参数。</p><p>在 <code>toTCPProbeHandler()</code> 和 <code>toHTTPProbeHandler()</code> 中， 使用 <code>url.Parse()</code> 方法， 很简单的提取了所有字段数据。</p><p>在 <code>toExecProbeHandler</code> 中， 直接使用 <code>strings.Split()</code> 方法分割。</p><h3 id=为-container-添加健康检查>为 Container 添加健康检查</h3><p>在 <code>/pkg/kustz/k_container.go</code> 中， 为 <code>ContainerProbe</code> 为添加方法 <code>kubeProbe</code> 创建健康检查， 这时添加所有附加参数。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#998;font-style:italic>// kubeProbe return Kube Probe without handler
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span> (cp <span style=color:#000;font-weight:700>*</span>ContainerProbe) <span style=color:#900;font-weight:700>kubeProbe</span>() <span style=color:#000;font-weight:700>*</span>corev1.Probe {
+</span></span><span style=display:flex><span>	handler <span style=color:#000;font-weight:700>:=</span> tokube.<span style=color:#900;font-weight:700>ProbeHandler</span>(cp.Action, cp.Headers)
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>&amp;</span>corev1.Probe{
+</span></span><span style=display:flex><span>		ProbeHandler:                  handler,
+</span></span><span style=display:flex><span>		InitialDelaySeconds:           cp.InitialDelaySeconds,
+</span></span><span style=display:flex><span>		TimeoutSeconds:                cp.TimeoutSeconds,
+</span></span><span style=display:flex><span>		PeriodSeconds:                 cp.PeriodSeconds,
+</span></span><span style=display:flex><span>		SuccessThreshold:              cp.SuccessThreshold,
+</span></span><span style=display:flex><span>		FailureThreshold:              cp.FailureThreshold,
+</span></span><span style=display:flex><span>		TerminationGracePeriodSeconds: cp.TerminationGracePeriodSeconds,
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>为 <code>ContainerProbes</code> 添加 <code>kubeProbe</code> 方法， 解决 <code>ContainerProbe</code> 的为 nil 的问题。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (cps ContainerProbes) <span style=color:#900;font-weight:700>kubeProbe</span>(cp <span style=color:#000;font-weight:700>*</span>ContainerProbe) <span style=color:#000;font-weight:700>*</span>corev1.Probe {
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>if</span> cp <span style=color:#000;font-weight:700>==</span> <span style=color:#000;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>		<span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>nil</span>
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> cp.<span style=color:#900;font-weight:700>kubeProbe</span>()
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h2 id=测试>测试</h2><p>执行命令， 检查结果</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ make test.deployment
+</span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/books/kustz/chapter03/05-container-probe/>https://tangx.in/posts/books/kustz/chapter03/05-container-probe/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/books/kustz/chapter01/01-introduce/>从零开始写 k8s 发布工具 - 1.0. kustz 介绍和设计思想</a></li><li><a href=/posts/books/kustz/chapter02/01-sample-deployment/>从零开始写 k8s 发布工具 - 2.1. 模仿 kubectl create 创建 Deployment 样例</a></li><li><a href=/posts/books/kustz/chapter02/02-define-strings-to-service/>从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service</a></li><li><a href=/posts/books/kustz/chapter02/03-parse-url-to-ingress/>从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress</a></li><li><a href=/posts/books/kustz/chapter02/04-kustomize/>从零开始写 k8s 发布工具 - 2.4. 使用 kustomize 管理所有 k8s 文件</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/kustz target=_blank>kustz</a></li><li><a href=/tags/golang target=_blank>golang</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/books/kustz/chapter01/01-introduce/ title="从零开始写 k8s 发布工具 - 1.0. kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具 - 1.0. kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/01-sample-deployment/ title="从零开始写 k8s 发布工具 - 2.1. 模仿 kubectl create 创建 Deployment 样例" target=_blank>从零开始写 k8s 发布工具 - 2.1. 模仿 kubectl create 创建 Deployment 样例</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/02-define-strings-to-service/ title="从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service" target=_blank>从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/03-parse-url-to-ingress/ title="从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress" target=_blank>从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/04-kustomize/ title="从零开始写 k8s 发布工具 - 2.4. 使用 kustomize 管理所有 k8s 文件" target=_blank>从零开始写 k8s 发布工具 - 2.4. 使用 kustomize 管理所有 k8s 文件</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/05-kustz-cli/ title="从零开始写 k8s 发布工具 - 2.5. 使用 cobra 实现 kustz 命令" target=_blank>从零开始写 k8s 发布工具 - 2.5. 使用 cobra 实现 kustz 命令</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/01-container-env-var/ title="从零开始写 k8s 发布工具 - 3.1. 为 Container 添加环境变量" target=_blank>从零开始写 k8s 发布工具 - 3.1. 为 Container 添加环境变量</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/02-configmap-secret-generator/ title="从零开始写 k8s 发布工具 - 3.2. ConfigMap 和 Secret 的生成器" target=_blank>从零开始写 k8s 发布工具 - 3.2. ConfigMap 和 Secret 的生成器</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/03-container-env-from/ title="从零开始写 k8s 发布工具 - 3.3. 注入 ConfigMap 和 Secrets 到容器环境变量" target=_blank>从零开始写 k8s 发布工具 - 3.3. 注入 ConfigMap 和 Secrets 到容器环境变量</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/04-container-resources/ title="从零开始写 k8s 发布工具 - 3.4. 用字符串定义容器申请资源上下限" target=_blank>从零开始写 k8s 发布工具 - 3.4. 用字符串定义容器申请资源上下限</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (9)</a></li><li><a href=https://tangx.in/categories/books/>books (13)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (3)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/kubernetes/>kubernetes (15)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/github/>github</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kustomize/>kustomize</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/pgsql/>pgsql</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qcloud/>qcloud</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/qos/>qos</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

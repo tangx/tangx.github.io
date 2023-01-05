@@ -1,0 +1,368 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service | 老麦的书房</title><meta property="og:title" content="从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2023-01-05T13:28:03+08:00"><meta property="article:modified_time" content="2023-01-05T13:28:03+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/books/kustz/chapter02/02-define-strings-to-service/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#service-api-中的-port>Service API 中的 Port</a></li><li><a href=#kubez-中的-service-规则>kubez 中的 service 规则</a></li><li><a href=#代码实现>代码实现</a><ul><li><a href=#先说一个变更>先说一个变更</a></li><li><a href=#生成-service-api>生成 Service API</a></li><li><a href=#portstring>PortString</a></li></ul></li><li><a href=#测试>测试</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service</h1></header><time datetime=2023-01-05T05:28:03Z class="post-meta meta-date dt-published">2023年1月5日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/kubernetes target=_blank>kubernetes</a>
+<a href=/categories/books target=_blank>books</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=22-定义字符串创建-service>2.2. 定义字符串创建 Service</h1><p><img class=mx-auto alt=logo src=https://static.tangx.in/assets/topic/kustz.jpg></p><blockquote><p>大家好， 我是老麦， 一个小运维。
+今天我们为 kustz 增加 service 解析功能。</p></blockquote><p>通过 <code>kubectl create service</code> 命令可以看到， service 的模式还是挺多的。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ kubectl create service -h
+</span></span><span style=display:flex><span>Create a service using a specified subcommand.
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>Aliases:
+</span></span><span style=display:flex><span>service, svc
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>Available Commands:
+</span></span><span style=display:flex><span>  clusterip      Create a ClusterIP service
+</span></span><span style=display:flex><span>  externalname   Create an ExternalName service
+</span></span><span style=display:flex><span>  loadbalancer   Create a LoadBalancer service
+</span></span><span style=display:flex><span>  nodeport       Create a NodePort service
+</span></span></code></pre></td></tr></table></div></div><p>除了以上列出来的四种之外， 还用一种 <code>Headless Service</code>(
+<a href=https://kubernetes.io/docs/concepts/services-networking/service/#headless-services target=_blank rel=noopener>https://kubernetes.io/docs/concepts/services-networking/service/#headless-services</a>
+)。</p><p><code>Headless Service</code> 是当 <strong>类型</strong> 为 ClusterIP，且 IP 值为 <code>None</code>。 所以是 <code>Cluster IP</code> 的一种特殊情况。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># 创建一个新的 ClusterIP service</span>
+</span></span><span style=display:flex><span>$ kubectl create service clusterip my-cs --tcp<span style=color:#000;font-weight:700>=</span>5678:8080
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 创建一个新的 ClusterIP service (headless 模式)</span>
+</span></span><span style=display:flex><span>$ kubectl create service clusterip my-cs --clusterip<span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;None&#34;</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=service-api-中的-port>Service API 中的 Port</h2><p>如果你之前留意过 Service API， 你就应该会发现 API 中带有 port 的字段就有 3 个。 弄清楚他们分别对应什么<strong>这点很重要</strong></p><p>先来看看一个 <code>NodePort</code> 的 API。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#998;font-style:italic># $ kubectl create service nodeport my-cs --tcp=80:8080 --dry-run=client -o yaml</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>apiVersion</span>:<span style=color:#bbb> </span>v1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>kind</span>:<span style=color:#bbb> </span>Service<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:#998;font-style:italic># ... 省略</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>spec</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>ports</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:navy>name</span>:<span style=color:#bbb> </span><span style=color:#099>80-8080</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>nodePort</span>:<span style=color:#bbb> </span><span style=color:#099>18080</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>port</span>:<span style=color:#bbb> </span><span style=color:#099>80</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>protocol</span>:<span style=color:#bbb> </span>TCP<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>targetPort</span>:<span style=color:#bbb> </span><span style=color:#099>8080</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>selector</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>app</span>:<span style=color:#bbb> </span>my-cs<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>type</span>:<span style=color:#bbb> </span>NodePort<span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><p>对于 <code>nodePort, port, targetPort</code> 这三个名词如果还不能直接回答的话， 认真记住下面这张图。</p><p><img class=mx-auto alt=nodeport src=https://static.tangx.in/posts/books/kustz/chapter02/nodeport-port-targetport-fs8.png!v1></p><ol><li>集群外部用户通过 <code>nodePort -> port -> targetPort</code>。</li><li>集群内部用户通过 <code>port -> targetPort</code>。</li></ol><h2 id=kubez-中的-service-规则>kubez 中的 service 规则</h2><p>在看随后的规则的时候， 再回头看看之前的 API， 能否找到几个关键要素。</p><ol><li>端口映射规则。</li><li>Service 类型。</li><li>端口协议。 通常不太关注。</li><li>明确且有意义区分符号。 这是一个隐藏点。</li></ol><ul><li>clusterip: <code>80:8080</code>。 无任何特殊符号。</li><li>headless: <code>#80:8080</code>。 <strong>注释符号 #</strong> 顾名思义， 就是把某些 Head <strong>隐藏</strong> 之后成为 Headless。</li><li>nodeport: <code>!18080:80:800</code> / <code>!80:8080</code>。 <strong>叹号 !</strong> 表示重要， 因为我们要暴露端口到外部， 这是一个风险点。 NodePort 有两个规则， 是因为如果 <strong>不指定</strong> 端口就使用 <strong>随机</strong> 端口。</li><li>externalname: <code>@example.com</code>。 <strong>AT @</strong>， 指定或指向某个地方。</li><li>loadbalancer: <code>%80:8080</code>。 <strong>分号 %</strong>， 看起来就像个天平， 一人一半， 分流。</li></ul><p>上面的规则中， 并没有提到 <strong>端口协议</strong>。</p><ul><li>含有协议的规则 <code>tcp://80:8080</code> / <code>udp://!18080:80:8080</code>。 就用协议地址的写法， 使用 <code>://</code> 分割 <strong>协议</strong> 和 <strong>转发规则</strong>。</li></ul><p>之所以协议拿出来单独说， 其原因是协议通常不太关注， 默认都用 TCP。因此在 kustsz 中也作为可省略字段。</p><blockquote><p>以上规则都是个人习惯。 仅供参考。</p></blockquote><h2 id=代码实现>代码实现</h2><p>凑 API 还是很简单的， 不过需要注意当出现<strong>多个规则</strong>的时候<strong>怎样</strong>确定<strong>最终</strong>的 <code>Type</code>。</p><p>例如规则中存在 <code>ClusterIP, NodePort 和 ExternalName</code>， 那在最终呈现的时候， Type 值是顺序第一？逆序第一？还是冲突报错？ 一切看自己需求和习惯。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:navy>ports</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:#d14>&#34;8099:80&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:#d14>&#34;!28080:80&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:#d14>&#34;@example.com&#34;</span><span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><p>本章代码就先只实现两个， ClusterIP 和 NodePort。 完整配置查看 <code>/pkg/kustz/kustz.yml</code></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#998;font-style:italic># ... 省略</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>service</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#998;font-style:italic># ... 省略</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>ports</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>- <span style=color:#d14>&#34;80:8080&#34;</span><span style=color:#bbb> </span><span style=color:#998;font-style:italic># cluster ip</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>- <span style=color:#d14>&#34;udp://!9998:8889&#34;</span><span style=color:#bbb> </span><span style=color:#998;font-style:italic># 随机 nodeport</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#998;font-style:italic># - &#34;!20080:80:8080&#34; # 指定 nodeport</span><span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><h3 id=先说一个变更>先说一个变更</h3><p>在 <code>/pkg/kustz/common.go</code> 中， 之前的 <code>func CommonLabels(kz *Config)</code> 函数变为了 <code>func (kz *Config) CommonLabels()</code> 方法。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (kz <span style=color:#000;font-weight:700>*</span>Config) <span style=color:#900;font-weight:700>CommonLabels</span>() <span style=color:#000;font-weight:700>map</span>[<span style=color:#458;font-weight:700>string</span>]<span style=color:#458;font-weight:700>string</span> {
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>map</span>[<span style=color:#458;font-weight:700>string</span>]<span style=color:#458;font-weight:700>string</span>{
+</span></span><span style=display:flex><span>		<span style=color:#d14>&#34;app&#34;</span>: kz.Name,
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h3 id=生成-service-api>生成 Service API</h3><p>在创建 Service API 的方法中还是中规中矩的在凑 API。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (kz <span style=color:#000;font-weight:700>*</span>Config) <span style=color:#900;font-weight:700>KubeService</span>() <span style=color:#000;font-weight:700>*</span>corev1.Service {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	ports, typ <span style=color:#000;font-weight:700>:=</span> <span style=color:#900;font-weight:700>ParsePortStrings</span>(kz.Service.Ports)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	svc <span style=color:#000;font-weight:700>:=</span> <span style=color:#000;font-weight:700>&amp;</span>corev1.Service{
+</span></span><span style=display:flex><span>		TypeMeta: metav1.TypeMeta{
+</span></span><span style=display:flex><span>			APIVersion: <span style=color:#d14>&#34;v1&#34;</span>,
+</span></span><span style=display:flex><span>			Kind:       <span style=color:#d14>&#34;Service&#34;</span>,
+</span></span><span style=display:flex><span>		},
+</span></span><span style=display:flex><span>		ObjectMeta: metav1.ObjectMeta{
+</span></span><span style=display:flex><span>			Name:   kz.Name,
+</span></span><span style=display:flex><span>			Labels: kz.<span style=color:#900;font-weight:700>CommonLabels</span>(),
+</span></span><span style=display:flex><span>			<span style=color:#998;font-style:italic>// Namespace: kz.Namespace,
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>		},
+</span></span><span style=display:flex><span>		Spec: corev1.ServiceSpec{
+</span></span><span style=display:flex><span>			Selector: kz.<span style=color:#900;font-weight:700>CommonLabels</span>(),
+</span></span><span style=display:flex><span>			Type:     typ,
+</span></span><span style=display:flex><span>			Ports:    ports,
+</span></span><span style=display:flex><span>		},
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> svc
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>在 ObjectMeta 中可以注意到， <code>Namespace</code> 字段是被注释了的。</p><ol><li>因为 namespace 是<strong>环境限定</strong>， 而非服务本身特性。 即部署在 ns-a 和 ns-b 中， 服务配置本身并没有改变。</li><li>对于 namespace 值提供， 我想放在 <code>kustomization.yml</code> 中, 通过 <code>kubectl apply -n ns-demo</code> 提供。</li></ol><blockquote><p>同样的， 在 <code>/pkg/kustz/k_deployment.go</code> 中的 Deployment API 的 ObjectMeta 也删除了 namespace 字段。</p></blockquote><h3 id=portstring>PortString</h3><p>从 <code>corev1.ServiceSpec</code> 中可以看到， Type 和 Ports 是并列关系， 且只有一个 Type</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>		Spec: corev1.ServiceSpec{
+</span></span><span style=display:flex><span>			Selector: kz.<span style=color:#900;font-weight:700>CommonLabels</span>(),
+</span></span><span style=display:flex><span>			Type:     typ,
+</span></span><span style=display:flex><span>			Ports:    ports,
+</span></span><span style=display:flex><span>		},
+</span></span></code></pre></td></tr></table></div></div><p>而在我们 kustz.yml 文件中, <code>!9998:8889</code>, Type <strong>符号</strong> 存在于每一条规则中。</p><p>因此， 通过函数 <code>ParsePortStrings</code> 解析所有规则， 并返回一个并列关系。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>ParsePortStrings</span>(values []<span style=color:#458;font-weight:700>string</span>) ([]corev1.ServicePort, corev1.ServiceType) {
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#000;font-weight:700>for</span> _, value <span style=color:#000;font-weight:700>:=</span> <span style=color:#000;font-weight:700>range</span> values {
+</span></span><span style=display:flex><span>		port <span style=color:#000;font-weight:700>:=</span> <span style=color:#900;font-weight:700>NewPortFromString</span>(value)
+</span></span><span style=display:flex><span>		<span style=color:#000;font-weight:700>if</span> port.Type <span style=color:#000;font-weight:700>!=</span> corev1.ServiceTypeClusterIP {
+</span></span><span style=display:flex><span>			typ = port.Type
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>		sps = <span style=color:#0086b3>append</span>(sps, port.<span style=color:#900;font-weight:700>KubeServicePort</span>())
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> sps, typ
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>在 for 循环中， 处理了当 <code>ports</code> 出现多个 Type 规则的时候以谁为准的问题， 正如我们之前提到的。</p><p>这里我使用了 <strong>Type 默认为 ClusterIP， 且最后出现的 <code>非ClusterIP</code> 为准（如有）</strong> 。</p><p>为此， 我定义一个命令 <code>PortString</code> 的结构体，</p><ol><li>通过 <code>NewPortFromString</code> 函数从 <strong>字符串</strong> 中提取关键信息。</li><li>并通过 <code>PortString KubeServicePort</code> 方法将结构体转换成的 <code>corev1.ServicePort</code></li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> PortString <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	Port       <span style=color:#458;font-weight:700>int32</span>
+</span></span><span style=display:flex><span>	TargetPort <span style=color:#458;font-weight:700>int32</span>
+</span></span><span style=display:flex><span>	NodePort   <span style=color:#458;font-weight:700>int32</span>
+</span></span><span style=display:flex><span>	Protocol   corev1.Protocol
+</span></span><span style=display:flex><span>	Type       corev1.ServiceType
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// NewPortFromString parse port from string to PortString
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>NewPortFromString</span>(value <span style=color:#458;font-weight:700>string</span>) PortString {}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// KubeServicePort return a corev1.ServicePort
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span> (p <span style=color:#000;font-weight:700>*</span>PortString) <span style=color:#900;font-weight:700>KubeServicePort</span>() corev1.ServicePort {}
+</span></span></code></pre></td></tr></table></div></div><p><code>PortString</code> 提供了相应的方法按规则从 <code>string</code> 提取关键信息。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#998;font-style:italic>// toServiceClusterIP parse value from for ClusterIP
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span> (p <span style=color:#000;font-weight:700>*</span>PortString) <span style=color:#900;font-weight:700>toServiceClusterIP</span>(value <span style=color:#458;font-weight:700>string</span>) {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	parts <span style=color:#000;font-weight:700>:=</span> strings.<span style=color:#900;font-weight:700>Split</span>(value, <span style=color:#d14>&#34;:&#34;</span>)
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>switch</span> <span style=color:#0086b3>len</span>(parts) {
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>case</span> <span style=color:#099>1</span>:
+</span></span><span style=display:flex><span>		n <span style=color:#000;font-weight:700>:=</span> p.<span style=color:#900;font-weight:700>StringToInt32</span>(parts[<span style=color:#099>0</span>])
+</span></span><span style=display:flex><span>		p.Port = n
+</span></span><span style=display:flex><span>		p.TargetPort = n
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>case</span> <span style=color:#099>2</span>:
+</span></span><span style=display:flex><span>		p.Port = p.<span style=color:#900;font-weight:700>StringToInt32</span>(parts[<span style=color:#099>0</span>])
+</span></span><span style=display:flex><span>		p.TargetPort = p.<span style=color:#900;font-weight:700>StringToInt32</span>(parts[<span style=color:#099>1</span>])
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	p.Type = corev1.ServiceTypeClusterIP
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// toServiceNodePort parse value from for NodePort
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span> (p <span style=color:#000;font-weight:700>*</span>PortString) <span style=color:#900;font-weight:700>toServiceNodePort</span>(value <span style=color:#458;font-weight:700>string</span>) {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	value = strings.<span style=color:#900;font-weight:700>TrimPrefix</span>(value, <span style=color:#d14>&#34;!&#34;</span>)
+</span></span><span style=display:flex><span>	parts <span style=color:#000;font-weight:700>:=</span> strings.<span style=color:#900;font-weight:700>Split</span>(value, <span style=color:#d14>&#34;:&#34;</span>)
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>switch</span> <span style=color:#0086b3>len</span>(parts) {
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>case</span> <span style=color:#099>1</span>, <span style=color:#099>2</span>:
+</span></span><span style=display:flex><span>		p.<span style=color:#900;font-weight:700>toServiceClusterIP</span>(value)
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>case</span> <span style=color:#099>3</span>:
+</span></span><span style=display:flex><span>		p.NodePort = p.<span style=color:#900;font-weight:700>StringToInt32</span>(parts[<span style=color:#099>0</span>])
+</span></span><span style=display:flex><span>		p.Port = p.<span style=color:#900;font-weight:700>StringToInt32</span>(parts[<span style=color:#099>1</span>])
+</span></span><span style=display:flex><span>		p.TargetPort = p.<span style=color:#900;font-weight:700>StringToInt32</span>(parts[<span style=color:#099>2</span>])
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	p.Type = corev1.ServiceTypeNodePort
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h2 id=测试>测试</h2><p>在 <code>/pkg/kustz/kustz_test.go</code> 中， 拆分了 test 规则。</p><p>执行命令， 检查结果是不是和自己期待的一样。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ go <span style=color:#0086b3>test</span> -timeout 30s -run ^Test_KustzService$ ./pkg/kustz/ -v
+</span></span></code></pre></td></tr></table></div></div><p>如果不是， 就回去检查代码吧。</p></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/books/kustz/chapter02/02-define-strings-to-service/>https://tangx.in/posts/books/kustz/chapter02/02-define-strings-to-service/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/books/kustz/chapter01/01-introduce/>从零开始写 k8s 发布工具 - 1.0. kustz 介绍和设计思想</a></li><li><a href=/posts/books/kustz/chapter02/01-sample-deployment/>从零开始写 k8s 发布工具 - 2.1. 模仿 kubectl create 创建 Deployment 样例</a></li><li><a href=/posts/books/kustz/chapter02/03-parse-url-to-ingress/>从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress</a></li><li><a href=/posts/books/kustz/chapter02/04-kustomize/>从零开始写 k8s 发布工具 - 2.4. 使用 kustomize 管理所有 k8s 文件</a></li><li><a href=/posts/books/kustz/chapter02/05-kustz-cli/>从零开始写 k8s 发布工具 - 2.5. 使用 cobra 实现 kustz 命令</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/kustz target=_blank>kustz</a></li><li><a href=/tags/golang target=_blank>golang</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/books/kustz/chapter01/01-introduce/ title="从零开始写 k8s 发布工具 - 1.0. kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具 - 1.0. kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/01-sample-deployment/ title="从零开始写 k8s 发布工具 - 2.1. 模仿 kubectl create 创建 Deployment 样例" target=_blank>从零开始写 k8s 发布工具 - 2.1. 模仿 kubectl create 创建 Deployment 样例</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/02-define-strings-to-service/ title="从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service" target=_blank>从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/03-parse-url-to-ingress/ title="从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress" target=_blank>从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/04-kustomize/ title="从零开始写 k8s 发布工具 - 2.4. 使用 kustomize 管理所有 k8s 文件" target=_blank>从零开始写 k8s 发布工具 - 2.4. 使用 kustomize 管理所有 k8s 文件</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/05-kustz-cli/ title="从零开始写 k8s 发布工具 - 2.5. 使用 cobra 实现 kustz 命令" target=_blank>从零开始写 k8s 发布工具 - 2.5. 使用 cobra 实现 kustz 命令</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/01-container-env-var/ title="从零开始写 k8s 发布工具 - 3.1. 为 Container 添加环境变量" target=_blank>从零开始写 k8s 发布工具 - 3.1. 为 Container 添加环境变量</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/02-configmap-secret-generator/ title="从零开始写 k8s 发布工具 - 3.2. ConfigMap 和 Secret 的生成器" target=_blank>从零开始写 k8s 发布工具 - 3.2. ConfigMap 和 Secret 的生成器</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/03-container-env-from/ title="从零开始写 k8s 发布工具 - 3.3. 注入 ConfigMap 和 Secrets 到容器环境变量" target=_blank>从零开始写 k8s 发布工具 - 3.3. 注入 ConfigMap 和 Secrets 到容器环境变量</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/04-container-resources/ title="从零开始写 k8s 发布工具 - 3.4. 用字符串定义容器申请资源上下限" target=_blank>从零开始写 k8s 发布工具 - 3.4. 用字符串定义容器申请资源上下限</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (9)</a></li><li><a href=https://tangx.in/categories/books/>books (13)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (3)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/kubernetes/>kubernetes (15)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/github/>github</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kustomize/>kustomize</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/pgsql/>pgsql</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qcloud/>qcloud</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/qos/>qos</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

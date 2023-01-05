@@ -1,0 +1,309 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress | 老麦的书房</title><meta property="og:title" content="从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2023-01-05T13:28:03+08:00"><meta property="article:modified_time" content="2023-01-05T13:28:03+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/books/kustz/chapter02/03-parse-url-to-ingress/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#kubernetes-ingress>Kubernetes Ingress</a></li><li><a href=#编码>编码</a><ul><li><a href=#kustzyml-配置><code>kustz.yml</code> 配置</a></li><li><a href=#annotations>Annotations</a></li><li><a href=#kubernetes-官方-ingressrule>Kubernetes 官方 IngressRule</a></li><li><a href=#pathtype>PathType</a></li></ul></li><li><a href=#渲染-ingress>渲染 Ingress</a><ul><li><a href=#ingressrulestring>IngressRuleString</a></li></ul></li><li><a href=#测试>测试</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress</h1></header><time datetime=2023-01-05T05:28:03Z class="post-meta meta-date dt-published">2023年1月5日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/kubernetes target=_blank>kubernetes</a>
+<a href=/categories/books target=_blank>books</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=23-解析-url-为-ingress>2.3. 解析 URL 为 Ingress</h1><p><img class=mx-auto alt=logo src=https://static.tangx.in/assets/topic/kustz.jpg></p><p>之前已经提到过， 在 <code>kustz.yml</code> 中的字段值， 要尽量做到 <strong>见名知义</strong>。</p><p>对于 Ingress 而言， 在发布之后， 我们访问的就是 URL 地址。</p><pre tabindex=0><code>http://api.example.com/v1
+</code></pre><p>因此我们可以考虑 <strong>从结果推导解析渲染 Ingress</strong> 。</p><h2 id=kubernetes-ingress>Kubernetes Ingress</h2><p>老规矩， 我们还是通过命令看看创建一个 ingress 需要提供哪些参数。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ kubectl create ingress simple --rule<span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;foo.com/bar=svc1:8080,tls=my-cert&#34;</span> -o
+</span></span><span style=display:flex><span>yaml --dry-run<span style=color:#000;font-weight:700>=</span>client
+</span></span></code></pre></td></tr></table></div></div><p>在 rule 中， 提供了两组 k-v。 其中， <code>foo.com/bar</code> 就是一个不带协议的 URL。</p><p>再来看看输出结果。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:navy>apiVersion</span>:<span style=color:#bbb> </span>networking.k8s.io/v1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>kind</span>:<span style=color:#bbb> </span>Ingress<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>metadata</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>creationTimestamp</span>:<span style=color:#bbb> </span><span style=color:#000;font-weight:700>null</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>simple<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>spec</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>rules</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:navy>host</span>:<span style=color:#bbb> </span>foo.com  <span style=color:#bbb> </span><span style=color:#998;font-style:italic># 多 host</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>http</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>paths</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span>- <span style=color:navy>backend</span>:<span style=color:#bbb>    </span><span style=color:#998;font-style:italic># 一个 host 多个后端服务</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>service</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>svc1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>port</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>              </span><span style=color:navy>number</span>:<span style=color:#bbb> </span><span style=color:#099>8080</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>path</span>:<span style=color:#bbb> </span>/bar<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>pathType</span>:<span style=color:#bbb> </span>Exact<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>tls</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:navy>hosts</span>:<span style=color:#bbb>         </span><span style=color:#998;font-style:italic># 多个证书</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>- foo.com<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>secretName</span>:<span style=color:#bbb> </span>my-cert<span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><p>一个基本的 Ingress API 配置， 包含了</p><ol><li>主要由两个模块 <code>rules</code> 和 <code>tls</code> 构成。</li><li>rules 是个数组， 即 <strong>一条或多条</strong> URL。</li><li>每条规则可以有多个后端服务。</li><li>规则路径有一个特殊的 <code>pathType</code> 参数， 表示规则是 <strong>Prefix（前缀匹配）</strong> 还是 <strong>Excat（精确匹配）</strong></li></ol><blockquote><p>补充， 还有一个重要的模块 <code>annotations</code> 通过声明控制 <code>ingress-class</code> 行为。</p></blockquote><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ kubectl create ingress annotated --class<span style=color:#000;font-weight:700>=</span>default --rule<span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;foo.com/bar=svc:port&#34;</span> --annotation ingress.annotation1<span style=color:#000;font-weight:700>=</span>foo
+</span></span></code></pre></td></tr></table></div></div><h2 id=编码>编码</h2><p>有了之前 Service 打样， Ingress 就容易很多了。</p><h3 id=kustzyml-配置><code>kustz.yml</code> 配置</h3><p>之前已经提到过了， 我们希望 ingress rule 所见即所得。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#998;font-style:italic># ...省略</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>ingress</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>rules</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>- http://api.example.com/user/*?tls=my-cert&amp;svc=srv-webapp-demo:8080<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>- http://demo.example.com/login?tls=my-cert<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>annotations</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>k1</span>:<span style=color:#bbb> </span>v1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>k2</span>:<span style=color:#bbb> </span>v2<span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><ol><li>rule 就是最终实际对外暴露的 URL</li><li>rule 通过 query 参数 <code>tls</code> 和 <code>svc</code> 传递后端证书名和服务。</li><li>为了区分 <code>Prefix</code> 和 <code>Exact</code> 两种 PathType， 我使用了 <strong>通配符 <code>*</code></strong>。</li></ol><h3 id=annotations>Annotations</h3><p><code>Annotation</code> 还是很简单的， 本身就是 map 对象， 直接赋值就可以了。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>	ing <span style=color:#000;font-weight:700>:=</span> <span style=color:#000;font-weight:700>&amp;</span>netv1.Ingress{
+</span></span><span style=display:flex><span>		TypeMeta: metav1.TypeMeta{
+</span></span><span style=display:flex><span>			APIVersion: <span style=color:#d14>&#34;networking.k8s.io/v1&#34;</span>,
+</span></span><span style=display:flex><span>			Kind:       <span style=color:#d14>&#34;Ingress&#34;</span>,
+</span></span><span style=display:flex><span>		},
+</span></span><span style=display:flex><span>		ObjectMeta: metav1.ObjectMeta{
+</span></span><span style=display:flex><span>			Name:        kz.Name,
+</span></span><span style=display:flex><span>			Labels:      kz.<span style=color:#900;font-weight:700>CommonLabels</span>(),
+</span></span><span style=display:flex><span>			Annotations: kz.Ingress.Annotations,
+</span></span><span style=display:flex><span>		},
+</span></span><span style=display:flex><span>		<span style=color:#998;font-style:italic>// ... 省略
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	}
+</span></span></code></pre></td></tr></table></div></div><h3 id=kubernetes-官方-ingressrule>Kubernetes 官方 IngressRule</h3><p>在官方 <code>IngressRule</code> 结构体中规则描述还是挺多的。 截取部分</p><ol><li>需要满足 <code>RFC 3986</code> 规范<ol><li>host 字段不能是 IP 地址。</li><li>不支持 80,443 之外的端口。 即只支持 <code>http</code> 和 <code>https</code> 协议。</li></ol></li><li>host 可以带 <code>* 号</code>， 即支持泛域名。</li></ol><blockquote><p>文档中还专门强调了， 这些规则在以后可能会改变。</p></blockquote><h3 id=pathtype>PathType</h3><p>之前提到过， PathType 在控制匹配行为上非常重要。</p><ol><li>Prefix： 前缀匹配， 也可以理解为模糊匹配。</li><li>Exact: 精确匹配， 只有100%匹配才生效。</li><li><strong>不建议使用</strong> 还有一个值 <code>ImplementationSpecific</code>， 表示由 ingress-class 决定值是 <strong>Prefix 或者 Excat</strong>。</li></ol><p>PathType 其实虽说不难， 但是官网还是给了一个 Example 详细列举了匹配规则。 建议还是看一下。
+<a href=https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types target=_blank rel=noopener>https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types</a></p><p>代码中</p><ol><li>Type 默认类型是 <code>Excat</code>。 相对比较安全。</li><li>通过判断 <code>path</code> 末尾最后一个字符是 <code>*</code> 则为 <code>Prefix</code> 规则。</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>NewIngressRuleFromString</span>(value <span style=color:#458;font-weight:700>string</span>) <span style=color:#000;font-weight:700>*</span>IngressRule {
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// ...省略
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// ex: /api/*
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	path <span style=color:#000;font-weight:700>:=</span> ur.Path
+</span></span><span style=display:flex><span>	typ <span style=color:#000;font-weight:700>:=</span> netv1.PathTypeExact
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>if</span> strings.<span style=color:#900;font-weight:700>HasSuffix</span>(path, <span style=color:#d14>&#34;*&#34;</span>) {
+</span></span><span style=display:flex><span>		path = strings.<span style=color:#900;font-weight:700>TrimSuffix</span>(path, <span style=color:#d14>&#34;*&#34;</span>)
+</span></span><span style=display:flex><span>		typ = netv1.PathTypePrefix
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// ...省略
+</span></span></span></code></pre></td></tr></table></div></div><blockquote><p>确认 Prefix 之后， 别忘记把 <code>*</code> 从 path 中去掉。</p></blockquote><h2 id=渲染-ingress>渲染 Ingress</h2><p>在官方 Ingress 结构体中字段一层套一层， 少说五六层。</p><p>因此在代码中定义了一个 <code>IngressRuleString</code> 保存所需要的字段信息。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> IngressRuleString <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	Host      <span style=color:#458;font-weight:700>string</span>
+</span></span><span style=display:flex><span>	Path      <span style=color:#458;font-weight:700>string</span>
+</span></span><span style=display:flex><span>	PathType  netv1.PathType
+</span></span><span style=display:flex><span>	TLSSecret <span style=color:#458;font-weight:700>string</span>
+</span></span><span style=display:flex><span>	Service   <span style=color:#458;font-weight:700>string</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><ol><li>通过函数 <code>NewIngressRuleFromString</code> 解析字符串。</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>NewIngressRuleFromString</span>(value <span style=color:#458;font-weight:700>string</span>) <span style=color:#000;font-weight:700>*</span>IngressRuleString {
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><ol start=2><li>通过方法 <code>KubeIngressTLS</code>,<code>KubeIngressRule</code> 创建 tls 和 rule。</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (ir <span style=color:#000;font-weight:700>*</span>IngressRuleString) <span style=color:#900;font-weight:700>KubeIngressTLS</span>() <span style=color:#000;font-weight:700>*</span>netv1.IngressTLS {
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (ir <span style=color:#000;font-weight:700>*</span>IngressRuleString) <span style=color:#900;font-weight:700>KubeIngressRule</span>() netv1.IngressRule {
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h3 id=ingressrulestring>IngressRuleString</h3><blockquote><p>注意， 在定义 IngressRuleString 的时候， 我偷了个懒。</p></blockquote><p>前面说过， ingress rule 是支持多个后端服务的, 所以 <code>Service</code> 应该是 <strong>切片</strong> 类型。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> IngressRuleString <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	Service   []<span style=color:#458;font-weight:700>string</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>但在我的定义中是 <strong>字符串</strong> 类型。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#998;font-style:italic>// 渲染 Ingress
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span> (kz <span style=color:#000;font-weight:700>*</span>Config) <span style=color:#900;font-weight:700>KubeIngress</span>() <span style=color:#000;font-weight:700>*</span>netv1.Ingress {
+</span></span><span style=display:flex><span>	rules, tlss <span style=color:#000;font-weight:700>:=</span> <span style=color:#900;font-weight:700>ParseIngreseRulesFromStrings</span>(kz.Ingress.Rules, kz.Name)
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// ... 省略
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// 解析字符串
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>ParseIngreseRulesFromStrings</span>(values []<span style=color:#458;font-weight:700>string</span>, defaultService <span style=color:#458;font-weight:700>string</span>) ([]netv1.IngressRule, []netv1.IngressTLS) {
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// ... 省略
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#000;font-weight:700>for</span> _, value <span style=color:#000;font-weight:700>:=</span> <span style=color:#000;font-weight:700>range</span> values {
+</span></span><span style=display:flex><span>		ing <span style=color:#000;font-weight:700>:=</span> <span style=color:#900;font-weight:700>NewIngressRuleFromString</span>(value)
+</span></span><span style=display:flex><span>		<span style=color:#000;font-weight:700>if</span> ing.Service <span style=color:#000;font-weight:700>==</span> <span style=color:#d14>&#34;&#34;</span> {
+</span></span><span style=display:flex><span>			ing.Service = defaultService
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// ... 省略
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>}
+</span></span></code></pre></td></tr></table></div></div><ol><li>在调用的时候传递了一个 <strong>服务同名</strong> 默认值。</li><li><strong>服务同名</strong> 不包含端口， 即 <code>srv-webapp-demo</code>。 省略端口默认为 <strong><code>80</code></strong></li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (ir <span style=color:#000;font-weight:700>*</span>IngressRuleString) <span style=color:#900;font-weight:700>toKubeIngressBackend</span>() netv1.IngressBackend {
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// srv-webapp-demo[:8080]
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	svc <span style=color:#000;font-weight:700>:=</span> ir.Service
+</span></span><span style=display:flex><span>	port <span style=color:#000;font-weight:700>:=</span> <span style=color:#0086b3>int32</span>(<span style=color:#099>80</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	parts <span style=color:#000;font-weight:700>:=</span> strings.<span style=color:#900;font-weight:700>Split</span>(svc, <span style=color:#d14>&#34;:&#34;</span>)
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>if</span> <span style=color:#0086b3>len</span>(parts) <span style=color:#000;font-weight:700>==</span> <span style=color:#099>2</span> {
+</span></span><span style=display:flex><span>		svc = parts[<span style=color:#099>0</span>]
+</span></span><span style=display:flex><span>		port = <span style=color:#900;font-weight:700>StringToInt32</span>(parts[<span style=color:#099>1</span>])
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p><strong>这一处默认值</strong> 反过来要求了 Service 的端口映射必须是 <code>80:xxxx</code></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#998;font-style:italic># kustz.yml</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>service</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>ports</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>- <span style=color:#d14>&#34;80:8080&#34;</span><span style=color:#bbb> </span><span style=color:#998;font-style:italic># cluster ip</span><span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><blockquote><p>为什么？</p><blockquote><p>因为当管理多个服务（尤其是多个团队或语言的服务）时， 统一使用 <code>80</code> 为 Service 入口也可以作为一个<strong>强制规则约束</strong>， 节省脑细胞。</p></blockquote></blockquote><h2 id=测试>测试</h2><p>执行命令， 检查结果是不是和自己期待的一样。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ go <span style=color:#0086b3>test</span> -timeout 30s -run ^Test_KustzIngress$ ./pkg/kustz/ -v
+</span></span></code></pre></td></tr></table></div></div><p>如果不是， 就回去检查代码吧。</p></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/books/kustz/chapter02/03-parse-url-to-ingress/>https://tangx.in/posts/books/kustz/chapter02/03-parse-url-to-ingress/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>maitalking</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/books/kustz/chapter01/01-introduce/>从零开始写 k8s 发布工具 - 1.0. kustz 介绍和设计思想</a></li><li><a href=/posts/books/kustz/chapter02/01-sample-deployment/>从零开始写 k8s 发布工具 - 2.1. 模仿 kubectl create 创建 Deployment 样例</a></li><li><a href=/posts/books/kustz/chapter02/02-define-strings-to-service/>从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service</a></li><li><a href=/posts/books/kustz/chapter02/04-kustomize/>从零开始写 k8s 发布工具 - 2.4. 使用 kustomize 管理所有 k8s 文件</a></li><li><a href=/posts/books/kustz/chapter02/05-kustz-cli/>从零开始写 k8s 发布工具 - 2.5. 使用 cobra 实现 kustz 命令</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/kustz target=_blank>kustz</a></li><li><a href=/tags/golang target=_blank>golang</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/books/kustz/chapter01/01-introduce/ title="从零开始写 k8s 发布工具 - 1.0. kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具 - 1.0. kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/01-sample-deployment/ title="从零开始写 k8s 发布工具 - 2.1. 模仿 kubectl create 创建 Deployment 样例" target=_blank>从零开始写 k8s 发布工具 - 2.1. 模仿 kubectl create 创建 Deployment 样例</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/02-define-strings-to-service/ title="从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service" target=_blank>从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/03-parse-url-to-ingress/ title="从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress" target=_blank>从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/04-kustomize/ title="从零开始写 k8s 发布工具 - 2.4. 使用 kustomize 管理所有 k8s 文件" target=_blank>从零开始写 k8s 发布工具 - 2.4. 使用 kustomize 管理所有 k8s 文件</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/05-kustz-cli/ title="从零开始写 k8s 发布工具 - 2.5. 使用 cobra 实现 kustz 命令" target=_blank>从零开始写 k8s 发布工具 - 2.5. 使用 cobra 实现 kustz 命令</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/01-container-env-var/ title="从零开始写 k8s 发布工具 - 3.1. 为 Container 添加环境变量" target=_blank>从零开始写 k8s 发布工具 - 3.1. 为 Container 添加环境变量</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/02-configmap-secret-generator/ title="从零开始写 k8s 发布工具 - 3.2. ConfigMap 和 Secret 的生成器" target=_blank>从零开始写 k8s 发布工具 - 3.2. ConfigMap 和 Secret 的生成器</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/03-container-env-from/ title="从零开始写 k8s 发布工具 - 3.3. 注入 ConfigMap 和 Secrets 到容器环境变量" target=_blank>从零开始写 k8s 发布工具 - 3.3. 注入 ConfigMap 和 Secrets 到容器环境变量</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/04-container-resources/ title="从零开始写 k8s 发布工具 - 3.4. 用字符串定义容器申请资源上下限" target=_blank>从零开始写 k8s 发布工具 - 3.4. 用字符串定义容器申请资源上下限</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (9)</a></li><li><a href=https://tangx.in/categories/books/>books (13)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (3)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/kubernetes/>kubernetes (15)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/github/>github</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kustomize/>kustomize</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/pgsql/>pgsql</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qcloud/>qcloud</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/qos/>qos</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

@@ -1,0 +1,99 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>kustz | 老麦的书房</title><meta property="og:title" content="kustz - 老麦的书房"><meta property="og:type" content="article"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="kustz"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/tags/kustz/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><link rel=alternate type=application/rss+xml href=https://tangx.in/tags/kustz/index.xml title=老麦的书房><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script></head><body><header id=header class=clearfix><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><h3 class=archive-title>包含标签
+<span class=keyword>kustz</span>
+中的文章</h3><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/books/kustz/chapter03/05-container-probe/ target=_blank>从零开始写 k8s 发布工具 - 3.5. 为 Container 添加健康检查方法</a></h1></header><time datetime=2023-01-05T05:28:03Z class="post-meta meta-date dt-published">2023年1月5日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/kubernetes target=_blank>kubernetes</a>
+<a href=/categories/books target=_blank>books</a></div><div class=post-content>3.5. 为 Container 添加健康检查方法 kustz 终于到了准生产的地步了。 今天的健康检查接口， 就为我们解决这个问题。 我们要知道， 确定一个应用能不能对外提供服务之前， 需要进行一个 可用性 检测。 而这个检测通常被我们称为 健康检查。 Kubernetes 的健康检查 在 Kubernetes 中， 为我们提供了 主要 的 3类状态 的健康检查。 startup: 等待探针。 如果执行成功，……<p class=readmore><a href=https://tangx.in/posts/books/kustz/chapter03/05-container-probe/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/books/kustz/chapter03/06-image-pull-policy/ target=_blank>从零开始写 k8s 发布工具 - 3.6. 镜像拉取鉴权和策略</a></h1></header><time datetime=2023-01-05T05:28:03Z class="post-meta meta-date dt-published">2023年1月5日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/kubernetes target=_blank>kubernetes</a>
+<a href=/categories/books target=_blank>books</a></div><div class=post-content>3.6. 镜像拉取鉴权和策略 今天我们解决镜像拉取鉴权和策略 镜像拉取鉴权 拉取私有镜像或私有仓库镜像的时候， 需要提供鉴权信息。 在 Kubernets 中， 通过 Secret 管理账号这些账号信息。 Secret 类型分为两种， kubernetes.io/dockerconfigjson: 如果有linux安装了 docker， 就是 ~/.docker/config.json 这个文件。 kubernetes.io/dockercfg: 不太熟。 在 /pkg/tokube/pod.go 中， 可以看到 ImagePullSecrets 的处理方法。 就是将字符串转为 kubernetes 的……<p class=readmore><a href=https://tangx.in/posts/books/kustz/chapter03/06-image-pull-policy/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/books/kustz/chapter04/01-kustz-flags/ target=_blank>从零开始写 k8s 发布工具 - 4.1. 使用 cobrautils 为命令添加更实用的命令参数</a></h1></header><time datetime=2023-01-05T05:28:03Z class="post-meta meta-date dt-published">2023年1月5日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/kubernetes target=_blank>kubernetes</a>
+<a href=/categories/books target=_blank>books</a></div><div class=post-content>4.1. 使用 cobrautils 为命令添加更实用的命令参数 之前的章节， 我们陆陆续续给 kustz 库添加了很多丰富服务的配置 但 kustz 命令， 还是处于一个很原始的命令状态。 接下来我们给 kustz 添加一些更丰富的参数 ， 使 kustz 用起来更顺手。 在 CICD 的中， 一般情况下 变量，健康检查， 镜像策略 等很难发生变动。 而镜像名称 经常性 的在每次打包后发生变化……<p class=readmore><a href=https://tangx.in/posts/books/kustz/chapter04/01-kustz-flags/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/2023/01/05/how-to-create-multiple-line-variables-in-kustomize/ target=_blank>怎么在 Kustomize 中添加多行变量</a></h1></header><time datetime=2023-01-05T05:09:55Z class="post-meta meta-date dt-published">2023年1月5日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/kubernetes target=_blank>kubernetes</a></div><div class=post-content>怎么在 Kustomize 中添加多行变量 原文链接: https://tangx.in/posts/2023/01/05/how-to-create-multiple-line-variables-in-kustomize/ kustomize 是 k8s 官方出的一个 应用管理工具 ， 说起来还是很好用的。 可以参考 k8s 部署工具 kustomize 的实用小技巧 Kustomize 中的 ConfigMap/Secrets Generator 在配置管理方面， kustomize 为我们提供了 Generator 帮助我们管理配置文件。 提供了三个 API 模块 files: 通过 文件 生成 文件 literals: 通过文字 字面量 k=v 生成 k=v 数据 envs: 通过 文件 生成 k=v 数据。 这个应该是 files 和……<p class=readmore><a href=https://tangx.in/posts/2023/01/05/how-to-create-multiple-line-variables-in-kustomize/ target=_blank>阅读全文</a></p></div></article><ol class=page-navigator><li class=prev><a href=https://tangx.in/tags/kustz/>上一页</a></li><li><a href=https://tangx.in/tags/kustz/>1</a></li><li class=current><a href=https://tangx.in/tags/kustz/page/2/>2</a></li></ol></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script>
+<script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/books/kustz/chapter01/01-introduce/ title="从零开始写 k8s 发布工具 - 1.0. kustz 介绍和设计思想" target=_blank>从零开始写 k8s 发布工具 - 1.0. kustz 介绍和设计思想</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/01-sample-deployment/ title="从零开始写 k8s 发布工具 - 2.1. 模仿 kubectl create 创建 Deployment 样例" target=_blank>从零开始写 k8s 发布工具 - 2.1. 模仿 kubectl create 创建 Deployment 样例</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/02-define-strings-to-service/ title="从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service" target=_blank>从零开始写 k8s 发布工具 - 2.2. 定义字符串创建 Service</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/03-parse-url-to-ingress/ title="从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress" target=_blank>从零开始写 k8s 发布工具 - 2.3. 解析 URL 为 Ingress</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/04-kustomize/ title="从零开始写 k8s 发布工具 - 2.4. 使用 kustomize 管理所有 k8s 文件" target=_blank>从零开始写 k8s 发布工具 - 2.4. 使用 kustomize 管理所有 k8s 文件</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter02/05-kustz-cli/ title="从零开始写 k8s 发布工具 - 2.5. 使用 cobra 实现 kustz 命令" target=_blank>从零开始写 k8s 发布工具 - 2.5. 使用 cobra 实现 kustz 命令</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/01-container-env-var/ title="从零开始写 k8s 发布工具 - 3.1. 为 Container 添加环境变量" target=_blank>从零开始写 k8s 发布工具 - 3.1. 为 Container 添加环境变量</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/02-configmap-secret-generator/ title="从零开始写 k8s 发布工具 - 3.2. ConfigMap 和 Secret 的生成器" target=_blank>从零开始写 k8s 发布工具 - 3.2. ConfigMap 和 Secret 的生成器</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/03-container-env-from/ title="从零开始写 k8s 发布工具 - 3.3. 注入 ConfigMap 和 Secrets 到容器环境变量" target=_blank>从零开始写 k8s 发布工具 - 3.3. 注入 ConfigMap 和 Secrets 到容器环境变量</a></li><li><a href=https://tangx.in/posts/books/kustz/chapter03/04-container-resources/ title="从零开始写 k8s 发布工具 - 3.4. 用字符串定义容器申请资源上下限" target=_blank>从零开始写 k8s 发布工具 - 3.4. 用字符串定义容器申请资源上下限</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/aliyun/>aliyun (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (9)</a></li><li><a href=https://tangx.in/categories/books/>books (13)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (3)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (1)</a></li><li><a href=https://tangx.in/categories/kubernetes/>kubernetes (15)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/github/>github</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kustomize/>kustomize</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/pgsql/>pgsql</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qcloud/>qcloud</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/qos/>qos</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
