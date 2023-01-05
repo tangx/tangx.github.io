@@ -1,4 +1,4 @@
-sitemap: https://tangx.in/sitemap.xml
+sitemap: ./docs/sitemap.xml
 purge: true
 push: false
 lastModInDays: 7

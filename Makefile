@@ -1,5 +1,4 @@
 
-App_Flusher ?= ./cdn-flusher/
 
 purge: download
 	./qcloud-cdn-flusher -c purge.flusher.yml
