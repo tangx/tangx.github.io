@@ -117,7 +117,7 @@ time=&#34;2020-12-02T19:00:57Z&#34; level=error msg=&#34;get user failed: Error 
 ... lue ...
 </code></pre><p>通过日志不难看出， sqlmap 在测试注入的时候， 使用了各种类型的数据库函数。 因此， <strong>可以完善日志系统， 针对异常接口参数进行及时告警和跟进处理</strong> 。</p><p>当然， 如果真被 sql 注入拖库了， 那之后的优化也封堵也不过是亡羊补牢。 所以， 更好的办法是 <strong>在 CI 完成发布到测试环境之后立即进行注入测试</strong> ， 将事故扼杀在萌芽中。</p><h2 id=补充>补充</h2><p><code>doslab/vulhub-sqli</code> 额外提供了<strong>同样功能，但无注入危险</strong>的一个接口 <code>GET http://your-ip:8080/v1/{user}/{password}</code> ( <strong>注意这里是 <code>v1</code></strong> ) 。
 不通的是，该接口查询使用的时候 <code>golang mysql</code> 库进行的 <code>Query</code> 查询操作； 而非自己拼写 sql 语句。</p></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2020/12/02/sqlmap-injection-restful/>https://tangx.in/posts/2020/12/02/sqlmap-injection-restful/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
-<span style=background-color:#e8e8e9><code>maitalking</code></span>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
 或 <strong>订阅网站</strong>
 <span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
 。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/%E5%AE%89%E5%85%A8 target=_blank>安全</a></li><li><a href=/tags/tools target=_blank>tools</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
