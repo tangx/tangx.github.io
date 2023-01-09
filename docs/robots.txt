@@ -1,0 +1,9 @@
+
+User-agent: *
+
+Sitemap: https://tangx.in/sitemap.xml
+Sitemap: https://tangx.in/books/kustz/sitemap.xml
+Sitemap: https://tangx.in/books/istio-in-action/sitemap.xml
+Sitemap: https://tangx.in/books/k8sailor/sitemap.xml
+Sitemap: https://tangx.in/books/kubebuilder-zero-to-one/sitemap.xml
+
