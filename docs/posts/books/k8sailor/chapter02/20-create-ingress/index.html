@@ -1,0 +1,209 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>| 老麦的书房</title><meta property="og:title" content=" - 老麦的书房"><meta property="og:type" content="article"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/books/k8sailor/chapter02/20-create-ingress/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
+<script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?3ed4211d4b231bb7277eca826149b74f",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#k8s-ingress>k8s ingress</a><ul><li><a href=#路径类型>路径类型</a></li><li><a href=#api-请求体设计>API 请求体设计</a></li></ul></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title></h1></header><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=post-content><h1 id=创建-ingress>创建 ingress</h1><blockquote><p>tag:
+<a href=https://github.com/tangx/k8sailor/tree/feat/20-create-ingress target=_blank rel=noopener>https://github.com/tangx/k8sailor/tree/feat/20-create-ingress</a></p></blockquote><h2 id=k8s-ingress>k8s ingress</h2><blockquote><p><a href=https://kubernetes.io/zh/docs/concepts/services-networking/ingress/ target=_blank rel=noopener>https://kubernetes.io/zh/docs/concepts/services-networking/ingress/</a></p></blockquote><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>  <span style=color:#998;font-style:italic># Create an ingress with a default backend</span>
+</span></span><span style=display:flex><span>  kubectl create ingress ingdefault --class<span style=color:#000;font-weight:700>=</span>default <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>  --default-backend<span style=color:#000;font-weight:700>=</span>defaultsvc:http <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>  --rule<span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;foo.com/*=svc:8080,tls=secret1&#34;</span> --dry-run -o yaml
+</span></span></code></pre></td></tr></table></div></div><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:navy>apiVersion</span>:<span style=color:#bbb> </span>networking.k8s.io/v1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>kind</span>:<span style=color:#bbb> </span>Ingress<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>metadata</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>creationTimestamp</span>:<span style=color:#bbb> </span><span style=color:#000;font-weight:700>null</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>ingdefault<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>spec</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>defaultBackend</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>service</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>defaultsvc<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>port</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>http<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>ingressClassName</span>:<span style=color:#bbb> </span>default<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>rules</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:navy>host</span>:<span style=color:#bbb> </span>foo.com<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>http</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>paths</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span>- <span style=color:navy>backend</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>service</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>svc<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>port</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>              </span><span style=color:navy>number</span>:<span style=color:#bbb> </span><span style=color:#099>8080</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>path</span>:<span style=color:#bbb> </span>/<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>pathType</span>:<span style=color:#bbb> </span>Prefix  <span style=color:#bbb> </span><span style=color:#998;font-style:italic># 匹配方式</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>tls</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:navy>hosts</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>- foo.com<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>secretName</span>:<span style=color:#bbb> </span>secret1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>status</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>loadBalancer</span>:<span style=color:#bbb> </span>{}<span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><h3 id=路径类型>路径类型</h3><p>Ingress 中的每个路径都需要有对应的路径类型（Path Type）。未明确设置 pathType 的路径无法通过合法性检查。当前支持的路径类型有三种：</p><p><code>ImplementationSpecific</code> ：对于这种路径类型，匹配方法取决于 IngressClass。 具体实现可以将其作为单独的 pathType 处理或者与 Prefix 或 Exact 类型作相同处理。</p><p><code>Exact</code> ：精确匹配 URL 路径，且区分大小写。</p><p><code>Prefix</code> ：基于以 / 分隔的 URL 路径前缀匹配。匹配区分大小写，并且对路径中的元素逐个完成。 路径元素指的是由 / 分隔符分隔的路径中的标签列表。 如果每个 p 都是请求路径 p 的元素前缀，则请求与路径 p 匹配。</p><p>说明： 如果路径的最后一个元素是请求路径中最后一个元素的子字符串，则不会匹配 （例如：/foo/bar 匹配 /foo/bar/baz, 但不匹配 /foo/barbaz）。</p><blockquote><p>不建议使用 <code>ImplementationSpecific</code>，因为这个参数实现的功能取决于 <strong>IngressClass / IngressController</strong> ， 对用户 <strong>1. 或不可控</strong>， <strong>2. 或认知盲点</strong>。 如果后期换了一个 Controller 或换了一个人维护则可能出现异常。</p></blockquote><p>事实上， 在 <code>kubectl create ingress</code> 的时候， 也是通过判断 rule 中的 uri 最后一个字符是否为 <code>*</code> 号确定使用使用哪种规则。 有 <code>*</code> 使用 prefix， 没有使用 exact 。</p><h3 id=api-请求体设计>API 请求体设计</h3><h4 id=endpoint-传递方式>endpoint 传递方式</h4><p>因此我们采用 k8s 的规则， 使用 <code>*</code> 座位 PathType 的描述符。</p><pre tabindex=0><code class=language-json5 data-lang=json5>### Post ingress
+POST http://127.0.0.1:8088/k8sailor/v0/ingresses/my-nginx-5?namespace=default
+Content-Type: application/json
+
+{
+    &#34;endpoints&#34;:[
+        &#34;http://www.baidu.com/v0&#34;,
+        &#34;http://www.baidu.com/v1/api/*?backend=svc-google:443&amp;tls=google-tls&#34;
+    ]
+}
+</code></pre><p>在 ingress 参数设计的时候， 考虑到 <strong>URL 的可读性</strong>，</p><ol><li>直接将多个字段合并成了一个整体， 可以通过转换成 <code>url.URL</code> 进行解构，获取其中的关键字段。</li><li>在规则参数的传递上，为了更符合一个
+<a href=https://rfc-editor.org/rfc/rfc3986.html target=_blank rel=noopener>RFC 3986 URI</a>
+规定, 所以使用 <code>query</code> 进行参数传递。</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>http://www.example.com:20080/v1/api/*?backend<span style=color:#000;font-weight:700>=</span>svc-google:443&amp;<span style=color:teal>tls</span><span style=color:#000;font-weight:700>=</span>google-tls
+</span></span></code></pre></td></tr></table></div></div><ol><li>host 不支持 IP 地址， 也就是说 <code>http://192.168.100.100/v1/api</code> 是不合法的。</li><li>在 IngressRule 规则中， 不支持 <strong>显式</strong> 指定端口， 目前是通过 <code>http / https</code> 协议 <strong>隐式</strong> 实现的的 <code>80 / 443</code> 端口。</li><li>host 可以为 <strong>空</strong> 将转发所有请求。 host 为域名时只转发匹配域名的请求。</li></ol><blockquote><p><a href=https://pkg.go.dev/k8s.io/api@v0.21.4/networking/v1#IngressRule target=_blank rel=noopener>https://pkg.go.dev/k8s.io/api@v0.21.4/networking/v1#IngressRule</a></p></blockquote><p>这里的 port 其实并没有用， 保留设计只是为了 <strong>标识</strong> 外部入口使用的端口。 这种情况在云上遇到的不多， 但在一些实施项目上由于可能会遇到，例如域名没有备案。</p><p><img class=mx-auto alt="ingress 非标准端口转发" src=https://static.tangx.in/posts/books/k8sailor/chapter02/20-create-ingress/ingress-not-standard-port-transport-fs8.png!v1></p><h4 id=backend-service-默认值>backend service 默认值</h4><p>除此之外， 在实现的时候 query 参数 <code>backend=svc-google:port</code> 进行了一些默认值处理</p><ol><li><p>如果不传递 backend， 将默认使用 <code>ingressName</code> 作为 <code>serviceName</code>。 这个主要是为了服务名称的统一性。 <strong>ingress -> service -> workloads</strong> 使用相同名字， 更具有识别性。</p></li><li><p>port 如果不传递， 默认是 80</p></li></ol><blockquote><p>注意: 在创建 service 的时候， port 是可以<strong>具名</strong>的， 这个 <strong>port 名字</strong> 也是能被使用的。 因此 <code>portName</code> 最好不要使用 <strong>纯数字</strong>， 避免造成混淆。</p></blockquote><p>以下是对 ServiceBackendPort 的定义， 支持 <code>string 的 name</code> 和 <code>int32 的 Number</code></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#998;font-style:italic>// k8s.io/api@v0.21.4/networking/v1/types.go
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// ServiceBackendPort is the service port being referenced.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>type</span> ServiceBackendPort <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// Name is the name of the port on the Service.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// This is a mutually exclusive setting with &#34;Number&#34;.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// +optional
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	Name <span style=color:#458;font-weight:700>string</span> <span style=color:#d14>`json:&#34;name,omitempty&#34; protobuf:&#34;bytes,1,opt,name=name&#34;`</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// Number is the numerical port number (e.g. 80) on the Service.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// This is a mutually exclusive setting with &#34;Name&#34;.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// +optional
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	Number <span style=color:#458;font-weight:700>int32</span> <span style=color:#d14>`json:&#34;number,omitempty&#34; protobuf:&#34;bytes,2,opt,name=number&#34;`</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/books/k8sailor/chapter02/20-create-ingress/>https://tangx.in/posts/books/k8sailor/chapter02/20-create-ingress/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/books/k8sailor/chapter01/02-design-cobra-command/>k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=/posts/books/k8sailor/chapter01/01-install-k3s-cluster/>k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=/posts/2023/01/10/english-again-and-again-pronounce/>英语怎么说 - Again and Again 怎么连读</a></li><li><a href=/posts/2023/01/09/golang-timezone-issue/>Golang 中的时区问题处理(汇总)</a></li><li><a href=/posts/books/kubebuilder-zero-to-one/01-kubebuilder-init-project/>《kubebuilder 从零开始实战》 - 01. 使用 kuberbuilder 初始化项目</a></li></ul></div><div class="post-meta meta-tags">没有标签</div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/01-install-k3s-cluster/ title="k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境" target=_blank>k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/02-design-cobra-command/ title="k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境" target=_blank>k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=https://tangx.in/posts/2023/01/10/english-again-and-again-pronounce/ title="英语怎么说 -  Again and Again 怎么连读" target=_blank>英语怎么说 - Again and Again 怎么连读</a></li><li><a href=https://tangx.in/posts/2023/01/09/golang-timezone-issue/ title="Golang 中的时区问题处理(汇总)" target=_blank>Golang 中的时区问题处理(汇总)</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/01-kubebuilder-init-project/ title="《kubebuilder 从零开始实战》 - 01. 使用 kuberbuilder 初始化项目" target=_blank>《kubebuilder 从零开始实战》 - 01. 使用 kuberbuilder 初始化项目</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/02-simplest-redis-crd/ title="《kubebuilder 从零开始实战》 - 02. 定义对象 CRD 字段， 实现第一个 DEMO" target=_blank>《kubebuilder 从零开始实战》 - 02. 定义对象 CRD 字段， 实现第一个 DEMO</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/03-deploy-crd-controller/ title="《kubebuilder 从零开始实战》 - 03. 优化配置 发布 crd controller 到集群" target=_blank>《kubebuilder 从零开始实战》 - 03. 优化配置 发布 crd controller 到集群</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/04-filed-validation-by-comment/ title="《kubebuilder 从零开始实战》 - 04. 使用注解完整字段值约束" target=_blank>《kubebuilder 从零开始实战》 - 04. 使用注解完整字段值约束</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/05-filed-validation-by-webhook/ title="《kubebuilder 从零开始实战》 - 05. 使用注解完整字段值约束" target=_blank>《kubebuilder 从零开始实战》 - 05. 使用注解完整字段值约束</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/06-create-pod-by-redis-operator/ title="《kubebuilder 从零开始实战》 - 06. 使用 Operator 创建并发布一个 Pod" target=_blank>《kubebuilder 从零开始实战》 - 06. 使用 Operator 创建并发布一个 Pod</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (10)</a></li><li><a href=https://tangx.in/categories/books/>books (13)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (3)</a></li><li><a href=https://tangx.in/categories/english/>english (3)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (4)</a></li><li><a href=https://tangx.in/categories/k8sailor/>k8sailor (2)</a></li><li><a href=https://tangx.in/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://tangx.in/categories/kubernetes/>kubernetes (32)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/github/>github</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubebuilder/>kubebuilder</a>
+<a href=https://tangx.in/tags/kustomize/>kustomize</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/library/>library</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/pgsql/>pgsql</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qcloud/>qcloud</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/qos/>qos</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/time/>time</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://tangx.in/tags/%E6%89%98%E4%B8%9A%E8%8B%B1%E8%AF%AD/>托业英语</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

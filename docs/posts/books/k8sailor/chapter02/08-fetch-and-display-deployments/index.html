@@ -1,0 +1,294 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>| 老麦的书房</title><meta property="og:title" content=" - 老麦的书房"><meta property="og:type" content="article"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/books/k8sailor/chapter02/08-fetch-and-display-deployments/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
+<script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?3ed4211d4b231bb7277eca826149b74f",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#使用-axios-请求-deployments-数据>使用 Axios 请求 Deployments 数据</a><ul><li><a href=#使用-axios-config-模式初始化一个客户端>使用 axios config 模式初始化一个客户端</a></li><li><a href=#创建-deployments-的请求参数>创建 deployments 的请求参数</a></li></ul></li><li><a href=#server-端允许-cors-跨域>server 端允许 cors 跨域</a></li><li><a href=#vue3-展示数据>vue3 展示数据</a><ul><li><a href=#使用-onmounted-加载数据>使用 onMounted 加载数据</a></li><li><a href=#使用-v-for-显示数据>使用 v-for 显示数据</a></li><li><a href=#使用-v-if-进行条件渲染>使用 v-if 进行条件渲染</a></li><li><a href=#使用-v-model-绑定数据>使用 v-model 绑定数据</a></li><li><a href=#使用-v-on-绑定事件>使用 v-on 绑定事件</a></li></ul></li><li><a href=#问题遗留>问题遗留</a><ul><li><a href=#301-重定向遇到跨域问题>301 重定向遇到跨域问题。</a></li></ul></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title></h1></header><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=post-content><h1 id=获取并展示-deployments-信息>获取并展示 Deployments 信息</h1><blockquote><p>tag:
+<a href=https://github.com/tangx/k8sailor/tree/feat/08-fetch-and-display-deployments target=_blank rel=noopener>https://github.com/tangx/k8sailor/tree/feat/08-fetch-and-display-deployments</a></p></blockquote><p><img class=mx-auto alt=display-deployments.png src=https://static.tangx.in/posts/books/k8sailor/chapter02/08-fetch-and-display-deployments/display-deployments-fs8.png!v1></p><p><img class=mx-auto alt=display-deployments-kube-system.png src=https://static.tangx.in/posts/books/k8sailor/chapter02/08-fetch-and-display-deployments/display-deployments-kube-system-fs8.png!v1></p><h2 id=使用-axios-请求-deployments-数据>使用 Axios 请求 Deployments 数据</h2><p>安装 axios 客户端</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># 安装 axios</span>
+</span></span><span style=display:flex><span>yarn add axios
+</span></span></code></pre></td></tr></table></div></div><p>创建
+<a href=https://static.tangx.in/webapp/src/apis target=_blank rel=noopener>/webapp/src/apis</a>
+目录， 用于存放所有针对 k8sailor 后端的数据请求</p><h3 id=使用-axios-config-模式初始化一个客户端>使用 axios config 模式初始化一个客户端</h3><p><a href=https://static.tangx.in/webapp/src/apis/httpc.ts target=_blank rel=noopener>/webapp/src/apis/httpc.ts</a></p><p>axios config 模式可以创建一个 http 客户端，其中包含了各种各样的初始化参数， 使用这个模式就不用在每个请求中都写重复的内容了。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">9
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ts data-lang=ts><span style=display:flex><span><span style=color:#000;font-weight:700>import</span> axios <span style=color:#000;font-weight:700>from</span> <span style=color:#d14>&#39;axios&#39;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// 使用 config 模式
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// https://github.com/axios/axios#config-defaults
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>let</span> httpc <span style=color:#000;font-weight:700>=</span> axios.create({
+</span></span><span style=display:flex><span>    baseURL<span style=color:#000;font-weight:700>:</span><span style=color:#d14>&#34;http://127.0.0.1:8088/k8sailor/v0&#34;</span>
+</span></span><span style=display:flex><span>})
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>export</span> <span style=color:#000;font-weight:700>default</span> httpc
+</span></span></code></pre></td></tr></table></div></div><h3 id=创建-deployments-的请求参数>创建 deployments 的请求参数</h3><p><a href=https://static.tangx.in/webapp/src/apis/deployment.ts target=_blank rel=noopener>/webapp/src/apis/deployment.ts</a></p><p>有了公共的 <code>httpc</code> 之后， 在不同的 <strong>组建</strong> 中就可以直接 <code>import</code> 使用了。</p><blockquote><p>注意: 在 <code>httpc.get()</code> 的时候， 只写了 <code>deployments</code> 的接口相对地址。 在发送请求是， axsio 会自动进行补全。</p></blockquote><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ts data-lang=ts><span style=display:flex><span><span style=color:#000;font-weight:700>import</span> httpc <span style=color:#000;font-weight:700>from</span> <span style=color:#d14>&#39;./httpc&#39;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// 获取所有 deployment 信息
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// namespace 默认值为 defualt
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// 使用 async await 解析内容
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>async</span> <span style=color:#000;font-weight:700>function</span> getAllDeployments(<span style=color:#000;font-weight:700>namespace</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#d14>&#34;default&#34;</span>)<span style=color:#000;font-weight:700>:</span> Promise&lt;<span style=color:navy>Deployment</span>&gt;{
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>const</span> resp <span style=color:#000;font-weight:700>=</span> <span style=color:#000;font-weight:700>await</span> httpc.<span style=color:#000;font-weight:700>get</span>(<span style=color:#d14>`/deployments?namespace=</span><span style=color:#d14>${</span><span style=color:#000;font-weight:700>namespace</span><span style=color:#d14>}</span><span style=color:#d14>`</span>)
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>// console.log(resp.data)
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#000;font-weight:700>return</span> resp.data
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h2 id=server-端允许-cors-跨域>server 端允许 cors 跨域</h2><p>到这里会遇到 <strong>跨域</strong> 问题。 由于目前 <strong>前后端</strong> 是分离的，并且之前我们在 server 并没有相关代码允许跨域请求。 所有通过页面的请求 <em>暂时</em> 是无法拿到数据的。</p><p>跨域在 gin 中的实现其实就是 <code>gin.HandlerFunc</code>， 可以理解成一种中间件。</p><p>以下是跨域规则， 规则比较暴力， 极狐允许了全部请求， 在实际使用中， 可以进行按需调整。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>cors</span>() gin.HandlerFunc {
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>func</span>(c <span style=color:#000;font-weight:700>*</span>gin.Context) {
+</span></span><span style=display:flex><span>		method <span style=color:#000;font-weight:700>:=</span> c.Request.Method
+</span></span><span style=display:flex><span>		<span style=color:#000;font-weight:700>if</span> method <span style=color:#000;font-weight:700>!=</span> <span style=color:#d14>&#34;&#34;</span> {
+</span></span><span style=display:flex><span>			c.<span style=color:#900;font-weight:700>Header</span>(<span style=color:#d14>&#34;Access-Control-Allow-Origin&#34;</span>, <span style=color:#d14>&#34;*&#34;</span>) <span style=color:#998;font-style:italic>// 可将将 * 替换为指定的域名
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>			c.<span style=color:#900;font-weight:700>Header</span>(<span style=color:#d14>&#34;Access-Control-Allow-Methods&#34;</span>, <span style=color:#d14>&#34;POST, GET, OPTIONS, PUT, DELETE, UPDATE&#34;</span>)
+</span></span><span style=display:flex><span>			c.<span style=color:#900;font-weight:700>Header</span>(<span style=color:#d14>&#34;Access-Control-Allow-Headers&#34;</span>, <span style=color:#d14>&#34;Origin, X-Requested-With, Content-Type, Accept, Authorization,X-Token&#34;</span>)
+</span></span><span style=display:flex><span>			c.<span style=color:#900;font-weight:700>Header</span>(<span style=color:#d14>&#34;Access-Control-Expose-Headers&#34;</span>, <span style=color:#d14>&#34;Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Cache-Control, Content-Language, Content-Type&#34;</span>)
+</span></span><span style=display:flex><span>			c.<span style=color:#900;font-weight:700>Header</span>(<span style=color:#d14>&#34;Access-Control-Allow-Credentials&#34;</span>, <span style=color:#d14>&#34;true&#34;</span>)
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>		<span style=color:#000;font-weight:700>if</span> method <span style=color:#000;font-weight:700>==</span> <span style=color:#d14>&#34;OPTIONS&#34;</span> {
+</span></span><span style=display:flex><span>			c.<span style=color:#900;font-weight:700>AbortWithStatus</span>(http.StatusNoContent)
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>接下来在 server 端应用规则， 允许跨域。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#998;font-style:italic>// RegisterRoute 注册
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span> (s <span style=color:#000;font-weight:700>*</span>Server) <span style=color:#900;font-weight:700>RegisterRoute</span>(registerFunc <span style=color:#000;font-weight:700>func</span>(rg <span style=color:#000;font-weight:700>*</span>gin.RouterGroup)) {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// 注册以服务名为根的路由信息，方便在 k8s ingress 中做转发
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	base <span style=color:#000;font-weight:700>:=</span> s.engine.<span style=color:#900;font-weight:700>Group</span>(s.Appname)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// 针对 appname 下的路由，允许跨域
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	base.<span style=color:#900;font-weight:700>Use</span>(<span style=color:#900;font-weight:700>cors</span>())
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// 注册业务子路由
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#900;font-weight:700>registerFunc</span>(base)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>这里并没有在 <strong>根路由</strong> 下允许， 而是在 <code>/:appname</code> 下允许。</p><p>也就是说如下</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># 允许跨域</span>
+</span></span><span style=display:flex><span>/appname/deployments   
+</span></span><span style=display:flex><span>/appname/pods/:podname  
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># 不允许跨域</span>
+</span></span><span style=display:flex><span>/ping
+</span></span></code></pre></td></tr></table></div></div><h2 id=vue3-展示数据>vue3 展示数据</h2><p>使用 <code>reactive</code> 定义一个 <strong>响应式</strong> 数据</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>script</span> <span style=color:teal>setup</span> <span style=color:teal>lang</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;ts&#39;</span>&gt;
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>import</span> {reactive } from <span style=color:#d14>&#39;@vue/reactivity&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>import</span> client,{ DeploymentItem } from <span style=color:#d14>&#39;../apis/deployment&#39;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>let</span> data <span style=color:#000;font-weight:700>=</span> reactive({
+</span></span><span style=display:flex><span>  namespace<span style=color:#000;font-weight:700>:</span><span style=color:#d14>&#34;default&#34;</span>,
+</span></span><span style=display:flex><span>  error<span style=color:#000;font-weight:700>:</span> <span style=color:#d14>&#34;&#34;</span>,
+</span></span><span style=display:flex><span>  items<span style=color:#000;font-weight:700>:</span> [] as DeploymentItem[]
+</span></span><span style=display:flex><span>})
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>&lt;/<span style=color:navy>script</span>&gt;
+</span></span></code></pre></td></tr></table></div></div><h3 id=使用-onmounted-加载数据>使用 onMounted 加载数据</h3><p><code>onMounted</code> 是 vue3 的生命周期钩子的其中一个, 在页面加载时执行。</p><blockquote><p><a href=https://v3.vuejs.org/guide/composition-api-lifecycle-hooks.html target=_blank rel=noopener>https://v3.vuejs.org/guide/composition-api-lifecycle-hooks.html</a></p></blockquote><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>script</span> <span style=color:teal>setup</span> <span style=color:teal>lang</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;ts&#39;</span>&gt;
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>import</span> {reactive } from <span style=color:#d14>&#39;@vue/reactivity&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>import</span> { onMounted } from <span style=color:#d14>&#39;@vue/runtime-core&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// ...
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>
+</span></span><span style=display:flex><span>onMounted(()=&gt;{
+</span></span><span style=display:flex><span>  getAllByNamespace()
+</span></span><span style=display:flex><span>})
+</span></span><span style=display:flex><span>&lt;/<span style=color:navy>script</span>&gt;
+</span></span></code></pre></td></tr></table></div></div><h3 id=使用-v-for-显示数据>使用 v-for 显示数据</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span>    &lt;<span style=color:navy>tr</span> <span style=color:teal>v-for</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;(item,id) in data.items&#34;</span> <span style=color:teal>key</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>:id</span>&gt;
+</span></span><span style=display:flex><span>      &lt;<span style=color:navy>th</span> <span style=color:teal>scope</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;row&#34;</span>&gt;{{ id }}&lt;/<span style=color:navy>th</span>&gt;
+</span></span><span style=display:flex><span>      &lt;<span style=color:navy>td</span>&gt;{{ item.name }}&lt;/<span style=color:navy>td</span>&gt;
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 省略 --&gt;</span>
+</span></span><span style=display:flex><span>    &lt;/<span style=color:navy>tr</span>&gt;
+</span></span></code></pre></td></tr></table></div></div><h3 id=使用-v-if-进行条件渲染>使用 v-if 进行条件渲染</h3><p>在返回的数据中， 有两种状况:</p><ol><li>有错误， 没数据</li><li>没错误， 有数据</li></ol><p>因此设置了两个容器（错误与表格）， 使用 <code>v-if</code> 根据是否有错误消息决定是否展示这两部分容器</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 当数据异常的时候显示 --&gt;</span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>div</span> <span style=color:teal>class</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;error-container&#34;</span> <span style=color:teal>v-if</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;data.error&#34;</span>&gt;
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 省略 --&gt;</span>
+</span></span><span style=display:flex><span>&lt;/<span style=color:navy>div</span>&gt;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>&lt;!-- 当数据正常的时候显示 --&gt;</span>
+</span></span><span style=display:flex><span>&lt;<span style=color:navy>table</span> <span style=color:teal>class</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;table&#34;</span> <span style=color:teal>v-if</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;!data.error&#34;</span>&gt;
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>&lt;!-- 省略 --&gt;</span>
+</span></span><span style=display:flex><span>&lt;/<span style=color:navy>table</span>&gt;
+</span></span></code></pre></td></tr></table></div></div><h3 id=使用-v-model-绑定数据>使用 v-model 绑定数据</h3><p><code>v-model</code> 数据的双向绑定。
+<code>v-model="data.source"</code> 是将 <code>data.source</code> 的值绑定到 <strong>控件</strong> 的 <strong>value</strong> 属性上。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span>  &lt;<span style=color:navy>input</span> <span style=color:teal>type</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;text&#34;</span> <span style=color:teal>placeholder</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;default&#34;</span> <span style=color:teal>v-model</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;data.namespace&#34;</span>&gt;
+</span></span></code></pre></td></tr></table></div></div><h3 id=使用-v-on-绑定事件>使用 v-on 绑定事件</h3><p><code>@</code> 是 <code>v-on</code> 的语法糖， 因此<code>@click</code> 完全写法就是 <code>v-on=click</code>。 意思就是 <strong>点击按钮</strong> 触发 <strong>getAllByNamespace</strong> 方法。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span>  &lt;<span style=color:navy>button</span> <span style=color:#a61717;background-color:#e3d2d2>@</span><span style=color:teal>click</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;getAllByNamespace(data.namespace)&#34;</span>&gt;更新数据&lt;/<span style=color:navy>button</span>&gt;
+</span></span></code></pre></td></tr></table></div></div><h2 id=问题遗留>问题遗留</h2><h3 id=301-重定向遇到跨域问题>301 重定向遇到跨域问题。</h3></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/books/k8sailor/chapter02/08-fetch-and-display-deployments/>https://tangx.in/posts/books/k8sailor/chapter02/08-fetch-and-display-deployments/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/books/k8sailor/chapter01/02-design-cobra-command/>k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=/posts/books/k8sailor/chapter01/01-install-k3s-cluster/>k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=/posts/2023/01/10/english-again-and-again-pronounce/>英语怎么说 - Again and Again 怎么连读</a></li><li><a href=/posts/2023/01/09/golang-timezone-issue/>Golang 中的时区问题处理(汇总)</a></li><li><a href=/posts/books/kubebuilder-zero-to-one/01-kubebuilder-init-project/>《kubebuilder 从零开始实战》 - 01. 使用 kuberbuilder 初始化项目</a></li></ul></div><div class="post-meta meta-tags">没有标签</div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/01-install-k3s-cluster/ title="k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境" target=_blank>k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/02-design-cobra-command/ title="k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境" target=_blank>k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=https://tangx.in/posts/2023/01/10/english-again-and-again-pronounce/ title="英语怎么说 -  Again and Again 怎么连读" target=_blank>英语怎么说 - Again and Again 怎么连读</a></li><li><a href=https://tangx.in/posts/2023/01/09/golang-timezone-issue/ title="Golang 中的时区问题处理(汇总)" target=_blank>Golang 中的时区问题处理(汇总)</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/01-kubebuilder-init-project/ title="《kubebuilder 从零开始实战》 - 01. 使用 kuberbuilder 初始化项目" target=_blank>《kubebuilder 从零开始实战》 - 01. 使用 kuberbuilder 初始化项目</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/02-simplest-redis-crd/ title="《kubebuilder 从零开始实战》 - 02. 定义对象 CRD 字段， 实现第一个 DEMO" target=_blank>《kubebuilder 从零开始实战》 - 02. 定义对象 CRD 字段， 实现第一个 DEMO</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/03-deploy-crd-controller/ title="《kubebuilder 从零开始实战》 - 03. 优化配置 发布 crd controller 到集群" target=_blank>《kubebuilder 从零开始实战》 - 03. 优化配置 发布 crd controller 到集群</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/04-filed-validation-by-comment/ title="《kubebuilder 从零开始实战》 - 04. 使用注解完整字段值约束" target=_blank>《kubebuilder 从零开始实战》 - 04. 使用注解完整字段值约束</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/05-filed-validation-by-webhook/ title="《kubebuilder 从零开始实战》 - 05. 使用注解完整字段值约束" target=_blank>《kubebuilder 从零开始实战》 - 05. 使用注解完整字段值约束</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/06-create-pod-by-redis-operator/ title="《kubebuilder 从零开始实战》 - 06. 使用 Operator 创建并发布一个 Pod" target=_blank>《kubebuilder 从零开始实战》 - 06. 使用 Operator 创建并发布一个 Pod</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (10)</a></li><li><a href=https://tangx.in/categories/books/>books (13)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (3)</a></li><li><a href=https://tangx.in/categories/english/>english (3)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (4)</a></li><li><a href=https://tangx.in/categories/k8sailor/>k8sailor (2)</a></li><li><a href=https://tangx.in/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://tangx.in/categories/kubernetes/>kubernetes (32)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/github/>github</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubebuilder/>kubebuilder</a>
+<a href=https://tangx.in/tags/kustomize/>kustomize</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/library/>library</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/pgsql/>pgsql</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qcloud/>qcloud</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/qos/>qos</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/time/>time</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://tangx.in/tags/%E6%89%98%E4%B8%9A%E8%8B%B1%E8%AF%AD/>托业英语</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>

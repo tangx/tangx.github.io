@@ -1,0 +1,269 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>| 老麦的书房</title><meta property="og:title" content=" - 老麦的书房"><meta property="og:type" content="article"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/books/k8sailor/chapter02/19-create-service/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
+<script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?3ed4211d4b231bb7277eca826149b74f",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#port-targetport-nodeport>port, targetPort, nodePort</a><ul><li><a href=#解析-port>解析 port</a></li></ul></li><li><a href=#headless-service>headless service</a><ul><li><a href=#解析-headless-port>解析 Headless Port</a></li></ul></li><li><a href=#external-name>external name</a><ul><li><a href=#解析-externalname>解析 externalName</a></li></ul></li><li><a href=#总结>总结</a><ul><li><a href=#demo>demo</a></li></ul></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title></h1></header><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=post-content><h1 id=为-deployment-创建-service>为 Deployment 创建 Service</h1><blockquote><p>tag:
+<a href=https://github.com/tangx/k8sailor/tree/feat/19-create-service target=_blank rel=noopener>https://github.com/tangx/k8sailor/tree/feat/19-create-service</a></p></blockquote><blockquote><p><a href=https://kubernetes.io/zh/docs/concepts/services-networking/service/#externalname target=_blank rel=noopener>https://kubernetes.io/zh/docs/concepts/services-networking/service/#externalname</a></p></blockquote><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>kubectl create service clusterip nginx-web --clusterip<span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;port:targetPort&#34;</span>
+</span></span><span style=display:flex><span>kubectl create service clusterip nginx-web --clusterip<span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;8082:80&#34;</span>
+</span></span><span style=display:flex><span>kubectl create service nodeport  nginx-web --clusterip<span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;8081:80&#34;</span>
+</span></span></code></pre></td></tr></table></div></div><p>需要注意, 使用 <code>kubectl get service</code> 查看到的 <code>Ports</code> 的展示结果为 <code>port:nodePort</code>， 而 <code>targetPort</code> 不展示。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># kubectl get service</span>
+</span></span><span style=display:flex><span>NAME                    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span style=color:#000;font-weight:700>(</span>S<span style=color:#000;font-weight:700>)</span>         AGE
+</span></span><span style=display:flex><span>demo-nginx-nodeport-3   NodePort    10.43.181.29    &lt;none&gt;        80:32425/TCP    4s
+</span></span></code></pre></td></tr></table></div></div><h2 id=port-targetport-nodeport>port, targetPort, nodePort</h2><p><img class=mx-auto alt=nodeport-port-targetport src=https://static.tangx.in/posts/books/k8sailor/chapter02/19-create-service/nodeport-port-targetport-fs8.png!v1></p><p>端口映射中的四个 <strong>比较关键</strong> 的要素:</p><ol><li>name: 避免端口相同时，默认名字冲突</li><li>port: service 对外提供服务的端口</li><li>targetPort: service 指向的 pod 的端口， 即 pod 对外服务的端口。</li><li>nodePort: node 对外提供服务的端口， 通过 kube-proxy 修改 iptables 将流量转发到 service 上。</li></ol><p>其中， targetPort 可以是 <code>string / int32</code> 的复合类型， 定义如下。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#998;font-style:italic>// k8s.io/api@v0.21.4/core/v1/types.go
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// ServicePort contains information on service&#39;s port.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>type</span> ServicePort <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// Number or name of the port to access on the pods targeted by the service.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// If this is a string, it will be looked up as a named port in the
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// target Pod&#39;s container ports. If this is not specified, the value
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// of the &#39;port&#39; field is used (an identity map).
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// This field is ignored for services with clusterIP=None, and should be
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// omitted or set equal to the &#39;port&#39; field.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// More info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#998;font-style:italic>// +optional
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	TargetPort intstr.IntOrString <span style=color:#d14>`json:&#34;targetPort,omitempty&#34; protobuf:&#34;bytes,4,opt,name=targetPort&#34;`</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>在 <strong>apimachinery<code>(k8s.io/apimachinery@v0.21.4/pkg/util/)</code></strong> 包中， 提供了很多针对 k8s 对象的常用方法。</p><h3 id=解析-port>解析 port</h3><p>为了能简化 api 请求的参数， 因此对 clusterIp 和 nodePort 使用了符号表示： 默认为 clusterIp， 如果有 <strong>叹号<code>!</code></strong> 则为 nodePort。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span>port    <span style=color:#998;font-style:italic>// clusterIp, port 与 targetPort 一致
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>port:targetPort <span style=color:#998;font-style:italic>// clusterIp, port 与 targetPort 可能不一致
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>
+</span></span><span style=display:flex><span>!port:targetPort <span style=color:#998;font-style:italic>// nodeport, 端口号随机: port 与 targetPort 可能不一致
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>!nodePort:port:targetPort <span style=color:#998;font-style:italic>// nodeport, 指定端口号, 端口可能因为被使用而创建失败
+</span></span></span></code></pre></td></tr></table></div></div><h2 id=headless-service>headless service</h2><p>对 statefuleset 有效， 对 deployment 无效</p><blockquote><p><a href=https://kubernetes.io/zh/docs/concepts/workloads/controllers/statefulset/ target=_blank rel=noopener>https://kubernetes.io/zh/docs/concepts/workloads/controllers/statefulset/</a></p></blockquote><p><img class=mx-auto alt=service-headless src=https://static.tangx.in/posts/books/k8sailor/chapter02/19-create-service/service-headless-fs8.png!v1></p><p>使用 <code>headless</code> 之后， k8s 将不再创建 <code>service</code> 进行 pod 的负载均衡。 取而代之的是 <strong>DNS</strong> 将每个 pod 直接解析暴露， 域名规则 <code>podName.serviceName.namespace.Cluster</code>。</p><blockquote><p>注意: statefuleSet 对与绑定的 serviceName 是有强力约束的。 只有匹配名字的 service 才能提供响应的服务。</p></blockquote><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:navy>apiVersion</span>:<span style=color:#bbb> </span>apps/v1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>kind</span>:<span style=color:#bbb> </span>StatefulSet<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>metadata</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>web<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>spec</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>selector</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>matchLabels</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>app</span>:<span style=color:#bbb> </span>nginx <span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>serviceName</span>:<span style=color:#bbb> </span><span style=color:#d14>&#34;nginx&#34;</span><span style=color:#bbb> </span><span style=color:#998;font-style:italic># 约束只能匹配名为 `nginx` 的 service</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>replicas</span>:<span style=color:#bbb> </span><span style=color:#099>3</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>template</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:#998;font-style:italic># .... 省略</span><span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><h3 id=解析-headless-port>解析 Headless Port</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>kubectl create service clusterip my-nginx-web  --clusterip<span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;None&#34;</span> --tcp<span style=color:#000;font-weight:700>=</span>8088:80
+</span></span></code></pre></td></tr></table></div></div><p>从 kubectl 的命令中可以看到， <code>Headless Service</code> 可以被认为 <code>clusterip</code> 的一个子类， 其特殊之处就是 <code>ClusterIp: None</code></p><p>鉴于此， 对之前的 Port 规则进行了一定扩展。</p><p>规则基本类似， 采用了的新的符号 <code>#</code> 表示 Headless 服务。 <code>#</code> 在很多地方表示注释， 注释对外看不见，因此用以表示 <code>Headless</code>。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2>#</span>port:targetPort <span style=color:#998;font-style:italic>// headless 
+</span></span></span></code></pre></td></tr></table></div></div><p>本身 <strong>NodePort 和 Headless</strong> 就是不兼容的， 由于 <code>#, !</code> 在同一个位置， 也一定程度上避免了 <strong>误写</strong></p><h2 id=external-name>external name</h2><p>externalName service 就是 k8s 集群通过 coredns 实现的 <strong>CNAME</strong> 服务， 从而实现了 <strong>在集群内部不依赖外部地址</strong> 的内聚效果。</p><p>无论依赖资源地址是否发生变化（例如 迁移）， 客户端服务都不需要进行任何变更，只需要通过外部配置更新 service 的 externalName 即可完成切换。</p><p><img class=mx-auto alt=service-external-name src=https://static.tangx.in/posts/books/k8sailor/chapter02/19-create-service/service-external-name-fs8.png!v1></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>kubectl create service externalname my-ns --external-name www.baidu.com
+</span></span></code></pre></td></tr></table></div></div><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#998;font-style:italic># kgs my-ns -o yaml</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>apiVersion</span>:<span style=color:#bbb> </span>v1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>kind</span>:<span style=color:#bbb> </span>Service<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>metadata</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>labels</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>app</span>:<span style=color:#bbb> </span>my-ns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>my-ns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>namespace</span>:<span style=color:#bbb> </span>default<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>spec</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>externalName</span>:<span style=color:#bbb> </span>www.baidu.com<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:#998;font-style:italic># selector:   # external 是不需要选择器的</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:#998;font-style:italic>#   app: my-ns</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>sessionAffinity</span>:<span style=color:#bbb> </span>None<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>type</span>:<span style=color:#bbb> </span>ExternalName<span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><p>通过 ping 命令可以看到， <code>my-ns</code> 和 <code>www.baidu.com</code> 结果是一样的。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">9
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># ping my-ns</span>
+</span></span><span style=display:flex><span>PING www.a.shifen.com <span style=color:#000;font-weight:700>(</span>110.242.68.4<span style=color:#000;font-weight:700>)</span> 56<span style=color:#000;font-weight:700>(</span>84<span style=color:#000;font-weight:700>)</span> bytes of data.
+</span></span><span style=display:flex><span><span style=color:#099>64</span> bytes from 110.242.68.4 <span style=color:#000;font-weight:700>(</span>110.242.68.4<span style=color:#000;font-weight:700>)</span>: <span style=color:teal>icmp_seq</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>1</span> <span style=color:teal>ttl</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>48</span> <span style=color:teal>time</span><span style=color:#000;font-weight:700>=</span>12.2 ms
+</span></span><span style=display:flex><span><span style=color:#099>64</span> bytes from 110.242.68.4 <span style=color:#000;font-weight:700>(</span>110.242.68.4<span style=color:#000;font-weight:700>)</span>: <span style=color:teal>icmp_seq</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>2</span> <span style=color:teal>ttl</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>48</span> <span style=color:teal>time</span><span style=color:#000;font-weight:700>=</span>12.1 ms
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># ping www.baidu.com</span>
+</span></span><span style=display:flex><span>PING www.a.shifen.com <span style=color:#000;font-weight:700>(</span>110.242.68.3<span style=color:#000;font-weight:700>)</span> 56<span style=color:#000;font-weight:700>(</span>84<span style=color:#000;font-weight:700>)</span> bytes of data.
+</span></span><span style=display:flex><span><span style=color:#099>64</span> bytes from 110.242.68.3 <span style=color:#000;font-weight:700>(</span>110.242.68.3<span style=color:#000;font-weight:700>)</span>: <span style=color:teal>icmp_seq</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>1</span> <span style=color:teal>ttl</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>48</span> <span style=color:teal>time</span><span style=color:#000;font-weight:700>=</span>11.2 ms
+</span></span><span style=display:flex><span><span style=color:#099>64</span> bytes from 110.242.68.3 <span style=color:#000;font-weight:700>(</span>110.242.68.3<span style=color:#000;font-weight:700>)</span>: <span style=color:teal>icmp_seq</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>2</span> <span style=color:teal>ttl</span><span style=color:#000;font-weight:700>=</span><span style=color:#099>48</span> <span style=color:teal>time</span><span style=color:#000;font-weight:700>=</span>11.2 ms
+</span></span></code></pre></td></tr></table></div></div><h3 id=解析-externalname>解析 externalName</h3><p>由于 externalName 是完全的 DNS 行为。 1. 没有 pod 映射， 2. 也不需要 label selector 选择后端的提供服务的 Pod。 因此， 之前的 <strong>port:targetPort</strong> 规则也就用不上了。</p><p>对于 externalName 引入了新的符号 <strong>at <code>@</code></strong> ， <code>@</code> 本身也有 <strong>到、去</strong> 目的地的意思。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2>@</span>external.name
+</span></span></code></pre></td></tr></table></div></div><h2 id=总结>总结</h2><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># k create service --help</span>
+</span></span><span style=display:flex><span>Available Commands:
+</span></span><span style=display:flex><span>  clusterip    Create a ClusterIP service.
+</span></span><span style=display:flex><span>  externalname Create an ExternalName service.
+</span></span><span style=display:flex><span>  loadbalancer 创建一个 LoadBalancer service.
+</span></span><span style=display:flex><span>  nodeport     创建一个 NodePort service.
+</span></span></code></pre></td></tr></table></div></div><p>自此 kubectl 创建 service 常用的几个子命令已经实现了。</p><ol><li>clusterip:<ul><li>normal: <code>port:targetPort</code></li><li>headless: <code>#port:targetPort</code></li></ul></li><li>externalname: <code>@external.com</code></li><li>nodeport:<ul><li>指定 nodePort 端口: <code>!nodeport:port:targetPort</code></li><li>随机 nodePort 端口: <code>!port:targetPort</code></li></ul></li></ol><h3 id=demo>demo</h3><p>services 中的参数互斥， 不能共用。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic>### CREATE servcie , Headless</span>
+</span></span><span style=display:flex><span>POST http://127.0.0.1:8088/k8sailor/v0/services/demo-nginx-211?namespace<span style=color:#000;font-weight:700>=</span>default
+</span></span><span style=display:flex><span>Content-Type: application/json
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#d14>&#34;services&#34;</span>:<span style=color:#000;font-weight:700>[</span>
+</span></span><span style=display:flex><span>        <span style=color:#d14>&#34;80:8088&#34;</span>,         <span style=color:#998;font-style:italic># clusterip</span>
+</span></span><span style=display:flex><span>        <span style=color:#d14>&#34;#80:80&#34;</span>,          <span style=color:#998;font-style:italic># headless</span>
+</span></span><span style=display:flex><span>        <span style=color:#d14>&#34;!31234:80:8088&#34;</span>,  <span style=color:#998;font-style:italic># nodeport</span>
+</span></span><span style=display:flex><span>        <span style=color:#d14>&#34;@www.baidu.com&#34;</span>,  <span style=color:#998;font-style:italic># external name</span>
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>]</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>}</span>
+</span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/books/k8sailor/chapter02/19-create-service/>https://tangx.in/posts/books/k8sailor/chapter02/19-create-service/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/books/k8sailor/chapter01/01-install-k3s-cluster/>k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=/posts/books/k8sailor/chapter01/02-design-cobra-command/>k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=/posts/2023/01/10/english-again-and-again-pronounce/>英语怎么说 - Again and Again 怎么连读</a></li><li><a href=/posts/2023/01/09/golang-timezone-issue/>Golang 中的时区问题处理(汇总)</a></li><li><a href=/posts/books/kubebuilder-zero-to-one/01-kubebuilder-init-project/>《kubebuilder 从零开始实战》 - 01. 使用 kuberbuilder 初始化项目</a></li></ul></div><div class="post-meta meta-tags">没有标签</div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/01-install-k3s-cluster/ title="k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境" target=_blank>k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/02-design-cobra-command/ title="k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境" target=_blank>k8sailor 服务管理平台 - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=https://tangx.in/posts/2023/01/10/english-again-and-again-pronounce/ title="英语怎么说 -  Again and Again 怎么连读" target=_blank>英语怎么说 - Again and Again 怎么连读</a></li><li><a href=https://tangx.in/posts/2023/01/09/golang-timezone-issue/ title="Golang 中的时区问题处理(汇总)" target=_blank>Golang 中的时区问题处理(汇总)</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/01-kubebuilder-init-project/ title="《kubebuilder 从零开始实战》 - 01. 使用 kuberbuilder 初始化项目" target=_blank>《kubebuilder 从零开始实战》 - 01. 使用 kuberbuilder 初始化项目</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/02-simplest-redis-crd/ title="《kubebuilder 从零开始实战》 - 02. 定义对象 CRD 字段， 实现第一个 DEMO" target=_blank>《kubebuilder 从零开始实战》 - 02. 定义对象 CRD 字段， 实现第一个 DEMO</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/03-deploy-crd-controller/ title="《kubebuilder 从零开始实战》 - 03. 优化配置 发布 crd controller 到集群" target=_blank>《kubebuilder 从零开始实战》 - 03. 优化配置 发布 crd controller 到集群</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/04-filed-validation-by-comment/ title="《kubebuilder 从零开始实战》 - 04. 使用注解完整字段值约束" target=_blank>《kubebuilder 从零开始实战》 - 04. 使用注解完整字段值约束</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/05-filed-validation-by-webhook/ title="《kubebuilder 从零开始实战》 - 05. 使用注解完整字段值约束" target=_blank>《kubebuilder 从零开始实战》 - 05. 使用注解完整字段值约束</a></li><li><a href=https://tangx.in/posts/books/kubebuilder-zero-to-one/06-create-pod-by-redis-operator/ title="《kubebuilder 从零开始实战》 - 06. 使用 Operator 创建并发布一个 Pod" target=_blank>《kubebuilder 从零开始实战》 - 06. 使用 Operator 创建并发布一个 Pod</a></li></ul></section><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li><li><a href=https://url.cn/oThpo8gB title=【腾讯云】年终特惠，2核2G轻量应用服务器6.58元/月起 target=_blank style=color:red><img src=https://dscache.tencent-cloud.cn/upload//480x300-31cfe77af6a435bcde1680df1eb36fe936649b18.png></a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (10)</a></li><li><a href=https://tangx.in/categories/books/>books (13)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (3)</a></li><li><a href=https://tangx.in/categories/english/>english (3)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (4)</a></li><li><a href=https://tangx.in/categories/k8sailor/>k8sailor (2)</a></li><li><a href=https://tangx.in/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://tangx.in/categories/kubernetes/>kubernetes (32)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/github/>github</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubebuilder/>kubebuilder</a>
+<a href=https://tangx.in/tags/kustomize/>kustomize</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/library/>library</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/pgsql/>pgsql</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qcloud/>qcloud</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/qos/>qos</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/time/>time</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://tangx.in/tags/%E6%89%98%E4%B8%9A%E8%8B%B1%E8%AF%AD/>托业英语</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
