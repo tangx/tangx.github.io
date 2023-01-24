@@ -1,0 +1,238 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案 | 老麦的书房</title><meta property="og:title" content="DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2023-01-23T11:09:53+08:00"><meta property="article:modified_time" content="2023-01-23T11:09:53+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/2023/01/23/devopscamp-cobra01/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
+<script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?3ed4211d4b231bb7277eca826149b74f",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#作业要求>作业要求:</a></li><li><a href=#解题过程>解题过程</a><ul><li><a href=#1-安装依赖包>1. 安装依赖包</a></li><li><a href=#2-创建命令>2. 创建命令</a></li><li><a href=#3-指定参数>3. 指定参数</a></li><li><a href=#4-调用执行>4. 调用执行</a></li><li><a href=#4-使用-makefile-进行编译管理>4. 使用 Makefile 进行编译管理</a></li></ul></li><li><a href=#b站作业视频>B站作业视频</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案</h1></header><time datetime=2023-01-23T03:09:53Z class="post-meta meta-date dt-published">2023年1月23日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/devopscamp target=_blank>devopscamp</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=devopscamp-第一期作业-cobra---01-实现编译与参数绑定简单-解题答案>DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案</h1><blockquote><p><strong>原文链接:</strong>
+<a href=https://tangx.in/posts/2023/01/23/devopscamp-cobra01/ target=_blank rel=noopener>https://tangx.in/posts/2023/01/23/devopscamp-cobra01/</a></p></blockquote><p>本文为 <code>DevOpsCamp</code> 实战训练的作业解题答案 <strong>作业: cobra - 01 实现编译与参数绑定</strong>。</p><blockquote><p>DevOpsCamp作业地址:
+<a href=https://www.devopscamp.cc/semi-plan-202301-2/posts/homework/cobra01/ target=_blank rel=noopener>https://www.devopscamp.cc/semi-plan-202301-2/posts/homework/cobra01/</a></p></blockquote><p><img class=mx-auto alt=devopscamp-logo src=https://tangx.in/assets/tttuigguang/devops-camp-02.jpeg></p><h2 id=作业要求>作业要求:</h2><ol><li>使用
+<a href=https://github.com/spf13/cobra target=_blank rel=noopener>https://github.com/spf13/cobra</a>
+实现命令工具</li><li>命令具有以下参数<ol><li><code>--name</code> 姓名</li><li><code>--age</code> 年龄</li></ol></li><li>如果年龄为空， 默认为 20 岁。</li><li>完成交叉编译脚本， 编译其他平台的二进制文件</li></ol><pre tabindex=0><code>-rwxr-xr-x  1 franktang  staff  4220672 Jan 13 15:35 greeting-darwin-amd64
+-rwxr-xr-x  1 franktang  staff  4203442 Jan 13 15:35 greeting-darwin-arm64
+-rwxr-xr-x  1 franktang  staff  4215010 Jan 13 15:35 greeting-linux-amd64
+-rwxr-xr-x  1 franktang  staff  4157892 Jan 13 15:35 greeting-linux-arm64
+</code></pre><ol start=5><li>执行输出效果如下</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ ./out/greeting-darwin-arm64
+</span></span><span style=display:flex><span> 你好, 今年 <span style=color:#099>20</span> 岁
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>$ ./out/greeting-darwin-arm64 --age <span style=color:#099>30</span> --name zhangsan
+</span></span><span style=display:flex><span>zhangsan 你好, 今年 <span style=color:#099>30</span> 岁
+</span></span></code></pre></td></tr></table></div></div><h2 id=解题过程>解题过程</h2><h3 id=1-安装依赖包>1. 安装依赖包</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ go get -u github.com/spf13/cobra
+</span></span></code></pre></td></tr></table></div></div><h3 id=2-创建命令>2. 创建命令</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>var</span> root = <span style=color:#000;font-weight:700>&amp;</span>cobra.Command{
+</span></span><span style=display:flex><span>	Use:   <span style=color:#d14>&#34;greeting&#34;</span>,  <span style=color:#998;font-style:italic>// 命令名字
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	Short: <span style=color:#d14>&#34;打招呼&#34;</span>, <span style=color:#998;font-style:italic>// 短介绍
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	Run: <span style=color:#000;font-weight:700>func</span>(cmd <span style=color:#000;font-weight:700>*</span>cobra.Command, args []<span style=color:#458;font-weight:700>string</span>) { <span style=color:#998;font-style:italic>// 运行函数
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>		<span style=color:#900;font-weight:700>greeting</span>(name, age)
+</span></span><span style=display:flex><span>	},
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h3 id=3-指定参数>3. 指定参数</h3><ol><li>定义了变量作为参数接受者。</li><li>使用 init 函数， 在程序初始化的时候， 传递参数值。<ol><li>参数接受者 <strong>指针类型</strong></li><li>参数名称， <strong>字符串类型</strong></li><li>短参数名称， <strong>字符串类型， 但只接受一个参数</strong></li><li>默认值， <strong>具体类型</strong></li><li>参数描述， <strong>字符串类型</strong></li></ol></li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">9
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>var</span> (
+</span></span><span style=display:flex><span>	name = <span style=color:#d14>&#34;&#34;</span>
+</span></span><span style=display:flex><span>	age  = <span style=color:#099>0</span>
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>init</span>() {
+</span></span><span style=display:flex><span>	root.<span style=color:#900;font-weight:700>Flags</span>().<span style=color:#900;font-weight:700>StringVarP</span>(<span style=color:#000;font-weight:700>&amp;</span>name, <span style=color:#d14>&#34;name&#34;</span>, <span style=color:#d14>&#34;&#34;</span>, <span style=color:#d14>&#34;&#34;</span>, <span style=color:#d14>&#34;姓名&#34;</span>)
+</span></span><span style=display:flex><span>	root.<span style=color:#900;font-weight:700>Flags</span>().<span style=color:#900;font-weight:700>IntVarP</span>(<span style=color:#000;font-weight:700>&amp;</span>age, <span style=color:#d14>&#34;age&#34;</span>, <span style=color:#d14>&#34;&#34;</span>, <span style=color:#099>20</span>, <span style=color:#d14>&#34;年龄&#34;</span>)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h3 id=4-调用执行>4. 调用执行</h3><ol><li>greeting 是程序实际执行逻辑， 及执行逻辑入口。</li><li>在 root 的 Run 中调用 执行逻辑入口。</li><li>在 main 中调用 root 的执行函数 Execute()</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>greeting</span>(name <span style=color:#458;font-weight:700>string</span>, age <span style=color:#458;font-weight:700>int</span>) {
+</span></span><span style=display:flex><span>	fmt.<span style=color:#900;font-weight:700>Printf</span>(<span style=color:#d14>&#34;%s 你好， 今年 %d 岁\n&#34;</span>, name, age)
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>var</span> root = <span style=color:#000;font-weight:700>&amp;</span>cobra.Command{
+</span></span><span style=display:flex><span>	Use:   <span style=color:#d14>&#34;greeting&#34;</span>,
+</span></span><span style=display:flex><span>	Short: <span style=color:#d14>&#34;打招呼&#34;</span>,
+</span></span><span style=display:flex><span>	Run: <span style=color:#000;font-weight:700>func</span>(cmd <span style=color:#000;font-weight:700>*</span>cobra.Command, args []<span style=color:#458;font-weight:700>string</span>) {
+</span></span><span style=display:flex><span>		<span style=color:#900;font-weight:700>greeting</span>(name, age) <span style=color:#998;font-style:italic>// 2. root 命令调用 greeting 业务
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	},
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>main</span>() {
+</span></span><span style=display:flex><span>	err <span style=color:#000;font-weight:700>:=</span> root.<span style=color:#900;font-weight:700>Execute</span>() <span style=color:#998;font-style:italic>// 3. main 调用 root 命令
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	<span style=color:#000;font-weight:700>if</span> err <span style=color:#000;font-weight:700>!=</span> <span style=color:#000;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>		log.<span style=color:#900;font-weight:700>Fatal</span>(err)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h3 id=4-使用-makefile-进行编译管理>4. 使用 Makefile 进行编译管理</h3><ol><li>使用 <code>GOOS</code> 和 <code>GOARCH</code> 设置环境变量命令。</li><li>使用 <code>build</code> 命令， 使用进行 <strong>当前系统环境</strong> 的编译<ul><li>并且编译文件命名包含系统信息。</li></ul></li><li>使用 <code>buildx</code> 命令， 实现 <strong>交叉编译</strong></li><li>使用 <code>clean</code> 命令清空编译结果。</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Makefile data-lang=Makefile><span style=display:flex><span><span style=color:#998;font-style:italic>## 默认变量， 获取当前 go 的环境变量
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:teal>GOOS</span> <span style=color:#000;font-weight:700>?=</span> <span style=color:#000;font-weight:700>$(</span>shell go env GOOS<span style=color:#000;font-weight:700>)</span>
+</span></span><span style=display:flex><span><span style=color:teal>GOARCH</span> <span style=color:#000;font-weight:700>?=</span> <span style=color:#000;font-weight:700>$(</span>shell go env GOARCH<span style=color:#000;font-weight:700>)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## build 在指定环境变异
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#900;font-weight:700>build</span><span style=color:#000;font-weight:700>:</span>
+</span></span><span style=display:flex><span>	go build -o out/greeting-<span style=color:#000;font-weight:700>$(</span>GOOS<span style=color:#000;font-weight:700>)</span>-<span style=color:#000;font-weight:700>$(</span>GOARCH<span style=color:#000;font-weight:700>)</span> .
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## 通过指定环境变量， 执行交叉编译
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#900;font-weight:700>buildx</span><span style=color:#000;font-weight:700>:</span>
+</span></span><span style=display:flex><span>	<span style=color:teal>GOOS</span><span style=color:#000;font-weight:700>=</span>linux <span style=color:teal>GOARCH</span><span style=color:#000;font-weight:700>=</span>amd64 make build
+</span></span><span style=display:flex><span>	<span style=color:teal>GOOS</span><span style=color:#000;font-weight:700>=</span>linux <span style=color:teal>GOARCH</span><span style=color:#000;font-weight:700>=</span>arm64 make build
+</span></span><span style=display:flex><span>	<span style=color:teal>GOOS</span><span style=color:#000;font-weight:700>=</span>darwin <span style=color:teal>GOARCH</span><span style=color:#000;font-weight:700>=</span>amd64 make build
+</span></span><span style=display:flex><span>	<span style=color:teal>GOOS</span><span style=color:#000;font-weight:700>=</span>darwin <span style=color:teal>GOARCH</span><span style=color:#000;font-weight:700>=</span>arm64 make build
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## 清理编译结果
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#900;font-weight:700>clean</span><span style=color:#000;font-weight:700>:</span>
+</span></span><span style=display:flex><span>	rm -rf out/
+</span></span></code></pre></td></tr></table></div></div><p>一个最基本命令结构就这样完成了， 是不是很简单？</p><h2 id=b站作业视频>B站作业视频</h2><div style="margin:10px 0 20px"><div style="margin:5px 0"><span>本视频一切权利归 <strong>bilibili</strong> 及 <strong>原作者所有</strong></span>
+<span>如果觉得好， 请点击跳转到 <strong>bilibili</strong>给予支持</span>
+<a href=https://www.bilibili.com/video/BV1p24y1a7uc/>BV1p24y1a7uc</a></div><div style=position:relative;padding-bottom:75%;width:100%;height:0><iframe src="//player.bilibili.com/player.html?bvid=BV1p24y1a7uc&page=1" scrolling=no border=0 frameborder=no framespacing=0 allowfullscreen style=position:absolute;height:100%;width:100%></iframe></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2023/01/23/devopscamp-cobra01/>https://tangx.in/posts/2023/01/23/devopscamp-cobra01/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/books/k8sailor/chapter01/02-design-cobra-command/>开发 k8s 管理平台 - k8sailor 02. 使用 cobra 初始化程序命令与参数</a></li><li><a href=/posts/books/k8sailor/chapter01/01-install-k3s-cluster/>开发 k8s 管理平台 - k8sailor - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=/posts/books/k8sailor/chapter01/03-connect-cluster/>开发 k8s 管理平台 - k8sailor 03. 使用 client-go sdk 链接集群</a></li><li><a href=/posts/books/k8sailor/chapter01/04-init-httpserver/>开发 k8s 管理平台 - k8sailor 04. 使用 gin 创建第一个 API 接口</a></li><li><a href=/posts/books/k8sailor/chapter01/05-design-restful-api-and-response-data/>开发 k8s 管理平台 - k8sailor 05. RESTFul API 接口规范与请求应答约定</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/cobra target=_blank>cobra</a></li><li><a href=/tags/golang target=_blank>golang</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」答疑， 2023/12/31截止</strong></p><a href title="（免费星球）「运维成长路线」答疑， 2023/12/31截止" target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2023/01/23/devopscamp-cobra01/ title="DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案</a></li><li><a href=https://tangx.in/posts/2023/01/14/devopscamp-semimonthly-plan-202301-2/ title="DevOpsCamp 《初一十五计划》 第一期" target=_blank>DevOpsCamp 《初一十五计划》 第一期</a></li><li><a href=https://tangx.in/posts/2023/01/12/zsxq-devops-camp/ title="知识星球「运维之路」免费指导与帮助 - 试运营到 2023/12/31" target=_blank>知识星球「运维之路」免费指导与帮助 - 试运营到 2023/12/31</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/01-install-k3s-cluster/ title="开发 k8s 管理平台 - k8sailor - 01. 使用 k3s 快速搭建项目环境" target=_blank>开发 k8s 管理平台 - k8sailor - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/02-design-cobra-command/ title="开发 k8s 管理平台 - k8sailor 02. 使用 cobra 初始化程序命令与参数" target=_blank>开发 k8s 管理平台 - k8sailor 02. 使用 cobra 初始化程序命令与参数</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/03-connect-cluster/ title="开发 k8s 管理平台 - k8sailor 03. 使用 client-go sdk 链接集群" target=_blank>开发 k8s 管理平台 - k8sailor 03. 使用 client-go sdk 链接集群</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/04-init-httpserver/ title="开发 k8s 管理平台 - k8sailor 04. 使用 gin 创建第一个 API 接口" target=_blank>开发 k8s 管理平台 - k8sailor 04. 使用 gin 创建第一个 API 接口</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/05-design-restful-api-and-response-data/ title="开发 k8s 管理平台 - k8sailor 05. RESTFul API 接口规范与请求应答约定" target=_blank>开发 k8s 管理平台 - k8sailor 05. RESTFul API 接口规范与请求应答约定</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter02/06-get-all-deployments/ title="开发 k8s 管理平台 - k8sailor 06. 使用 api/biz/dao 分层结构管理数据请求，获取 deployment 数据" target=_blank>开发 k8s 管理平台 - k8sailor 06. 使用 api/biz/dao 分层结构管理数据请求，获取 deployment 数据</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter02/07-initial-vue3-vite2/ title="开发 k8s 管理平台 - k8sailor 07. (前端) 使用 vite 初始化 vue3 项目" target=_blank>开发 k8s 管理平台 - k8sailor 07. (前端) 使用 vite 初始化 vue3 项目</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (10)</a></li><li><a href=https://tangx.in/categories/books/>books (13)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://tangx.in/categories/devopscamp/>devopscamp (1)</a></li><li><a href=https://tangx.in/categories/docker/>docker (4)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (4)</a></li><li><a href=https://tangx.in/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://tangx.in/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://tangx.in/categories/kubernetes/>kubernetes (49)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/cobra/>cobra</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/deployment/>deployment</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/github/>github</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/informer/>informer</a>
+<a href=https://tangx.in/tags/ingress/>ingress</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubebuilder/>kubebuilder</a>
+<a href=https://tangx.in/tags/kustomize/>kustomize</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/library/>library</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/pgsql/>pgsql</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qcloud/>qcloud</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/qos/>qos</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/resetful/>resetful</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/semimonthly-plan/>semimonthly-plan</a>
+<a href=https://tangx.in/tags/service/>service</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/time/>time</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://tangx.in/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
