@@ -1,117 +1,117 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>istio | 老麦的书房</title><meta property="og:title" content="istio - 老麦的书房"><meta property="og:type" content="article"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="istio"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/tags/istio/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><link rel=alternate type=application/rss+xml href=https://tangx.in/tags/istio/index.xml title=老麦的书房><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>istio | 老麦的书房</title><meta property="og:title" content="istio - 老麦的书房"><meta property="og:type" content="article"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="istio"><meta name=author content="老麦"><meta property="og:url" content="https://typonotes.com/tags/istio/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><link rel=alternate type=application/rss+xml href=https://typonotes.com/tags/istio/index.xml title=老麦的书房><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
 <script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?3ed4211d4b231bb7277eca826149b74f",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a href=https://tangx.in/>首页</a>
-<a href=https://tangx.in/books/ title=书柜>书柜</a>
-<a href=https://tangx.in/categories/ title=分类>分类</a>
-<a href=https://tangx.in/tags/ title=标签>标签</a>
-<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
-<input type=hidden name=sitesearch value=https://tangx.in/>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://typonotes.com/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a href=https://typonotes.com/>首页</a>
+<a href=https://typonotes.com/books/ title=书柜>书柜</a>
+<a href=https://typonotes.com/categories/ title=分类>分类</a>
+<a href=https://typonotes.com/tags/ title=标签>标签</a>
+<a href=https://typonotes.com/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://typonotes.com/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://typonotes.com/>
 <button type=submit class="submit icon-search"></button></form></div><div class=res-cons><h3 class=archive-title>包含标签
 <span class=keyword>istio</span>
-中的文章</h3><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/books/istio-in-action/chapter02/18-dr-simple-loadbalance/ target=_blank>《istio-in-action 系列》 18. 使用 DestionationRule 流量控制策略 - 简单负载均衡</a></h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
-<a href=/categories/istio target=_blank>istio</a></div><div class=post-content>使用 DestionationRule 流量控制策略 - 简单负载均衡 简单负载均衡 策略， 官方指定名称。 ROUND_ROBIN: 轮训策略， 默认。 LEAST_CONN: 最小连接数。 随机 选择 两个健康 后端， 通过 O(1) 算法选择连接数最少的后端。 RANDOM: 随机选择了一个 健康 后端。 如果 没有配置健康检查策略， 随机策略比轮训更好。 PASSTHROUGH: 此选项会将连接转发到调用者请求的原始 IP 地址，而不进行任何……<p class=readmore><a href=https://tangx.in/posts/books/istio-in-action/chapter02/18-dr-simple-loadbalance/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/books/istio-in-action/chapter02/03-vs-and-ingress/ target=_blank>《istio-in-action 系列》 3. 使用 istio Gateway 允许外部访问</a></h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
-<a href=/categories/istio target=_blank>istio</a></div><div class=post-content>isti VirtualService 和 k8s Ingress 可以简单的认为 Ingress 是 k8s 中提出的流量入口转发的一个 标准定义规范（只是认为）。 怎么实现， 需要根据不同的 IngressController 的逻辑。 VirtualService 的部分功能就承担了 Ingress 的这一功能。 1. Ingress 与 VirtualService 的定义 k8s Ingress 配置 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 apiVersion: networking.k8s.io/v1 kind: Ingress metadata: creationTimestamp: null name: simple spec: rules: - host: foo.com # 访问的域名 http: paths: - backend: service: name: svc1 # 后端服务名称 port: number: 80……<p class=readmore><a href=https://tangx.in/posts/books/istio-in-action/chapter02/03-vs-and-ingress/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/books/istio-in-action/chapter02/04-gateway/ target=_blank>《istio-in-action 系列》 4. 使用 istio Gateway 允许外部访问</a></h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
-<a href=/categories/istio target=_blank>istio</a></div><div class=post-content>使用 istio Gateway 允许外部访问 仅仅是简单的创建了 VirtualService 是不能实现集群外部的访问的。 在 Istio 中， 还有一个 Gateway 的概念。 顾名思义， Gateway 就是大门保安， 只允许具有特定特征的流量通过。 1.1. 创建 Gateway 先来创建一个 Gateway 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 --- # https://istio.io/latest/docs/reference/config/networking/gateway/ apiVersion: networking.istio.io/v1alpha3 kind: Gateway metadata: name: istio-tangx-in namespace: myistio spec: selector: istio: ingressgateway # 选择 ingressgateway, 省略则兼容所有 servers: - port: number: 80 name: http protocol:……<p class=readmore><a href=https://tangx.in/posts/books/istio-in-action/chapter02/04-gateway/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/books/istio-in-action/chapter02/05-vs-http-rewrite-by-uri/ target=_blank>《istio-in-action 系列》 5. VirtualService 使用路径重写</a></h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
-<a href=/categories/istio target=_blank>istio</a></div><div class=post-content>《istio-in-action 系列》 5. VirtualService 使用路径重写 有了 VirtualService 的路径重写功能后， 就更符合 Ingress 的标准定义了。 但 VirtualService 不仅仅如此， 路径重写包含了三种方式 prefix: 前缀匹配。 只要 uri 路径的 前段 匹配则转发。 后端 自动补齐。 exact: 精确匹配。 只有 uri 全部 匹配才转发， 并且只能转发某一个固定地址。 精确匹配 regex: 正则匹配。 只有……<p class=readmore><a href=https://tangx.in/posts/books/istio-in-action/chapter02/05-vs-http-rewrite-by-uri/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/books/istio-in-action/chapter02/06-dr-subset/ target=_blank>《istio-in-action 系列》 6. 使用 DestinationRule Subset 进行路由分组(版本控制)</a></h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
-<a href=/categories/istio target=_blank>istio</a></div><div class=post-content>使用 DestinationRule Subset 进行路由分组(版本控制) 当一个程序并行发布多个版本的时候， 如 prod-v1 / prod-v2 1 2 3 4 5 kgd NAME READY UP-TO-DATE AVAILABLE AGE toolbox 1/1 1 1 3d22h prod-v1 1/1 1 1 16m prod-v2 1/1 1 1 16m // 两个版本的测试结果， 仅定义为 version 不一致 { "data": { "Name": "istio in action", "Price": 300, "Reviews": null }, "version": "v2.0.0" // "version": "v1.0.0" } k8s Service 依旧实现最根本的 服务级别的 Selector。 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16……<p class=readmore><a href=https://tangx.in/posts/books/istio-in-action/chapter02/06-dr-subset/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/books/istio-in-action/chapter02/08-vs-http-rewrite-by-header/ target=_blank>《istio-in-action 系列》 8. VirtualService 使用 header 重写路由</a></h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
-<a href=/categories/istio target=_blank>istio</a></div><div class=post-content>VirtualService 使用 header 重写路由 在 istio 中， 除了 path 之外还可以使用 Header 进行路由规则管理。 为了更好的展示 header 路由效果， 这里配合使用了 uri 的精确匹配模式。 实现之后， 只能访问地址 http://istio.tangx.in/ ， 其他均为 404。 具体哪个服务应答， 完全根据 header 匹配选择。 效果如下: 使用 Header 匹配有几个必要条件 Header 的 key 只能包含 小写字母 和 连字符 -。 从实际测试……<p class=readmore><a href=https://tangx.in/posts/books/istio-in-action/chapter02/08-vs-http-rewrite-by-header/ target=_blank>阅读全文</a></p></div></article><ol class=page-navigator><li class=prev><a href=https://tangx.in/tags/istio/>上一页</a></li><li><a href=https://tangx.in/tags/istio/>1</a></li><li class=current><a href=https://tangx.in/tags/istio/page/2/>2</a></li></ol></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+中的文章</h3><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/books/istio-in-action/chapter02/18-dr-simple-loadbalance/ target=_blank>《istio-in-action 系列》 18. 使用 DestionationRule 流量控制策略 - 简单负载均衡</a></h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/istio target=_blank>istio</a></div><div class=post-content>使用 DestionationRule 流量控制策略 - 简单负载均衡 简单负载均衡 策略， 官方指定名称。 ROUND_ROBIN: 轮训策略， 默认。 LEAST_CONN: 最小连接数。 随机 选择 两个健康 后端， 通过 O(1) 算法选择连接数最少的后端。 RANDOM: 随机选择了一个 健康 后端。 如果 没有配置健康检查策略， 随机策略比轮训更好。 PASSTHROUGH: 此选项会将连接转发到调用者请求的原始 IP 地址，而不进行任何……<p class=readmore><a href=https://typonotes.com/posts/books/istio-in-action/chapter02/18-dr-simple-loadbalance/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/books/istio-in-action/chapter02/03-vs-and-ingress/ target=_blank>《istio-in-action 系列》 3. 使用 istio Gateway 允许外部访问</a></h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/istio target=_blank>istio</a></div><div class=post-content>isti VirtualService 和 k8s Ingress 可以简单的认为 Ingress 是 k8s 中提出的流量入口转发的一个 标准定义规范（只是认为）。 怎么实现， 需要根据不同的 IngressController 的逻辑。 VirtualService 的部分功能就承担了 Ingress 的这一功能。 1. Ingress 与 VirtualService 的定义 k8s Ingress 配置 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 apiVersion: networking.k8s.io/v1 kind: Ingress metadata: creationTimestamp: null name: simple spec: rules: - host: foo.com # 访问的域名 http: paths: - backend: service: name: svc1 # 后端服务名称 port: number: 80……<p class=readmore><a href=https://typonotes.com/posts/books/istio-in-action/chapter02/03-vs-and-ingress/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/books/istio-in-action/chapter02/04-gateway/ target=_blank>《istio-in-action 系列》 4. 使用 istio Gateway 允许外部访问</a></h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/istio target=_blank>istio</a></div><div class=post-content>使用 istio Gateway 允许外部访问 仅仅是简单的创建了 VirtualService 是不能实现集群外部的访问的。 在 Istio 中， 还有一个 Gateway 的概念。 顾名思义， Gateway 就是大门保安， 只允许具有特定特征的流量通过。 1.1. 创建 Gateway 先来创建一个 Gateway 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 --- # https://istio.io/latest/docs/reference/config/networking/gateway/ apiVersion: networking.istio.io/v1alpha3 kind: Gateway metadata: name: istio-tangx-in namespace: myistio spec: selector: istio: ingressgateway # 选择 ingressgateway, 省略则兼容所有 servers: - port: number: 80 name: http protocol:……<p class=readmore><a href=https://typonotes.com/posts/books/istio-in-action/chapter02/04-gateway/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/books/istio-in-action/chapter02/05-vs-http-rewrite-by-uri/ target=_blank>《istio-in-action 系列》 5. VirtualService 使用路径重写</a></h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/istio target=_blank>istio</a></div><div class=post-content>《istio-in-action 系列》 5. VirtualService 使用路径重写 有了 VirtualService 的路径重写功能后， 就更符合 Ingress 的标准定义了。 但 VirtualService 不仅仅如此， 路径重写包含了三种方式 prefix: 前缀匹配。 只要 uri 路径的 前段 匹配则转发。 后端 自动补齐。 exact: 精确匹配。 只有 uri 全部 匹配才转发， 并且只能转发某一个固定地址。 精确匹配 regex: 正则匹配。 只有……<p class=readmore><a href=https://typonotes.com/posts/books/istio-in-action/chapter02/05-vs-http-rewrite-by-uri/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/books/istio-in-action/chapter02/06-dr-subset/ target=_blank>《istio-in-action 系列》 6. 使用 DestinationRule Subset 进行路由分组(版本控制)</a></h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/istio target=_blank>istio</a></div><div class=post-content>使用 DestinationRule Subset 进行路由分组(版本控制) 当一个程序并行发布多个版本的时候， 如 prod-v1 / prod-v2 1 2 3 4 5 kgd NAME READY UP-TO-DATE AVAILABLE AGE toolbox 1/1 1 1 3d22h prod-v1 1/1 1 1 16m prod-v2 1/1 1 1 16m // 两个版本的测试结果， 仅定义为 version 不一致 { "data": { "Name": "istio in action", "Price": 300, "Reviews": null }, "version": "v2.0.0" // "version": "v1.0.0" } k8s Service 依旧实现最根本的 服务级别的 Selector。 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16……<p class=readmore><a href=https://typonotes.com/posts/books/istio-in-action/chapter02/06-dr-subset/ target=_blank>阅读全文</a></p></div></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/books/istio-in-action/chapter02/08-vs-http-rewrite-by-header/ target=_blank>《istio-in-action 系列》 8. VirtualService 使用 header 重写路由</a></h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/istio target=_blank>istio</a></div><div class=post-content>VirtualService 使用 header 重写路由 在 istio 中， 除了 path 之外还可以使用 Header 进行路由规则管理。 为了更好的展示 header 路由效果， 这里配合使用了 uri 的精确匹配模式。 实现之后， 只能访问地址 http://istio.tangx.in/ ， 其他均为 404。 具体哪个服务应答， 完全根据 header 匹配选择。 效果如下: 使用 Header 匹配有几个必要条件 Header 的 key 只能包含 小写字母 和 连字符 -。 从实际测试……<p class=readmore><a href=https://typonotes.com/posts/books/istio-in-action/chapter02/08-vs-http-rewrite-by-header/ target=_blank>阅读全文</a></p></div></article><ol class=page-navigator><li class=prev><a href=https://typonotes.com/tags/istio/>上一页</a></li><li><a href=https://typonotes.com/tags/istio/>1</a></li><li class=current><a href=https://typonotes.com/tags/istio/page/2/>2</a></li></ol></div><footer id=footer><div>&copy; 2023 <a href=https://typonotes.com/>老麦的书房 By 老麦</a>
 | <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><a id=rocket href=#top></a>
 <script type=text/javascript src='/js/totop.js?v=0.0.0' async></script>
-<script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」答疑， 2023/12/31截止</strong></p><a href title="（免费星球）「运维成长路线」答疑， 2023/12/31截止" target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2023/01/28/stop-ask-questions-the-stupid-ways/ title="《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问" target=_blank>《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问</a></li><li><a href=https://tangx.in/posts/2023/01/27/golang-envutils-config/ title="「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了" target=_blank>「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了</a></li><li><a href=https://tangx.in/posts/2023/01/26/devopscamp-cobra-interactive-survey/ title="DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案</a></li><li><a href=https://tangx.in/posts/2023/01/24/devopscamp-cobra-binding-config-file/ title="DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案</a></li><li><a href=https://tangx.in/posts/2023/01/23/devopscamp-cobra01/ title="DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案</a></li><li><a href=https://tangx.in/posts/2023/01/14/devopscamp-semimonthly-plan-202301-2/ title="DevOpsCamp 《初一十五计划》 第一期" target=_blank>DevOpsCamp 《初一十五计划》 第一期</a></li><li><a href=https://tangx.in/posts/2023/01/12/zsxq-devops-camp/ title="知识星球「运维之路」免费指导与帮助 - 试运营到 2023/12/31" target=_blank>知识星球「运维之路」免费指导与帮助 - 试运营到 2023/12/31</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/01-install-k3s-cluster/ title="开发 k8s 管理平台 - k8sailor - 01. 使用 k3s 快速搭建项目环境" target=_blank>开发 k8s 管理平台 - k8sailor - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/02-design-cobra-command/ title="开发 k8s 管理平台 - k8sailor 02. 使用 cobra 初始化程序命令与参数" target=_blank>开发 k8s 管理平台 - k8sailor 02. 使用 cobra 初始化程序命令与参数</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/03-connect-cluster/ title="开发 k8s 管理平台 - k8sailor 03. 使用 client-go sdk 链接集群" target=_blank>开发 k8s 管理平台 - k8sailor 03. 使用 client-go sdk 链接集群</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (10)</a></li><li><a href=https://tangx.in/categories/books/>books (13)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://tangx.in/categories/devopscamp/>devopscamp (4)</a></li><li><a href=https://tangx.in/categories/docker/>docker (4)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (8)</a></li><li><a href=https://tangx.in/categories/istio/>istio (16)</a></li><li><a href=https://tangx.in/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://tangx.in/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://tangx.in/categories/kubernetes/>kubernetes (49)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/only-one/>only-one (1)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
-<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
-<a href=https://tangx.in/tags/XSS/>XSS</a>
-<a href=https://tangx.in/tags/XXE/>XXE</a>
-<a href=https://tangx.in/tags/aliyun/>aliyun</a>
-<a href=https://tangx.in/tags/ansible/>ansible</a>
-<a href=https://tangx.in/tags/apt/>apt</a>
-<a href=https://tangx.in/tags/aws/>aws</a>
-<a href=https://tangx.in/tags/axios/>axios</a>
-<a href=https://tangx.in/tags/blog/>blog</a>
-<a href=https://tangx.in/tags/calico/>calico</a>
-<a href=https://tangx.in/tags/cdn/>cdn</a>
-<a href=https://tangx.in/tags/cephfs/>cephfs</a>
-<a href=https://tangx.in/tags/cfssl/>cfssl</a>
-<a href=https://tangx.in/tags/cicd/>cicd</a>
-<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
-<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
-<a href=https://tangx.in/tags/cobra/>cobra</a>
-<a href=https://tangx.in/tags/code/>code</a>
-<a href=https://tangx.in/tags/config/>config</a>
-<a href=https://tangx.in/tags/configmap/>configmap</a>
-<a href=https://tangx.in/tags/database/>database</a>
-<a href=https://tangx.in/tags/defer/>defer</a>
-<a href=https://tangx.in/tags/deployment/>deployment</a>
-<a href=https://tangx.in/tags/dns/>dns</a>
-<a href=https://tangx.in/tags/dnsx/>dnsx</a>
-<a href=https://tangx.in/tags/docker/>docker</a>
-<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
-<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
-<a href=https://tangx.in/tags/download/>download</a>
-<a href=https://tangx.in/tags/filebeat/>filebeat</a>
-<a href=https://tangx.in/tags/gin/>gin</a>
-<a href=https://tangx.in/tags/github/>github</a>
-<a href=https://tangx.in/tags/gitlab/>gitlab</a>
-<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
-<a href=https://tangx.in/tags/golang/>golang</a>
-<a href=https://tangx.in/tags/gorm/>gorm</a>
-<a href=https://tangx.in/tags/haproxy/>haproxy</a>
-<a href=https://tangx.in/tags/html5/>html5</a>
-<a href=https://tangx.in/tags/https/>https</a>
-<a href=https://tangx.in/tags/hugo/>hugo</a>
-<a href=https://tangx.in/tags/informer/>informer</a>
-<a href=https://tangx.in/tags/ingress/>ingress</a>
-<a href=https://tangx.in/tags/iptables/>iptables</a>
-<a href=https://tangx.in/tags/istio/>istio</a>
-<a href=https://tangx.in/tags/js/>js</a>
-<a href=https://tangx.in/tags/k3s/>k3s</a>
-<a href=https://tangx.in/tags/k8s/>k8s</a>
-<a href=https://tangx.in/tags/kubebuilder/>kubebuilder</a>
-<a href=https://tangx.in/tags/kustomize/>kustomize</a>
-<a href=https://tangx.in/tags/kustz/>kustz</a>
-<a href=https://tangx.in/tags/lego/>lego</a>
-<a href=https://tangx.in/tags/libaray/>libaray</a>
-<a href=https://tangx.in/tags/library/>library</a>
-<a href=https://tangx.in/tags/linux/>linux</a>
-<a href=https://tangx.in/tags/log/>log</a>
-<a href=https://tangx.in/tags/minio/>minio</a>
-<a href=https://tangx.in/tags/mysql/>mysql</a>
-<a href=https://tangx.in/tags/network/>network</a>
-<a href=https://tangx.in/tags/nginx/>nginx</a>
-<a href=https://tangx.in/tags/pgsql/>pgsql</a>
-<a href=https://tangx.in/tags/proxy/>proxy</a>
-<a href=https://tangx.in/tags/python/>python</a>
-<a href=https://tangx.in/tags/qcloud/>qcloud</a>
-<a href=https://tangx.in/tags/qiniu/>qiniu</a>
-<a href=https://tangx.in/tags/qos/>qos</a>
-<a href=https://tangx.in/tags/redis/>redis</a>
-<a href=https://tangx.in/tags/reflect/>reflect</a>
-<a href=https://tangx.in/tags/repo/>repo</a>
-<a href=https://tangx.in/tags/resetful/>resetful</a>
-<a href=https://tangx.in/tags/s3/>s3</a>
-<a href=https://tangx.in/tags/scope/>scope</a>
-<a href=https://tangx.in/tags/semimonthly-plan/>semimonthly-plan</a>
-<a href=https://tangx.in/tags/service/>service</a>
-<a href=https://tangx.in/tags/shell/>shell</a>
-<a href=https://tangx.in/tags/slice/>slice</a>
-<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
-<a href=https://tangx.in/tags/storage/>storage</a>
-<a href=https://tangx.in/tags/tag01/>tag01</a>
-<a href=https://tangx.in/tags/tag02/>tag02</a>
-<a href=https://tangx.in/tags/test/>test</a>
-<a href=https://tangx.in/tags/tidb/>tidb</a>
-<a href=https://tangx.in/tags/timezone/>timezone</a>
-<a href=https://tangx.in/tags/tls/>tls</a>
-<a href=https://tangx.in/tags/tools/>tools</a>
-<a href=https://tangx.in/tags/trace/>trace</a>
-<a href=https://tangx.in/tags/typescript/>typescript</a>
-<a href=https://tangx.in/tags/typora/>typora</a>
-<a href=https://tangx.in/tags/v2ray/>v2ray</a>
-<a href=https://tangx.in/tags/vscode/>vscode</a>
-<a href=https://tangx.in/tags/vue/>vue</a>
-<a href=https://tangx.in/tags/vue3/>vue3</a>
-<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
-<a href=https://tangx.in/tags/%E5%8F%8D%E5%B0%84/>反射</a>
-<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a>
-<a href=https://tangx.in/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
-<a href=https://tangx.in/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
+<script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」答疑， 2023/12/31截止</strong></p><a href title="（免费星球）「运维成长路线」答疑， 2023/12/31截止" target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://typonotes.com/posts/2023/01/28/stop-ask-questions-the-stupid-ways/ title="《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问" target=_blank>《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问</a></li><li><a href=https://typonotes.com/posts/2023/01/27/golang-envutils-config/ title="「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了" target=_blank>「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了</a></li><li><a href=https://typonotes.com/posts/2023/01/26/devopscamp-cobra-interactive-survey/ title="DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案</a></li><li><a href=https://typonotes.com/posts/2023/01/24/devopscamp-cobra-binding-config-file/ title="DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案</a></li><li><a href=https://typonotes.com/posts/2023/01/23/devopscamp-cobra01/ title="DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案</a></li><li><a href=https://typonotes.com/posts/2023/01/14/devopscamp-semimonthly-plan-202301-2/ title="DevOpsCamp 《初一十五计划》 第一期" target=_blank>DevOpsCamp 《初一十五计划》 第一期</a></li><li><a href=https://typonotes.com/posts/2023/01/12/zsxq-devops-camp/ title="知识星球「运维之路」免费指导与帮助 - 试运营到 2023/12/31" target=_blank>知识星球「运维之路」免费指导与帮助 - 试运营到 2023/12/31</a></li><li><a href=https://typonotes.com/posts/books/k8sailor/chapter01/01-install-k3s-cluster/ title="开发 k8s 管理平台 - k8sailor - 01. 使用 k3s 快速搭建项目环境" target=_blank>开发 k8s 管理平台 - k8sailor - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=https://typonotes.com/posts/books/k8sailor/chapter01/02-design-cobra-command/ title="开发 k8s 管理平台 - k8sailor 02. 使用 cobra 初始化程序命令与参数" target=_blank>开发 k8s 管理平台 - k8sailor 02. 使用 cobra 初始化程序命令与参数</a></li><li><a href=https://typonotes.com/posts/books/k8sailor/chapter01/03-connect-cluster/ title="开发 k8s 管理平台 - k8sailor 03. 使用 client-go sdk 链接集群" target=_blank>开发 k8s 管理平台 - k8sailor 03. 使用 client-go sdk 链接集群</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://typonotes.com/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://typonotes.com/categories/blog/>blog (10)</a></li><li><a href=https://typonotes.com/categories/books/>books (13)</a></li><li><a href=https://typonotes.com/categories/database/>database (1)</a></li><li><a href=https://typonotes.com/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://typonotes.com/categories/devopscamp/>devopscamp (4)</a></li><li><a href=https://typonotes.com/categories/docker/>docker (4)</a></li><li><a href=https://typonotes.com/categories/gitlab/>gitlab (1)</a></li><li><a href=https://typonotes.com/categories/golang/>golang (8)</a></li><li><a href=https://typonotes.com/categories/istio/>istio (16)</a></li><li><a href=https://typonotes.com/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://typonotes.com/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://typonotes.com/categories/kubernetes/>kubernetes (49)</a></li><li><a href=https://typonotes.com/categories/linux/>linux (2)</a></li><li><a href=https://typonotes.com/categories/only-one/>only-one (1)</a></li><li><a href=https://typonotes.com/categories/redis/>redis (2)</a></li><li><a href=https://typonotes.com/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://typonotes.com/tags/MSSQL/>MSSQL</a>
+<a href=https://typonotes.com/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://typonotes.com/tags/XSS/>XSS</a>
+<a href=https://typonotes.com/tags/XXE/>XXE</a>
+<a href=https://typonotes.com/tags/aliyun/>aliyun</a>
+<a href=https://typonotes.com/tags/ansible/>ansible</a>
+<a href=https://typonotes.com/tags/apt/>apt</a>
+<a href=https://typonotes.com/tags/aws/>aws</a>
+<a href=https://typonotes.com/tags/axios/>axios</a>
+<a href=https://typonotes.com/tags/blog/>blog</a>
+<a href=https://typonotes.com/tags/calico/>calico</a>
+<a href=https://typonotes.com/tags/cdn/>cdn</a>
+<a href=https://typonotes.com/tags/cephfs/>cephfs</a>
+<a href=https://typonotes.com/tags/cfssl/>cfssl</a>
+<a href=https://typonotes.com/tags/cicd/>cicd</a>
+<a href=https://typonotes.com/tags/cli-tools/>cli-tools</a>
+<a href=https://typonotes.com/tags/cloudnative/>cloudnative</a>
+<a href=https://typonotes.com/tags/cobra/>cobra</a>
+<a href=https://typonotes.com/tags/code/>code</a>
+<a href=https://typonotes.com/tags/config/>config</a>
+<a href=https://typonotes.com/tags/configmap/>configmap</a>
+<a href=https://typonotes.com/tags/database/>database</a>
+<a href=https://typonotes.com/tags/defer/>defer</a>
+<a href=https://typonotes.com/tags/deployment/>deployment</a>
+<a href=https://typonotes.com/tags/dns/>dns</a>
+<a href=https://typonotes.com/tags/dnsx/>dnsx</a>
+<a href=https://typonotes.com/tags/docker/>docker</a>
+<a href=https://typonotes.com/tags/docker-compose/>docker-compose</a>
+<a href=https://typonotes.com/tags/dockerfile/>dockerfile</a>
+<a href=https://typonotes.com/tags/download/>download</a>
+<a href=https://typonotes.com/tags/filebeat/>filebeat</a>
+<a href=https://typonotes.com/tags/gin/>gin</a>
+<a href=https://typonotes.com/tags/github/>github</a>
+<a href=https://typonotes.com/tags/gitlab/>gitlab</a>
+<a href=https://typonotes.com/tags/glusterfs/>glusterfs</a>
+<a href=https://typonotes.com/tags/golang/>golang</a>
+<a href=https://typonotes.com/tags/gorm/>gorm</a>
+<a href=https://typonotes.com/tags/haproxy/>haproxy</a>
+<a href=https://typonotes.com/tags/html5/>html5</a>
+<a href=https://typonotes.com/tags/https/>https</a>
+<a href=https://typonotes.com/tags/hugo/>hugo</a>
+<a href=https://typonotes.com/tags/informer/>informer</a>
+<a href=https://typonotes.com/tags/ingress/>ingress</a>
+<a href=https://typonotes.com/tags/iptables/>iptables</a>
+<a href=https://typonotes.com/tags/istio/>istio</a>
+<a href=https://typonotes.com/tags/js/>js</a>
+<a href=https://typonotes.com/tags/k3s/>k3s</a>
+<a href=https://typonotes.com/tags/k8s/>k8s</a>
+<a href=https://typonotes.com/tags/kubebuilder/>kubebuilder</a>
+<a href=https://typonotes.com/tags/kustomize/>kustomize</a>
+<a href=https://typonotes.com/tags/kustz/>kustz</a>
+<a href=https://typonotes.com/tags/lego/>lego</a>
+<a href=https://typonotes.com/tags/libaray/>libaray</a>
+<a href=https://typonotes.com/tags/library/>library</a>
+<a href=https://typonotes.com/tags/linux/>linux</a>
+<a href=https://typonotes.com/tags/log/>log</a>
+<a href=https://typonotes.com/tags/minio/>minio</a>
+<a href=https://typonotes.com/tags/mysql/>mysql</a>
+<a href=https://typonotes.com/tags/network/>network</a>
+<a href=https://typonotes.com/tags/nginx/>nginx</a>
+<a href=https://typonotes.com/tags/pgsql/>pgsql</a>
+<a href=https://typonotes.com/tags/proxy/>proxy</a>
+<a href=https://typonotes.com/tags/python/>python</a>
+<a href=https://typonotes.com/tags/qcloud/>qcloud</a>
+<a href=https://typonotes.com/tags/qiniu/>qiniu</a>
+<a href=https://typonotes.com/tags/qos/>qos</a>
+<a href=https://typonotes.com/tags/redis/>redis</a>
+<a href=https://typonotes.com/tags/reflect/>reflect</a>
+<a href=https://typonotes.com/tags/repo/>repo</a>
+<a href=https://typonotes.com/tags/resetful/>resetful</a>
+<a href=https://typonotes.com/tags/s3/>s3</a>
+<a href=https://typonotes.com/tags/scope/>scope</a>
+<a href=https://typonotes.com/tags/semimonthly-plan/>semimonthly-plan</a>
+<a href=https://typonotes.com/tags/service/>service</a>
+<a href=https://typonotes.com/tags/shell/>shell</a>
+<a href=https://typonotes.com/tags/slice/>slice</a>
+<a href=https://typonotes.com/tags/sqlmap/>sqlmap</a>
+<a href=https://typonotes.com/tags/storage/>storage</a>
+<a href=https://typonotes.com/tags/tag01/>tag01</a>
+<a href=https://typonotes.com/tags/tag02/>tag02</a>
+<a href=https://typonotes.com/tags/test/>test</a>
+<a href=https://typonotes.com/tags/tidb/>tidb</a>
+<a href=https://typonotes.com/tags/timezone/>timezone</a>
+<a href=https://typonotes.com/tags/tls/>tls</a>
+<a href=https://typonotes.com/tags/tools/>tools</a>
+<a href=https://typonotes.com/tags/trace/>trace</a>
+<a href=https://typonotes.com/tags/typescript/>typescript</a>
+<a href=https://typonotes.com/tags/typora/>typora</a>
+<a href=https://typonotes.com/tags/v2ray/>v2ray</a>
+<a href=https://typonotes.com/tags/vscode/>vscode</a>
+<a href=https://typonotes.com/tags/vue/>vue</a>
+<a href=https://typonotes.com/tags/vue3/>vue3</a>
+<a href=https://typonotes.com/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://typonotes.com/tags/%E5%8F%8D%E5%B0%84/>反射</a>
+<a href=https://typonotes.com/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://typonotes.com/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
+<a href=https://typonotes.com/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://typonotes.com/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
