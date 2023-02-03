@@ -1,0 +1,417 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>《istio-in-action 系列》 1. 安装 docker-k3s-istio 开发环境 | 老麦的书房</title><meta property="og:title" content="《istio-in-action 系列》 1. 安装 docker-k3s-istio 开发环境 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2022-01-27T09:08:25+08:00"><meta property="article:modified_time" content="2023-02-01T11:08:25+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="《istio-in-action 系列》 1. 安装 docker-k3s-istio 开发环境"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/books/istio-in-action/chapter01/01-install/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
+<script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?3ed4211d4b231bb7277eca826149b74f",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#1-安装-docker>1. 安装 docker</a></li><li><a href=#2-安装-k3s>2. 安装 k3s</a><ul><li><a href=#21-安装-k3s>2.1 安装 k3s</a></li><li><a href=#22-复制-k3s-config-文件>2.2 复制 k3s config 文件</a></li></ul></li><li><a href=#3-安装-istio>3. 安装 istio</a><ul><li><a href=#31-安装-istioctl>3.1 安装 istioctl</a></li><li><a href=#32-安装-istio-控制器>3.2 安装 istio 控制器</a></li><li><a href=#33-安装-kiali-和-prometheus>3.3 安装 kiali 和 prometheus</a></li></ul></li><li><a href=#4--配置-kubectl-快捷键>4. 配置 kubectl 快捷键</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>《istio-in-action 系列》 1. 安装 docker-k3s-istio 开发环境</h1></header><time datetime=2022-01-27T01:08:25Z class="post-meta meta-date dt-published">2022年1月27日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/istio target=_blank>istio</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=istio-in-action-系列-1-安装-docker-k3s-istio-开发环境>《istio-in-action 系列》 1. 安装 docker-k3s-istio 开发环境</h1><h2 id=1-安装-docker>1. 安装 docker</h2><p>我这里使用的是 <code>ubuntu20.04LTS</code> 操作系统</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>sudo apt update
+</span></span><span style=display:flex><span>sudo apt install docker-ce
+</span></span></code></pre></td></tr></table></div></div><p>配置 docker 加速仓库</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:navy>&#34;registry-mirrors&#34;</span>: [
+</span></span><span style=display:flex><span>    <span style=color:#d14>&#34;https://mirror.ccs.tencentyun.com&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#d14>&#34;https://wlzfs4t4.mirror.aliyuncs.com&#34;</span>
+</span></span><span style=display:flex><span>  ],
+</span></span><span style=display:flex><span>  <span style=color:navy>&#34;bip&#34;</span>: <span style=color:#d14>&#34;169.253.32.1/24&#34;</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>上述是腾讯云和阿里云的加速仓库， 根据需求自行调整。</p><p>完成配置后， 重启 docker</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>systemctl daemon-reload
+</span></span><span style=display:flex><span>systemctl restart docker
+</span></span></code></pre></td></tr></table></div></div><h2 id=2-安装-k3s>2. 安装 k3s</h2><h3 id=21-安装-k3s>2.1 安装 k3s</h3><ol><li><p>k3s 使用 <code>--docker</code> 模式是为了方便 docker build 产生的镜像可以直接用在 k3s 中。 否则在 k3s 和 docker 各自使用自己的 containerd runtime， 在程序发布的时候还需要再实现一个镜像 push 和 pull。 麻烦</p></li><li><p>仅用 <code>--disable=traefik</code> 其一是为了保证集群的干净， 只有一个 ingress 控制器。 其二是 traefik 和 istio 默认都使用 LB 控制器， 会抢占 80/443 端口。 直接禁用，懒得再卸载。</p></li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>curl -sfL http://rancher-mirror.cnrancher.com/k3s/k3s-install.sh | <span style=color:teal>INSTALL_K3S_MIRROR</span><span style=color:#000;font-weight:700>=</span>cn <span style=color:teal>INSTALL_K3S_EXEC</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#34;server --docker --disable=traefik&#34;</span> sh -
+</span></span></code></pre></td></tr></table></div></div><p>如果之前已经安装过 k3s 的， 直接更在 systemd 启动文件后</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># /etc/systemd/system/k3s.service</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:teal>ExecStart</span><span style=color:#000;font-weight:700>=</span>/usr/local/bin/k3s <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>    server <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>	<span style=color:#d14>&#39;--docker&#39;</span> <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>	<span style=color:#d14>&#39;--disable=traefik&#39;</span> <span style=color:#d14>\
+</span></span></span></code></pre></td></tr></table></div></div><p>使用如果下命令重载配置并重启 k3s</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>systemctl daemon-reload
+</span></span><span style=display:flex><span>systemctl restart k3s
+</span></span></code></pre></td></tr></table></div></div><h3 id=22-复制-k3s-config-文件>2.2 复制 k3s config 文件</h3><p>方便 kubectl 和之后的 istioctl 调用</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>mkdir -p ~/.kube
+</span></span><span style=display:flex><span>cp -a /etc/rancher/k3s/k3s.yaml ~/.kube/config
+</span></span></code></pre></td></tr></table></div></div><h2 id=3-安装-istio>3. 安装 istio</h2><h3 id=31-安装-istioctl>3.1 安装 istioctl</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#0086b3>export</span> <span style=color:teal>ISTIO_VERSION</span><span style=color:#000;font-weight:700>=</span>1.11.4
+</span></span><span style=display:flex><span>mkdir -p /data/istio-install <span style=color:#000;font-weight:700>&amp;&amp;</span> <span style=color:#0086b3>cd</span> <span style=color:teal>$_</span>
+</span></span><span style=display:flex><span>wget -c https://github.com/istio/istio/releases/download/<span style=color:#d14>${</span><span style=color:teal>ISTIO_VERSION</span><span style=color:#d14>}</span>/istio-<span style=color:#d14>${</span><span style=color:teal>ISTIO_VERSION</span><span style=color:#d14>}</span>-linux-amd64.tar.gz <span style=color:#000;font-weight:700>&amp;&amp;</span> tar xf istio-<span style=color:#d14>${</span><span style=color:teal>ISTIO_VERSION</span><span style=color:#d14>}</span>-linux-amd64.tar.gz <span style=color:#000;font-weight:700>&amp;&amp;</span> mv istio-<span style=color:#d14>${</span><span style=color:teal>ISTIO_VERSION</span><span style=color:#d14>}</span> /usr/local/istio
+</span></span><span style=display:flex><span><span style=color:#0086b3>export</span> <span style=color:teal>PATH</span><span style=color:#000;font-weight:700>=</span>/usr/local/istio/bin/:<span style=color:teal>$PATH</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=32-安装-istio-控制器>3.2 安装 istio 控制器</h3><p>这里安装预设的 demo 文件</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>istioctl install --set <span style=color:teal>profile</span><span style=color:#000;font-weight:700>=</span>demo -y
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    ✔ Istio core installed
+</span></span><span style=display:flex><span>    ✔ Istiod installed
+</span></span><span style=display:flex><span>    ✔ Egress gateways installed
+</span></span><span style=display:flex><span>    ✔ Ingress gateways installed
+</span></span><span style=display:flex><span>    ✔ Installation <span style=color:#0086b3>complete</span>
+</span></span><span style=display:flex><span>    Thank you <span style=color:#000;font-weight:700>for</span> installing Istio 1.11.  Please take a few minutes to tell us about your install/upgrade experience!  https://forms.gle/kWULBRjUv7hHci7T6
+</span></span></code></pre></td></tr></table></div></div><h3 id=33-安装-kiali-和-prometheus>3.3 安装 kiali 和 prometheus</h3><p>kiali 是 istio 的一个可视化 dashboard， 必须配合 prometheus 一起使用才能达到最佳效果。</p><p>幸运的是 istio 已经为我们准备好了所有东西。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># 之前已经将 istio 安装包移动到了 /usr/local/istio</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>export</span> <span style=color:teal>ISTIO_HOME</span><span style=color:#000;font-weight:700>=</span>/usr/local/istio
+</span></span><span style=display:flex><span>ka -f <span style=color:#d14>${</span><span style=color:teal>ISTIO_HOME</span><span style=color:#d14>}</span>/samples/addons/kiali.yaml
+</span></span><span style=display:flex><span>ka -f <span style=color:#d14>${</span><span style=color:teal>ISTIO_HOME</span><span style=color:#d14>}</span>/samples/addons/prometheus.yaml
+</span></span></code></pre></td></tr></table></div></div><h2 id=4--配置-kubectl-快捷键>4. 配置 kubectl 快捷键</h2><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>curl https://raw.githubusercontent.com/ahmetb/kubectx/master/kubens -o /usr/local/bin/kubens <span style=color:#000;font-weight:700>&amp;&amp;</span> chmod +x /usr/local/bin/kubens
+</span></span></code></pre></td></tr></table></div></div><p>方便使用命令行查看。 将这些配置放在 <code>/etc/profile</code> 中</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 48
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 51
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 52
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 53
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 54
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 55
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 56
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 57
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 58
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 59
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 60
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 61
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 62
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 63
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 64
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 65
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 66
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 67
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 68
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 69
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 70
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 71
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 72
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 73
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 74
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 75
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 76
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 77
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 78
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 79
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 80
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 81
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 82
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 83
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 84
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 85
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 86
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 87
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 88
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 89
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 90
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 91
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 92
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 93
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 94
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 95
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 96
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 97
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 98
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 99
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">100
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">101
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">102
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">103
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">104
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">105
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">106
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">107
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">108
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">109
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">110
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">111
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">112
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>k</span><span style=color:#000;font-weight:700>=</span>kubectl
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>ka</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;k apply&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kaf</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl apply -f&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kc</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;k create&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kca</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;_kca(){ kubectl &#34;$@&#34; --all-namespaces;  unset -f _kca; }; _kca&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kccc</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl config current-context&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kcdc</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl config delete-context&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kcgc</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl config get-contexts&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kcn</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl config set-context --current --namespace&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kcp</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl cp&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kcsc</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl config set-context&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kctx</span><span style=color:#000;font-weight:700>=</span>kubectx
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kcuc</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl config use-context&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kd</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;k describe&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdcj</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe cronjob&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdcm</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe configmap&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdd</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe deployment&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdds</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe daemonset&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdel</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdelcj</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete cronjob&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdelcm</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete configmap&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdeld</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete deployment&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdelds</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete daemonset&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdelf</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete -f&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdeli</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete ingress&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdelno</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete node&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdelns</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete namespace&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdelp</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete pods&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdelpvc</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete pvc&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdels</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete svc&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdelsa</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete sa&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdelsec</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete secret&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdelss</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl delete statefulset&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdi</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe ingress&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdno</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe node&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdns</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe namespace&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdp</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe pods&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdpvc</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe pvc&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kds</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe svc&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdsa</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe sa&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdsec</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe secret&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kdss</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl describe statefulset&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kecj</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl edit cronjob&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kecm</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl edit configmap&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>ked</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl edit deployment&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>keds</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl edit daemonset&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kei</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl edit ingress&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>keno</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl edit node&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kens</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl edit namespace&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kep</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl edit pods&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kepvc</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl edit pvc&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kes</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl edit svc&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kess</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl edit statefulset&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>keti</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl exec -ti&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kg</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;k get&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kga</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get all&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgaa</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get all --all-namespaces&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgall</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kg --all-namespaces&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgcj</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get cronjob&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgcm</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get configmaps&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgcma</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get configmaps --all-namespaces&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgd</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get deployment&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgda</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get deployment --all-namespaces&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgds</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get daemonset&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgdsw</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgds --watch&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgdw</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgd --watch&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgdwide</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgd -o wide&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgi</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get ingress&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgia</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get ingress --all-namespaces&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgno</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get nodes&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgns</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get namespaces&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgp</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get pods&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgpa</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get pods --all-namespaces&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgpall</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get pods --all-namespaces -o wide&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgpl</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgp -l&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgpn</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgp -n&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgpvc</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get pvc&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgpvca</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get pvc --all-namespaces&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgpvcw</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgpvc --watch&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgpw</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgp -o wide&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgpwide</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgp -o wide&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgpy</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgp -o yaml&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgrs</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get rs&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgs</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get svc&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgsa</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get svc --all-namespaces&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgsec</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get secret&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgseca</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get secret --all-namespaces&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgss</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get statefulset&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgssa</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl get statefulset --all-namespaces&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgssw</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgss --watch&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgsswide</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgss -o wide&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgsw</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgs --watch&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kgswide</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kgs -o wide&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>khelp</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;cat /Users/tangxin/.zshrc.d/k8s.profile&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kk</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;k kustomize&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kl</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl logs&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kl1h</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl logs --since 1h&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kl1m</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl logs --since 1m&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kl1s</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl logs --since 1s&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>klf</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl logs -f&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>klf1h</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl logs --since 1h -f&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>klf1m</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl logs --since 1m -f&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>klf1s</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl logs --since 1s -f&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kns</span><span style=color:#000;font-weight:700>=</span>kubens
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kpf</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl port-forward&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>krh</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl rollout history&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>krm</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;k delete&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>krsd</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl rollout status deployment&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>krsss</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl rollout status statefulset&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>kru</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl rollout undo&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>ksd</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl scale deployment&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#0086b3>alias</span> <span style=color:teal>ksss</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>&#39;kubectl scale statefulset&#39;</span>
+</span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/books/istio-in-action/chapter01/01-install/>https://tangx.in/posts/books/istio-in-action/chapter01/01-install/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/books/istio-in-action/chapter01/07-upgrade-project/>《istio-in-action 系列》 1. 安装 docker-k3s-istio 开发环境</a></li><li><a href=/posts/books/istio-in-action/chapter01/16-lego-create-server-certificate/>《istio-in-action 系列》 1. 安装 docker-k3s-istio 开发环境</a></li><li><a href=/posts/books/istio-in-action/chapter01/02-initial-project/>《istio-in-action 系列》 1. 安装 docker-k3s-istio 开发环境</a></li><li><a href=/posts/books/istio-in-action/chapter02/10-vs-http-redirect/>《istio-in-action 系列》 10. VirtualService 路由重定向</a></li><li><a href=/posts/books/istio-in-action/chapter02/11-vs-http-retry/>《istio-in-action 系列》 11. VirtualService 重试机制</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/istio target=_blank>istio</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」答疑， 2023/12/31截止</strong></p><a href title="（免费星球）「运维成长路线」答疑， 2023/12/31截止" target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2023/01/28/stop-ask-questions-the-stupid-ways/ title="《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问" target=_blank>《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问</a></li><li><a href=https://tangx.in/posts/2023/01/27/golang-envutils-config/ title="「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了" target=_blank>「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了</a></li><li><a href=https://tangx.in/posts/2023/01/26/devopscamp-cobra-interactive-survey/ title="DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案</a></li><li><a href=https://tangx.in/posts/2023/01/24/devopscamp-cobra-binding-config-file/ title="DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案</a></li><li><a href=https://tangx.in/posts/2023/01/23/devopscamp-cobra01/ title="DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案</a></li><li><a href=https://tangx.in/posts/2023/01/14/devopscamp-semimonthly-plan-202301-2/ title="DevOpsCamp 《初一十五计划》 第一期" target=_blank>DevOpsCamp 《初一十五计划》 第一期</a></li><li><a href=https://tangx.in/posts/2023/01/12/zsxq-devops-camp/ title="知识星球「运维之路」免费指导与帮助 - 试运营到 2023/12/31" target=_blank>知识星球「运维之路」免费指导与帮助 - 试运营到 2023/12/31</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/01-install-k3s-cluster/ title="开发 k8s 管理平台 - k8sailor - 01. 使用 k3s 快速搭建项目环境" target=_blank>开发 k8s 管理平台 - k8sailor - 01. 使用 k3s 快速搭建项目环境</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/02-design-cobra-command/ title="开发 k8s 管理平台 - k8sailor 02. 使用 cobra 初始化程序命令与参数" target=_blank>开发 k8s 管理平台 - k8sailor 02. 使用 cobra 初始化程序命令与参数</a></li><li><a href=https://tangx.in/posts/books/k8sailor/chapter01/03-connect-cluster/ title="开发 k8s 管理平台 - k8sailor 03. 使用 client-go sdk 链接集群" target=_blank>开发 k8s 管理平台 - k8sailor 03. 使用 client-go sdk 链接集群</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (10)</a></li><li><a href=https://tangx.in/categories/books/>books (13)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://tangx.in/categories/devopscamp/>devopscamp (4)</a></li><li><a href=https://tangx.in/categories/docker/>docker (4)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (8)</a></li><li><a href=https://tangx.in/categories/istio/>istio (16)</a></li><li><a href=https://tangx.in/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://tangx.in/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://tangx.in/categories/kubernetes/>kubernetes (49)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/only-one/>only-one (1)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/cobra/>cobra</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/deployment/>deployment</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/github/>github</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/informer/>informer</a>
+<a href=https://tangx.in/tags/ingress/>ingress</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/istio/>istio</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubebuilder/>kubebuilder</a>
+<a href=https://tangx.in/tags/kustomize/>kustomize</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/library/>library</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/pgsql/>pgsql</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qcloud/>qcloud</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/qos/>qos</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/resetful/>resetful</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/semimonthly-plan/>semimonthly-plan</a>
+<a href=https://tangx.in/tags/service/>service</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/tag01/>tag01</a>
+<a href=https://tangx.in/tags/tag02/>tag02</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/timezone/>timezone</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://tangx.in/tags/%E5%8F%8D%E5%B0%84/>反射</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://tangx.in/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
+<a href=https://tangx.in/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
