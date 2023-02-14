@@ -60,14 +60,6 @@
 </span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// 省略
 </span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	}
 </span></span><span style=display:flex><span>}
-</span></span></code></pre></td></tr></table></div></div><p><strong>有一个疑惑点</strong>， 想不通同一个 <strong>子节点</strong> 为什么可以挂多个 <strong>父节点</strong>？ 为什么不会被覆盖掉？ 以后想通了再填。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
-</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
-</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
-</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>init</span>() {
-</span></span><span style=display:flex><span>	root.<span style=color:#900;font-weight:700>AddCommand</span>(sub1, sub_a)
-</span></span><span style=display:flex><span>	sub1.<span style=color:#900;font-weight:700>AddCommand</span>(sub_a)
-</span></span><span style=display:flex><span>}
 </span></span></code></pre></td></tr></table></div></div><p>我们可以在任意节点调用 <code>Execute</code> 方法， 这个调用会通过 <strong>递归</strong> 找到最上层的 <strong>根</strong> 节点。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
