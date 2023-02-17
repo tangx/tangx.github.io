@@ -1,12 +1,12 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>LVS 基本信息介绍 | 一壶酒一溪云</title><meta property="og:title" content="LVS 基本信息介绍 - 一壶酒一溪云"><meta property="og:type" content="article"><meta property="article:published_time" content="2017-09-02T00:00:00+08:00"><meta property="article:modified_time" content="2017-09-02T00:00:00+08:00"><meta name=Keywords content="[LVS]"><meta name=description content="LVS 负载均衡模式介绍、8种调度算法介绍简介"><meta name=author content="老麦"><meta property="og:url" content="https://typonotes.com/posts/2017/09/02/lvs-thoery/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>LVS 基本信息介绍 | 一壶酒一溪云</title><meta property="og:title" content="LVS 基本信息介绍 - 一壶酒一溪云"><meta property="og:type" content="article"><meta property="article:published_time" content="2017-09-02T00:00:00+08:00"><meta property="article:modified_time" content="2017-09-02T00:00:00+08:00"><meta name=Keywords content="[LVS]"><meta name=description content="LVS 负载均衡模式介绍、8种调度算法介绍简介"><meta name=author content="老麦"><meta property="og:url" content="https://tangx.in/posts/2017/09/02/lvs-thoery/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
 <script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?fe891ffeb313a7d084b8baf803d87746",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://typonotes.com/>一壶酒一溪云</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://typonotes.com/>首页</a>
-<a href=https://typonotes.com/books/ title=书柜>书柜</a>
-<a href=https://typonotes.com/categories/ title=分类>分类</a>
-<a href=https://typonotes.com/tags/ title=标签>标签</a>
-<a href=https://typonotes.com/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://typonotes.com/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
-<input type=hidden name=sitesearch value=https://typonotes.com/>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://tangx.in/>一壶酒一溪云</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
+<a href=https://tangx.in/books/ title=书柜>书柜</a>
+<a href=https://tangx.in/categories/ title=分类>分类</a>
+<a href=https://tangx.in/tags/ title=标签>标签</a>
+<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://tangx.in/>
 <button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#三种调度算法>三种调度算法</a><ul><li><a href=#nat-模式>NAT 模式</a></li><li><a href=#tun-模式>TUN 模式</a></li><li><a href=#dr-模式>DR 模式</a></li></ul></li><li><a href=#lvs-的实现>LVS 的实现</a><ul><li><a href=#nat-模式配置>NAT 模式配置</a></li><li><a href=#dr-模式配置>DR 模式配置</a></li></ul></li><li><a href=#lvs-基本命令介绍>LVS 基本命令介绍</a><ul><li></li></ul></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>LVS 基本信息介绍</h1></header><time datetime=2017-09-02T00:00:00Z class="post-meta meta-date dt-published">2017年9月2日</time><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
 <span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=post-content><h1 id=lvs-介绍>LVS 介绍</h1><p>本来想自己画图写介绍的，结果看了官网，里面的内容更详细更直接，所以就直接看
 <a href=http://www.linuxvirtualserver.org/zh/lvs1.html target=_blank rel=noopener>LVS 官网 中文</a>
@@ -281,110 +281,110 @@ RS 服务器收到报文后，先将报文解封获得原来目标地址为VIP�
 </span></span><span style=display:flex><span>-r server-address: 某RS的地址，在NAT模型中，可使用IP：PORT实现端口映射；
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>-w weight<span style=color:#000;font-weight:700>]</span>: 定义服务器权重
-</span></span></code></pre></td></tr></table></div></div><h4 id=参考文档>参考文档</h4><ul><li><a href=http://www.linuxvirtualserver.org/zh/lvs1.html target=_blank rel=noopener>http://www.linuxvirtualserver.org/zh/lvs1.html</a></li><li><a href=http://www.cnblogs.com/liwei0526vip/p/6370103.html target=_blank rel=noopener>http://www.cnblogs.com/liwei0526vip/p/6370103.html</a></li><li><a href=http://blog.csdn.net/shudaqi2010/article/details/59065999 target=_blank rel=noopener>http://blog.csdn.net/shudaqi2010/article/details/59065999</a></li><li><a href=http://www.361way.com/lvs-tun/5202.html target=_blank rel=noopener>http://www.361way.com/lvs-tun/5202.html</a></li></ul></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://typonotes.com/posts/2017/09/02/lvs-thoery/>https://typonotes.com/posts/2017/09/02/lvs-thoery/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+</span></span></code></pre></td></tr></table></div></div><h4 id=参考文档>参考文档</h4><ul><li><a href=http://www.linuxvirtualserver.org/zh/lvs1.html target=_blank rel=noopener>http://www.linuxvirtualserver.org/zh/lvs1.html</a></li><li><a href=http://www.cnblogs.com/liwei0526vip/p/6370103.html target=_blank rel=noopener>http://www.cnblogs.com/liwei0526vip/p/6370103.html</a></li><li><a href=http://blog.csdn.net/shudaqi2010/article/details/59065999 target=_blank rel=noopener>http://blog.csdn.net/shudaqi2010/article/details/59065999</a></li><li><a href=http://www.361way.com/lvs-tun/5202.html target=_blank rel=noopener>http://www.361way.com/lvs-tun/5202.html</a></li></ul></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://tangx.in/posts/2017/09/02/lvs-thoery/>https://tangx.in/posts/2017/09/02/lvs-thoery/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
 <span style=background-color:#e8e8e9><code>Go与云原生</code></span>
 或 <strong>订阅网站</strong>
-<span style=background-color:#e8e8e9><a href=https://typonotes.com/>https://typonotes.com/</a></span>
-。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2017/08/31/iptables-basic-theory-and-useage/>iptables 基础知识和基本用法</a></li><li><a href=/posts/2017/08/25/lvm-management-and-online-extend/>LVM 磁盘管理与在线扩容</a></li><li><a href=/posts/2017/07/12/proxy-for-linux-software/>为 linux 系统软件配置代理</a></li><li><a href=/posts/2017/03/06/%E7%A3%81%E7%9B%98IOPS%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/>使用 FIO 测试磁盘 IOPS 性能</a></li><li><a href=/posts/2016/12/16/cron-tips-lock-timeout/>cron 定时任务小技巧 进程锁与超时</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/linux target=_blank>linux</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://typonotes.com/>一壶酒一溪云 By 老麦</a>
+<span style=background-color:#e8e8e9><a href=https://tangx.in/>https://tangx.in/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2017/08/31/iptables-basic-theory-and-useage/>iptables 基础知识和基本用法</a></li><li><a href=/posts/2017/08/25/lvm-management-and-online-extend/>LVM 磁盘管理与在线扩容</a></li><li><a href=/posts/2017/07/12/proxy-for-linux-software/>为 linux 系统软件配置代理</a></li><li><a href=/posts/2017/03/06/%E7%A3%81%E7%9B%98IOPS%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/>使用 FIO 测试磁盘 IOPS 性能</a></li><li><a href=/posts/2016/12/16/cron-tips-lock-timeout/>cron 定时任务小技巧 进程锁与超时</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/linux target=_blank>linux</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>一壶酒一溪云 By 老麦</a>
 | <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
 <a id=rocket href=#top></a>
-<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」答疑， 2023/12/31截止</strong></p><a href title="（免费星球）「运维成长路线」答疑， 2023/12/31截止" target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://typonotes.com/posts/2023/02/14/devopscamp-cobra-05-subcommand/ title="DevopsCamp 第 2 期作业: 《cobra - 05 Cobra 的子命令》 简单说下 cobra 命令树和 gin 路由树的实现差异" target=_blank>DevopsCamp 第 2 期作业: 《cobra - 05 Cobra 的子命令》 简单说下 cobra 命令树和 gin 路由树的实现差异</a></li><li><a href=https://typonotes.com/posts/2023/02/13/devopscamp-cobra-05-layout/ title="DevopsCamp 第 2 期作业: 《cobra - 05 Go 项目的目录结构》" target=_blank>DevopsCamp 第 2 期作业: 《cobra - 05 Go 项目的目录结构》</a></li><li><a href=https://typonotes.com/posts/2023/02/09/chatgpt-write-poem/ title="把 ChatGPT 调教成了情诗王子" target=_blank>把 ChatGPT 调教成了情诗王子</a></li><li><a href=https://typonotes.com/posts/2023/02/06/remove-files-from-git-history/ title="从 git 历史中删除文件" target=_blank>从 git 历史中删除文件</a></li><li><a href=https://typonotes.com/posts/2023/01/28/stop-ask-questions-the-stupid-ways/ title="《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问" target=_blank>《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问</a></li><li><a href=https://typonotes.com/posts/2023/01/27/golang-envutils-config/ title="「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了" target=_blank>「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了</a></li><li><a href=https://typonotes.com/posts/2023/01/26/devopscamp-cobra-interactive-survey/ title="DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案</a></li><li><a href=https://typonotes.com/posts/2023/01/24/devopscamp-cobra-binding-config-file/ title="DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案</a></li><li><a href=https://typonotes.com/posts/2023/01/23/devopscamp-cobra01/ title="DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案</a></li><li><a href=https://typonotes.com/posts/2023/01/14/devopscamp-semimonthly-plan-202301-2/ title="DevOpsCamp 《初一十五计划》 第一期" target=_blank>DevOpsCamp 《初一十五计划》 第一期</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://typonotes.com/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://typonotes.com/categories/blog/>blog (10)</a></li><li><a href=https://typonotes.com/categories/books/>books (13)</a></li><li><a href=https://typonotes.com/categories/database/>database (1)</a></li><li><a href=https://typonotes.com/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://typonotes.com/categories/devopscamp/>devopscamp (6)</a></li><li><a href=https://typonotes.com/categories/docker/>docker (4)</a></li><li><a href=https://typonotes.com/categories/gitlab/>gitlab (1)</a></li><li><a href=https://typonotes.com/categories/golang/>golang (8)</a></li><li><a href=https://typonotes.com/categories/istio/>istio (16)</a></li><li><a href=https://typonotes.com/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://typonotes.com/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://typonotes.com/categories/kubernetes/>kubernetes (49)</a></li><li><a href=https://typonotes.com/categories/linux/>linux (2)</a></li><li><a href=https://typonotes.com/categories/only-one/>only-one (1)</a></li><li><a href=https://typonotes.com/categories/redis/>redis (2)</a></li><li><a href=https://typonotes.com/categories/vue3/>vue3 (2)</a></li><li><a href=https://typonotes.com/categories/%E5%91%BD%E4%BB%A4%E5%B7%A5%E5%85%B7/>命令工具 (1)</a></li><li><a href=https://typonotes.com/categories/%E9%9A%8F%E7%AC%94/>随笔 (1)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://typonotes.com/tags/MSSQL/>MSSQL</a>
-<a href=https://typonotes.com/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
-<a href=https://typonotes.com/tags/XSS/>XSS</a>
-<a href=https://typonotes.com/tags/XXE/>XXE</a>
-<a href=https://typonotes.com/tags/aliyun/>aliyun</a>
-<a href=https://typonotes.com/tags/ansible/>ansible</a>
-<a href=https://typonotes.com/tags/apt/>apt</a>
-<a href=https://typonotes.com/tags/aws/>aws</a>
-<a href=https://typonotes.com/tags/axios/>axios</a>
-<a href=https://typonotes.com/tags/blog/>blog</a>
-<a href=https://typonotes.com/tags/calico/>calico</a>
-<a href=https://typonotes.com/tags/cdn/>cdn</a>
-<a href=https://typonotes.com/tags/cephfs/>cephfs</a>
-<a href=https://typonotes.com/tags/cfssl/>cfssl</a>
-<a href=https://typonotes.com/tags/chatgpt/>chatgpt</a>
-<a href=https://typonotes.com/tags/cicd/>cicd</a>
-<a href=https://typonotes.com/tags/cli-tools/>cli-tools</a>
-<a href=https://typonotes.com/tags/cloudnative/>cloudnative</a>
-<a href=https://typonotes.com/tags/cobra/>cobra</a>
-<a href=https://typonotes.com/tags/code/>code</a>
-<a href=https://typonotes.com/tags/config/>config</a>
-<a href=https://typonotes.com/tags/configmap/>configmap</a>
-<a href=https://typonotes.com/tags/database/>database</a>
-<a href=https://typonotes.com/tags/defer/>defer</a>
-<a href=https://typonotes.com/tags/deployment/>deployment</a>
-<a href=https://typonotes.com/tags/dns/>dns</a>
-<a href=https://typonotes.com/tags/dnsx/>dnsx</a>
-<a href=https://typonotes.com/tags/docker/>docker</a>
-<a href=https://typonotes.com/tags/docker-compose/>docker-compose</a>
-<a href=https://typonotes.com/tags/dockerfile/>dockerfile</a>
-<a href=https://typonotes.com/tags/download/>download</a>
-<a href=https://typonotes.com/tags/filebeat/>filebeat</a>
-<a href=https://typonotes.com/tags/gin/>gin</a>
-<a href=https://typonotes.com/tags/git/>git</a>
-<a href=https://typonotes.com/tags/github/>github</a>
-<a href=https://typonotes.com/tags/gitlab/>gitlab</a>
-<a href=https://typonotes.com/tags/glusterfs/>glusterfs</a>
-<a href=https://typonotes.com/tags/golang/>golang</a>
-<a href=https://typonotes.com/tags/gorm/>gorm</a>
-<a href=https://typonotes.com/tags/haproxy/>haproxy</a>
-<a href=https://typonotes.com/tags/html5/>html5</a>
-<a href=https://typonotes.com/tags/https/>https</a>
-<a href=https://typonotes.com/tags/hugo/>hugo</a>
-<a href=https://typonotes.com/tags/informer/>informer</a>
-<a href=https://typonotes.com/tags/ingress/>ingress</a>
-<a href=https://typonotes.com/tags/iptables/>iptables</a>
-<a href=https://typonotes.com/tags/istio/>istio</a>
-<a href=https://typonotes.com/tags/js/>js</a>
-<a href=https://typonotes.com/tags/k3s/>k3s</a>
-<a href=https://typonotes.com/tags/k8s/>k8s</a>
-<a href=https://typonotes.com/tags/kubebuilder/>kubebuilder</a>
-<a href=https://typonotes.com/tags/kustomize/>kustomize</a>
-<a href=https://typonotes.com/tags/kustz/>kustz</a>
-<a href=https://typonotes.com/tags/layout/>layout</a>
-<a href=https://typonotes.com/tags/lego/>lego</a>
-<a href=https://typonotes.com/tags/libaray/>libaray</a>
-<a href=https://typonotes.com/tags/library/>library</a>
-<a href=https://typonotes.com/tags/linux/>linux</a>
-<a href=https://typonotes.com/tags/log/>log</a>
-<a href=https://typonotes.com/tags/minio/>minio</a>
-<a href=https://typonotes.com/tags/mysql/>mysql</a>
-<a href=https://typonotes.com/tags/network/>network</a>
-<a href=https://typonotes.com/tags/nginx/>nginx</a>
-<a href=https://typonotes.com/tags/pgsql/>pgsql</a>
-<a href=https://typonotes.com/tags/proxy/>proxy</a>
-<a href=https://typonotes.com/tags/python/>python</a>
-<a href=https://typonotes.com/tags/qcloud/>qcloud</a>
-<a href=https://typonotes.com/tags/qiniu/>qiniu</a>
-<a href=https://typonotes.com/tags/qos/>qos</a>
-<a href=https://typonotes.com/tags/redis/>redis</a>
-<a href=https://typonotes.com/tags/reflect/>reflect</a>
-<a href=https://typonotes.com/tags/repo/>repo</a>
-<a href=https://typonotes.com/tags/resetful/>resetful</a>
-<a href=https://typonotes.com/tags/s3/>s3</a>
-<a href=https://typonotes.com/tags/scope/>scope</a>
-<a href=https://typonotes.com/tags/semimonthly-plan/>semimonthly-plan</a>
-<a href=https://typonotes.com/tags/service/>service</a>
-<a href=https://typonotes.com/tags/shell/>shell</a>
-<a href=https://typonotes.com/tags/slice/>slice</a>
-<a href=https://typonotes.com/tags/sqlmap/>sqlmap</a>
-<a href=https://typonotes.com/tags/storage/>storage</a>
-<a href=https://typonotes.com/tags/tag01/>tag01</a>
-<a href=https://typonotes.com/tags/tag02/>tag02</a>
-<a href=https://typonotes.com/tags/test/>test</a>
-<a href=https://typonotes.com/tags/tidb/>tidb</a>
-<a href=https://typonotes.com/tags/timezone/>timezone</a>
-<a href=https://typonotes.com/tags/tls/>tls</a>
-<a href=https://typonotes.com/tags/tools/>tools</a>
-<a href=https://typonotes.com/tags/trace/>trace</a>
-<a href=https://typonotes.com/tags/typescript/>typescript</a>
-<a href=https://typonotes.com/tags/typora/>typora</a>
-<a href=https://typonotes.com/tags/v2ray/>v2ray</a>
-<a href=https://typonotes.com/tags/vscode/>vscode</a>
-<a href=https://typonotes.com/tags/vue/>vue</a>
-<a href=https://typonotes.com/tags/vue3/>vue3</a>
-<a href=https://typonotes.com/tags/%E5%89%8D%E7%AB%AF/>前端</a>
-<a href=https://typonotes.com/tags/%E5%8F%8D%E5%B0%84/>反射</a>
-<a href=https://typonotes.com/tags/%E5%AE%89%E5%85%A8/>安全</a>
-<a href=https://typonotes.com/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
-<a href=https://typonotes.com/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://typonotes.com/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」答疑， 2023/12/31截止</strong></p><a href title="（免费星球）「运维成长路线」答疑， 2023/12/31截止" target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2023/02/14/devopscamp-cobra-05-subcommand/ title="DevopsCamp 第 2 期作业: 《cobra - 05 Cobra 的子命令》 简单说下 cobra 命令树和 gin 路由树的实现差异" target=_blank>DevopsCamp 第 2 期作业: 《cobra - 05 Cobra 的子命令》 简单说下 cobra 命令树和 gin 路由树的实现差异</a></li><li><a href=https://tangx.in/posts/2023/02/13/devopscamp-cobra-05-layout/ title="DevopsCamp 第 2 期作业: 《cobra - 05 Go 项目的目录结构》" target=_blank>DevopsCamp 第 2 期作业: 《cobra - 05 Go 项目的目录结构》</a></li><li><a href=https://tangx.in/posts/2023/02/09/chatgpt-write-poem/ title="把 ChatGPT 调教成了情诗王子" target=_blank>把 ChatGPT 调教成了情诗王子</a></li><li><a href=https://tangx.in/posts/2023/02/06/remove-files-from-git-history/ title="从 git 历史中删除文件" target=_blank>从 git 历史中删除文件</a></li><li><a href=https://tangx.in/posts/2023/01/28/stop-ask-questions-the-stupid-ways/ title="《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问" target=_blank>《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问</a></li><li><a href=https://tangx.in/posts/2023/01/27/golang-envutils-config/ title="「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了" target=_blank>「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了</a></li><li><a href=https://tangx.in/posts/2023/01/26/devopscamp-cobra-interactive-survey/ title="DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案</a></li><li><a href=https://tangx.in/posts/2023/01/24/devopscamp-cobra-binding-config-file/ title="DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案</a></li><li><a href=https://tangx.in/posts/2023/01/23/devopscamp-cobra01/ title="DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案</a></li><li><a href=https://tangx.in/posts/2023/01/14/devopscamp-semimonthly-plan-202301-2/ title="DevOpsCamp 《初一十五计划》 第一期" target=_blank>DevOpsCamp 《初一十五计划》 第一期</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (10)</a></li><li><a href=https://tangx.in/categories/books/>books (13)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://tangx.in/categories/devopscamp/>devopscamp (6)</a></li><li><a href=https://tangx.in/categories/docker/>docker (4)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (8)</a></li><li><a href=https://tangx.in/categories/istio/>istio (16)</a></li><li><a href=https://tangx.in/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://tangx.in/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://tangx.in/categories/kubernetes/>kubernetes (49)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/only-one/>only-one (1)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li><li><a href=https://tangx.in/categories/%E5%91%BD%E4%BB%A4%E5%B7%A5%E5%85%B7/>命令工具 (1)</a></li><li><a href=https://tangx.in/categories/%E9%9A%8F%E7%AC%94/>随笔 (1)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
+<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://tangx.in/tags/XSS/>XSS</a>
+<a href=https://tangx.in/tags/XXE/>XXE</a>
+<a href=https://tangx.in/tags/aliyun/>aliyun</a>
+<a href=https://tangx.in/tags/ansible/>ansible</a>
+<a href=https://tangx.in/tags/apt/>apt</a>
+<a href=https://tangx.in/tags/aws/>aws</a>
+<a href=https://tangx.in/tags/axios/>axios</a>
+<a href=https://tangx.in/tags/blog/>blog</a>
+<a href=https://tangx.in/tags/calico/>calico</a>
+<a href=https://tangx.in/tags/cdn/>cdn</a>
+<a href=https://tangx.in/tags/cephfs/>cephfs</a>
+<a href=https://tangx.in/tags/cfssl/>cfssl</a>
+<a href=https://tangx.in/tags/chatgpt/>chatgpt</a>
+<a href=https://tangx.in/tags/cicd/>cicd</a>
+<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
+<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
+<a href=https://tangx.in/tags/cobra/>cobra</a>
+<a href=https://tangx.in/tags/code/>code</a>
+<a href=https://tangx.in/tags/config/>config</a>
+<a href=https://tangx.in/tags/configmap/>configmap</a>
+<a href=https://tangx.in/tags/database/>database</a>
+<a href=https://tangx.in/tags/defer/>defer</a>
+<a href=https://tangx.in/tags/deployment/>deployment</a>
+<a href=https://tangx.in/tags/dns/>dns</a>
+<a href=https://tangx.in/tags/dnsx/>dnsx</a>
+<a href=https://tangx.in/tags/docker/>docker</a>
+<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
+<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
+<a href=https://tangx.in/tags/download/>download</a>
+<a href=https://tangx.in/tags/filebeat/>filebeat</a>
+<a href=https://tangx.in/tags/gin/>gin</a>
+<a href=https://tangx.in/tags/git/>git</a>
+<a href=https://tangx.in/tags/github/>github</a>
+<a href=https://tangx.in/tags/gitlab/>gitlab</a>
+<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
+<a href=https://tangx.in/tags/golang/>golang</a>
+<a href=https://tangx.in/tags/gorm/>gorm</a>
+<a href=https://tangx.in/tags/haproxy/>haproxy</a>
+<a href=https://tangx.in/tags/html5/>html5</a>
+<a href=https://tangx.in/tags/https/>https</a>
+<a href=https://tangx.in/tags/hugo/>hugo</a>
+<a href=https://tangx.in/tags/informer/>informer</a>
+<a href=https://tangx.in/tags/ingress/>ingress</a>
+<a href=https://tangx.in/tags/iptables/>iptables</a>
+<a href=https://tangx.in/tags/istio/>istio</a>
+<a href=https://tangx.in/tags/js/>js</a>
+<a href=https://tangx.in/tags/k3s/>k3s</a>
+<a href=https://tangx.in/tags/k8s/>k8s</a>
+<a href=https://tangx.in/tags/kubebuilder/>kubebuilder</a>
+<a href=https://tangx.in/tags/kustomize/>kustomize</a>
+<a href=https://tangx.in/tags/kustz/>kustz</a>
+<a href=https://tangx.in/tags/layout/>layout</a>
+<a href=https://tangx.in/tags/lego/>lego</a>
+<a href=https://tangx.in/tags/libaray/>libaray</a>
+<a href=https://tangx.in/tags/library/>library</a>
+<a href=https://tangx.in/tags/linux/>linux</a>
+<a href=https://tangx.in/tags/log/>log</a>
+<a href=https://tangx.in/tags/minio/>minio</a>
+<a href=https://tangx.in/tags/mysql/>mysql</a>
+<a href=https://tangx.in/tags/network/>network</a>
+<a href=https://tangx.in/tags/nginx/>nginx</a>
+<a href=https://tangx.in/tags/pgsql/>pgsql</a>
+<a href=https://tangx.in/tags/proxy/>proxy</a>
+<a href=https://tangx.in/tags/python/>python</a>
+<a href=https://tangx.in/tags/qcloud/>qcloud</a>
+<a href=https://tangx.in/tags/qiniu/>qiniu</a>
+<a href=https://tangx.in/tags/qos/>qos</a>
+<a href=https://tangx.in/tags/redis/>redis</a>
+<a href=https://tangx.in/tags/reflect/>reflect</a>
+<a href=https://tangx.in/tags/repo/>repo</a>
+<a href=https://tangx.in/tags/resetful/>resetful</a>
+<a href=https://tangx.in/tags/s3/>s3</a>
+<a href=https://tangx.in/tags/scope/>scope</a>
+<a href=https://tangx.in/tags/semimonthly-plan/>semimonthly-plan</a>
+<a href=https://tangx.in/tags/service/>service</a>
+<a href=https://tangx.in/tags/shell/>shell</a>
+<a href=https://tangx.in/tags/slice/>slice</a>
+<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
+<a href=https://tangx.in/tags/storage/>storage</a>
+<a href=https://tangx.in/tags/tag01/>tag01</a>
+<a href=https://tangx.in/tags/tag02/>tag02</a>
+<a href=https://tangx.in/tags/test/>test</a>
+<a href=https://tangx.in/tags/tidb/>tidb</a>
+<a href=https://tangx.in/tags/timezone/>timezone</a>
+<a href=https://tangx.in/tags/tls/>tls</a>
+<a href=https://tangx.in/tags/tools/>tools</a>
+<a href=https://tangx.in/tags/trace/>trace</a>
+<a href=https://tangx.in/tags/typescript/>typescript</a>
+<a href=https://tangx.in/tags/typora/>typora</a>
+<a href=https://tangx.in/tags/v2ray/>v2ray</a>
+<a href=https://tangx.in/tags/vscode/>vscode</a>
+<a href=https://tangx.in/tags/vue/>vue</a>
+<a href=https://tangx.in/tags/vue3/>vue3</a>
+<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://tangx.in/tags/%E5%8F%8D%E5%B0%84/>反射</a>
+<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://tangx.in/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
+<a href=https://tangx.in/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
