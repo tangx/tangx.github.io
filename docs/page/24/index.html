@@ -1,112 +1,112 @@
-<!doctype html><html lang=zh-cn><head><meta name=generator content="Hugo 0.105.0"><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>一壶酒一溪云 | Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</title><meta property="og:title" content="一壶酒一溪云 | Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。"><meta property="og:type" content="website"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="专注于IT互联网， 包括但不限于Go语言(golang)、DevOps、云原生等"><meta property="og:url" content="https://tangx.in/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><link rel=alternate type=application/rss+xml href=https://tangx.in/index.xml title=一壶酒一溪云><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
+<!doctype html><html lang=zh-cn><head><meta name=generator content="Hugo 0.105.0"><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>一壶酒一溪云 | Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</title><meta property="og:title" content="一壶酒一溪云 | Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。"><meta property="og:type" content="website"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="专注于IT互联网， 包括但不限于Go语言(golang)、DevOps、云原生等"><meta property="og:url" content="https://typonotes.com/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><link rel=alternate type=application/rss+xml href=https://typonotes.com/index.xml title=一壶酒一溪云><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
 <script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?fe891ffeb313a7d084b8baf803d87746",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><h1><a id=logo href=https://tangx.in/>一壶酒一溪云</a></h1><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://tangx.in/>首页</a>
-<a href=https://tangx.in/books/ title=书柜>书柜</a>
-<a href=https://tangx.in/categories/ title=分类>分类</a>
-<a href=https://tangx.in/tags/ title=标签>标签</a>
-<a href=https://tangx.in/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://tangx.in/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
-<input type=hidden name=sitesearch value=https://tangx.in/>
-<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><div></div><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/2016/12/16/cron-tips-lock-timeout/ title="cron 定时任务小技巧 进程锁与超时" target=_blank>cron 定时任务小技巧 进程锁与超时</a></h1></header><time datetime=2016-12-16T00:00:00Z class="post-meta meta-date dt-published">2016年12月16日</time><div class=post-content>cron 定时任务小技巧 进程锁与超时 如果本文的内容仅限于此类小菜，那么未免有些太对不起各位看官，下面上一道硬菜：设置一个 PHP 脚本，每分钟执行一次，怎么搞？听起来这分明就是一道送分题啊： 1 * * * * * /path/to/php /path/to/file 让我们设想如下情况：假如上一分钟的 A 请求还没退出，下一分钟的 B 请求也启动了，就会导致出现 AB……</div><p class=readmore><a href=https://tangx.in/posts/2016/12/16/cron-tips-lock-timeout/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/2016/11/29/shell-thread-usage/ title="shell 模拟多线程处理" target=_blank>shell 模拟多线程处理</a></h1></header><time datetime=2016-11-29T00:00:00Z class="post-meta meta-date dt-published">2016年11月29日</time><div class=post-content>shell 模拟多线程处理 shell并发的本质就是将代码块放入后台运行 并发数量控制的本质是通过读取管道等待保证后台运行代码块的数量 代码 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 #!/bin/sh # # Author: uyinn # mailto: uyinn@live.com # datetime: 2014/04/28 # # # 创建管道 fifofile=/tmp/my.fifo mkfifo $fifofile exec 6&lt;> $fifofile # @1 rm -f $fifofile # 实现并发进程数(7个……</div><p class=readmore><a href=https://tangx.in/posts/2016/11/29/shell-thread-usage/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/2016/11/29/python-libaray-win_inet_pton/ title="windows 下为 python 安装 win_inet_pton" target=_blank>windows 下为 python 安装 win_inet_pton</a></h1></header><time datetime=2016-11-29T00:00:00Z class="post-meta meta-date dt-published">2016年11月29日</time><div class=post-content>windows 下为 python 安装 win_inet_pton AttributeError: &lsquo;module&rsquo; object has no attribute &lsquo;inet_pton&rsquo; 我在windows下使用的是python 2.7.11; 自带的socket是不包含inet_pton方法的. 因此, 在做socket代理的时候, socket调用 inet_pton方法会报错, 提示 AttributeError: 'module' object has no attribute 'inet_pton' . windows 使用 socket 报错: File "E:Python27libsite-packagessocks.py", line 482, in _SOCKS5_request resolved = self._write_SOCKS5_address(dst, writer) File "E:Python27libsite-packagessocks.py", line 517, in _write_SOCKS5_address addr_bytes = socket.inet_pton(family, host) AttributeError: 'module'……</div><p class=readmore><a href=https://tangx.in/posts/2016/11/29/python-libaray-win_inet_pton/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/2016/11/29/python-crawler-catalogue/ title="使用 python 做网页爬虫 目录" target=_blank>使用 python 做网页爬虫 目录</a></h1></header><time datetime=2016-11-29T00:00:00Z class="post-meta meta-date dt-published">2016年11月29日</time><div class=post-content>使用python做爬虫 本文是自己在做python爬虫时候的笔记. 目录是从百度文库中找到的, 包含了爬虫基础的方方面面. 各种分类练习代码放在了github上. 本文所有代码就基于 windows 版本的python 2.7.11 x86 1. 最基本抓站 对于抓取的对象, 都会使用正则方式进行匹配。 编写正则的一个小技巧： 1.将整……</div><p class=readmore><a href=https://tangx.in/posts/2016/11/29/python-crawler-catalogue/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/2016/11/29/python-urllib2-opener-usage/ title="在 python 中使用 opener 进行网页访问" target=_blank>在 python 中使用 opener 进行网页访问</a></h1></header><time datetime=2016-11-29T00:00:00Z class="post-meta meta-date dt-published">2016年11月29日</time><div class=post-content>在 python 中使用 opener 进行网页访问 在网页访问中, urllib2 提供了很多 handler, 并且默认支持 http 访问的。因此, 我们可以使用 http handler 初始化一个 opener。 其他的所支持的模式, 我们可以通过 opener.add_handler(handler) 添加。 1 2 3 4 5 6 # function get_opener() # 后面案例需要调用这个方法 import urllib2 url_abs='http://ip.cn' opener=urllib2.build_opener(urllib2.HTTPHandler()) resp=opener.open(url_abs) return opener 使用opener处理表单 和 cookie 如果遇到需要登录的网站, 可能就需要……</div><p class=readmore><a href=https://tangx.in/posts/2016/11/29/python-urllib2-opener-usage/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/2016/11/28/python_matplotlib_xaxis_datetime_format/ title="python matplatlib 格式化坐标轴时间 datetime" target=_blank>python matplatlib 格式化坐标轴时间 datetime</a></h1></header><time datetime=2016-11-28T00:00:00Z class="post-meta meta-date dt-published">2016年11月28日</time><div class=post-content>python matplatlib 格式化坐标轴时间 datetime 使用 matplatlib.pyploy 可以非常方便的将数组转换成时间。但是，如果是时间 datetime.datetime() 作为坐标轴，如果不对时间进行优化，将会显得非常紧凑。 对坐标轴时间进行优化，用到的库为 matplatlib.dates。主要代码如下 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36……</div><p class=readmore><a href=https://tangx.in/posts/2016/11/28/python_matplotlib_xaxis_datetime_format/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/2016/11/24/python-libaray-shutil-shell-command-for-python/ title="python 中使用 shutil 实现文件或目录的复制、删除、移动" target=_blank>python 中使用 shutil 实现文件或目录的复制、删除、移动</a></h1></header><time datetime=2016-11-24T00:00:00Z class="post-meta meta-date dt-published">2016年11月24日</time><div class=post-content>python 中使用 shutil 实现文件或目录的复制、删除、移动 shutil 模块 提供了多个针对文件或文件集合的高等级操作。 尤其是，文件的复制和删除操作。 对于独立文件的操作， 参考 os 模块 警告： 即使是更高等级的文件复制功能 ( shutil.copy(), shutil.copy2() ) 也不能复制所有文件的元数据(metadata)。 在 POSIX 平台上，这意味着文件的属主和用户组会……</div><p class=readmore><a href=https://tangx.in/posts/2016/11/24/python-libaray-shutil-shell-command-for-python/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/2016/11/18/dockerfile-commonds-usage/ title="Dockerfile 基础命令" target=_blank>Dockerfile 基础命令</a></h1></header><time datetime=2016-11-18T00:00:00Z class="post-meta meta-date dt-published">2016年11月18日</time><div class=post-content>Dockerfile 基础命令 Dockerfile 有十几条命令可用于构建镜像，下文将简略介绍这些命令。 FROM FROM 命令可能是最重要的 Dockerfile 命令。改命令定义了使用哪个基础镜像启动构建流程。基础镜像可以为任意镜像。如果基础镜像没有被发现， Docker 将试图从 Docker image index 来查找该镜像。FROM 命令必须是Dockerfile的首个命令。 # Usage: FROM [image name] # FROM 之……</div><p class=readmore><a href=https://tangx.in/posts/2016/11/18/dockerfile-commonds-usage/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/2016/11/18/nginx-location-root-alias/ title="nginx 子目录路径配置 root 与 alias 的区别" target=_blank>nginx 子目录路径配置 root 与 alias 的区别</a></h1></header><time datetime=2016-11-18T00:00:00Z class="post-meta meta-date dt-published">2016年11月18日</time><div class=post-content>nginx 子目录路径配置 root 与 alias 的区别 最近在nginx上部署日志分析工具awstats时，在配置awstats分析结果可供网页浏览这步时，分析结果页面访问总是404.后来查阅了一些资料，发现是root和alias的用法区别没搞懂导致的，这里特地将这两者区别详尽道来，供大家学习参考。 Ngin……</div><p class=readmore><a href=https://tangx.in/posts/2016/11/18/nginx-location-root-alias/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://tangx.in/posts/2016/11/17/python-json-usage/ title="python 字典与 json 异同" target=_blank>python 字典与 json 异同</a></h1></header><time datetime=2016-11-17T00:00:00Z class="post-meta meta-date dt-published">2016年11月17日</time><div class=post-content>json 与 dict 从结构上来看， json 字符出与 python 字典看起来很相似，都是大括号 {} 括起来的键值对 {key:value}。 s='{"number":10,"map":"china","10":"the number"}' 该字符串可以通过**字符串转字典 eval(s) 也可以通过json转字典 json.loads(s) **方式转换成字典 s='{"number":10,"map":"china","10":"the number"}' s_d=eval(s) print s_d # {'map': 'china', 'number': 10, '10': 'the number'} import json s_j=json.loads(s) print s_j # {u'map': u'china', u'number': 10, u'10': u'the number'} s_d is s_j # False s_d == s_j # True print type(s_d) # &lt;type 'dict'> 然而差别在于： 引……</div><p class=readmore><a href=https://tangx.in/posts/2016/11/17/python-json-usage/ target=_blank>阅读全文</a></p></article><ol class=page-navigator><li class=prev><a href=https://tangx.in/page/23/>上一页</a></li><li><a href=https://tangx.in/>1</a></li><li><span>...</span></li><li><a href=https://tangx.in/page/22/>22</a></li><li><a href=https://tangx.in/page/23/>23</a></li><li class=current><a href=https://tangx.in/page/24/>24</a></li><li><a href=https://tangx.in/page/25/>25</a></li><li class=next><a href=https://tangx.in/page/25/>下一页</a></li></ol></div><footer id=footer><div>&copy; 2023 <a href=https://tangx.in/>一壶酒一溪云 By 老麦</a>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><h1><a id=logo href=https://typonotes.com/>一壶酒一溪云</a></h1><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://typonotes.com/>首页</a>
+<a href=https://typonotes.com/books/ title=开源书>开源书</a>
+<a href=https://typonotes.com/categories/ title=分类>分类</a>
+<a href=https://typonotes.com/tags/ title=标签>标签</a>
+<a href=https://typonotes.com/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://typonotes.com/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://typonotes.com/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><div></div><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/2016/12/16/cron-tips-lock-timeout/ title="cron 定时任务小技巧 进程锁与超时" target=_blank>cron 定时任务小技巧 进程锁与超时</a></h1></header><time datetime=2016-12-16T00:00:00Z class="post-meta meta-date dt-published">2016年12月16日</time><div class=post-content>cron 定时任务小技巧 进程锁与超时 如果本文的内容仅限于此类小菜，那么未免有些太对不起各位看官，下面上一道硬菜：设置一个 PHP 脚本，每分钟执行一次，怎么搞？听起来这分明就是一道送分题啊： 1 * * * * * /path/to/php /path/to/file 让我们设想如下情况：假如上一分钟的 A 请求还没退出，下一分钟的 B 请求也启动了，就会导致出现 AB……</div><p class=readmore><a href=https://typonotes.com/posts/2016/12/16/cron-tips-lock-timeout/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/2016/11/29/shell-thread-usage/ title="shell 模拟多线程处理" target=_blank>shell 模拟多线程处理</a></h1></header><time datetime=2016-11-29T00:00:00Z class="post-meta meta-date dt-published">2016年11月29日</time><div class=post-content>shell 模拟多线程处理 shell并发的本质就是将代码块放入后台运行 并发数量控制的本质是通过读取管道等待保证后台运行代码块的数量 代码 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 #!/bin/sh # # Author: uyinn # mailto: uyinn@live.com # datetime: 2014/04/28 # # # 创建管道 fifofile=/tmp/my.fifo mkfifo $fifofile exec 6&lt;> $fifofile # @1 rm -f $fifofile # 实现并发进程数(7个……</div><p class=readmore><a href=https://typonotes.com/posts/2016/11/29/shell-thread-usage/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/2016/11/29/python-libaray-win_inet_pton/ title="windows 下为 python 安装 win_inet_pton" target=_blank>windows 下为 python 安装 win_inet_pton</a></h1></header><time datetime=2016-11-29T00:00:00Z class="post-meta meta-date dt-published">2016年11月29日</time><div class=post-content>windows 下为 python 安装 win_inet_pton AttributeError: &lsquo;module&rsquo; object has no attribute &lsquo;inet_pton&rsquo; 我在windows下使用的是python 2.7.11; 自带的socket是不包含inet_pton方法的. 因此, 在做socket代理的时候, socket调用 inet_pton方法会报错, 提示 AttributeError: 'module' object has no attribute 'inet_pton' . windows 使用 socket 报错: File "E:Python27libsite-packagessocks.py", line 482, in _SOCKS5_request resolved = self._write_SOCKS5_address(dst, writer) File "E:Python27libsite-packagessocks.py", line 517, in _write_SOCKS5_address addr_bytes = socket.inet_pton(family, host) AttributeError: 'module'……</div><p class=readmore><a href=https://typonotes.com/posts/2016/11/29/python-libaray-win_inet_pton/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/2016/11/29/python-crawler-catalogue/ title="使用 python 做网页爬虫 目录" target=_blank>使用 python 做网页爬虫 目录</a></h1></header><time datetime=2016-11-29T00:00:00Z class="post-meta meta-date dt-published">2016年11月29日</time><div class=post-content>使用python做爬虫 本文是自己在做python爬虫时候的笔记. 目录是从百度文库中找到的, 包含了爬虫基础的方方面面. 各种分类练习代码放在了github上. 本文所有代码就基于 windows 版本的python 2.7.11 x86 1. 最基本抓站 对于抓取的对象, 都会使用正则方式进行匹配。 编写正则的一个小技巧： 1.将整……</div><p class=readmore><a href=https://typonotes.com/posts/2016/11/29/python-crawler-catalogue/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/2016/11/29/python-urllib2-opener-usage/ title="在 python 中使用 opener 进行网页访问" target=_blank>在 python 中使用 opener 进行网页访问</a></h1></header><time datetime=2016-11-29T00:00:00Z class="post-meta meta-date dt-published">2016年11月29日</time><div class=post-content>在 python 中使用 opener 进行网页访问 在网页访问中, urllib2 提供了很多 handler, 并且默认支持 http 访问的。因此, 我们可以使用 http handler 初始化一个 opener。 其他的所支持的模式, 我们可以通过 opener.add_handler(handler) 添加。 1 2 3 4 5 6 # function get_opener() # 后面案例需要调用这个方法 import urllib2 url_abs='http://ip.cn' opener=urllib2.build_opener(urllib2.HTTPHandler()) resp=opener.open(url_abs) return opener 使用opener处理表单 和 cookie 如果遇到需要登录的网站, 可能就需要……</div><p class=readmore><a href=https://typonotes.com/posts/2016/11/29/python-urllib2-opener-usage/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/2016/11/28/python_matplotlib_xaxis_datetime_format/ title="python matplatlib 格式化坐标轴时间 datetime" target=_blank>python matplatlib 格式化坐标轴时间 datetime</a></h1></header><time datetime=2016-11-28T00:00:00Z class="post-meta meta-date dt-published">2016年11月28日</time><div class=post-content>python matplatlib 格式化坐标轴时间 datetime 使用 matplatlib.pyploy 可以非常方便的将数组转换成时间。但是，如果是时间 datetime.datetime() 作为坐标轴，如果不对时间进行优化，将会显得非常紧凑。 对坐标轴时间进行优化，用到的库为 matplatlib.dates。主要代码如下 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36……</div><p class=readmore><a href=https://typonotes.com/posts/2016/11/28/python_matplotlib_xaxis_datetime_format/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/2016/11/24/python-libaray-shutil-shell-command-for-python/ title="python 中使用 shutil 实现文件或目录的复制、删除、移动" target=_blank>python 中使用 shutil 实现文件或目录的复制、删除、移动</a></h1></header><time datetime=2016-11-24T00:00:00Z class="post-meta meta-date dt-published">2016年11月24日</time><div class=post-content>python 中使用 shutil 实现文件或目录的复制、删除、移动 shutil 模块 提供了多个针对文件或文件集合的高等级操作。 尤其是，文件的复制和删除操作。 对于独立文件的操作， 参考 os 模块 警告： 即使是更高等级的文件复制功能 ( shutil.copy(), shutil.copy2() ) 也不能复制所有文件的元数据(metadata)。 在 POSIX 平台上，这意味着文件的属主和用户组会……</div><p class=readmore><a href=https://typonotes.com/posts/2016/11/24/python-libaray-shutil-shell-command-for-python/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/2016/11/18/dockerfile-commonds-usage/ title="Dockerfile 基础命令" target=_blank>Dockerfile 基础命令</a></h1></header><time datetime=2016-11-18T00:00:00Z class="post-meta meta-date dt-published">2016年11月18日</time><div class=post-content>Dockerfile 基础命令 Dockerfile 有十几条命令可用于构建镜像，下文将简略介绍这些命令。 FROM FROM 命令可能是最重要的 Dockerfile 命令。改命令定义了使用哪个基础镜像启动构建流程。基础镜像可以为任意镜像。如果基础镜像没有被发现， Docker 将试图从 Docker image index 来查找该镜像。FROM 命令必须是Dockerfile的首个命令。 # Usage: FROM [image name] # FROM 之……</div><p class=readmore><a href=https://typonotes.com/posts/2016/11/18/dockerfile-commonds-usage/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/2016/11/18/nginx-location-root-alias/ title="nginx 子目录路径配置 root 与 alias 的区别" target=_blank>nginx 子目录路径配置 root 与 alias 的区别</a></h1></header><time datetime=2016-11-18T00:00:00Z class="post-meta meta-date dt-published">2016年11月18日</time><div class=post-content>nginx 子目录路径配置 root 与 alias 的区别 最近在nginx上部署日志分析工具awstats时，在配置awstats分析结果可供网页浏览这步时，分析结果页面访问总是404.后来查阅了一些资料，发现是root和alias的用法区别没搞懂导致的，这里特地将这两者区别详尽道来，供大家学习参考。 Ngin……</div><p class=readmore><a href=https://typonotes.com/posts/2016/11/18/nginx-location-root-alias/ target=_blank>阅读全文</a></p></article><article class=post><header><h1 class=post-title><a href=https://typonotes.com/posts/2016/11/17/python-json-usage/ title="python 字典与 json 异同" target=_blank>python 字典与 json 异同</a></h1></header><time datetime=2016-11-17T00:00:00Z class="post-meta meta-date dt-published">2016年11月17日</time><div class=post-content>json 与 dict 从结构上来看， json 字符出与 python 字典看起来很相似，都是大括号 {} 括起来的键值对 {key:value}。 s='{"number":10,"map":"china","10":"the number"}' 该字符串可以通过**字符串转字典 eval(s) 也可以通过json转字典 json.loads(s) **方式转换成字典 s='{"number":10,"map":"china","10":"the number"}' s_d=eval(s) print s_d # {'map': 'china', 'number': 10, '10': 'the number'} import json s_j=json.loads(s) print s_j # {u'map': u'china', u'number': 10, u'10': u'the number'} s_d is s_j # False s_d == s_j # True print type(s_d) # &lt;type 'dict'> 然而差别在于： 引……</div><p class=readmore><a href=https://typonotes.com/posts/2016/11/17/python-json-usage/ target=_blank>阅读全文</a></p></article><ol class=page-navigator><li class=prev><a href=https://typonotes.com/page/23/>上一页</a></li><li><a href=https://typonotes.com/>1</a></li><li><span>...</span></li><li><a href=https://typonotes.com/page/22/>22</a></li><li><a href=https://typonotes.com/page/23/>23</a></li><li class=current><a href=https://typonotes.com/page/24/>24</a></li><li><a href=https://typonotes.com/page/25/>25</a></li><li class=next><a href=https://typonotes.com/page/25/>下一页</a></li></ol></div><footer id=footer><div>&copy; 2023 <a href=https://typonotes.com/>一壶酒一溪云 By 老麦</a>
 | <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-2</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><a id=rocket href=#top></a>
 <script type=text/javascript src='/js/totop.js?v=0.0.0' async></script>
-<script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」答疑， 2023/12/31截止</strong></p><a href title="（免费星球）「运维成长路线」答疑， 2023/12/31截止" target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://tangx.in/posts/2023/02/19/devopscamp-cobra-06-persistent-run-and-flags/ title="DevOpsCamp第2期：从 《cobra 持久化命令》 开始聊聊 Go语言 指针类型的使用注意事项" target=_blank>DevOpsCamp第2期：从 《cobra 持久化命令》 开始聊聊 Go语言 指针类型的使用注意事项</a></li><li><a href=https://tangx.in/posts/2023/02/13/devopscamp-cobra-05-layout/ title="DevopsCamp 第 2 期作业: 《cobra - 04 Go 项目的目录结构》" target=_blank>DevopsCamp 第 2 期作业: 《cobra - 04 Go 项目的目录结构》</a></li><li><a href=https://tangx.in/posts/2023/02/14/devopscamp-cobra-05-subcommand/ title="DevopsCamp 第 2 期作业: 《cobra - 05 Cobra 的子命令》 简单说下 cobra 命令树和 gin 路由树的实现差异" target=_blank>DevopsCamp 第 2 期作业: 《cobra - 05 Cobra 的子命令》 简单说下 cobra 命令树和 gin 路由树的实现差异</a></li><li><a href=https://tangx.in/posts/2023/02/09/chatgpt-write-poem/ title="把 ChatGPT 调教成了情诗王子" target=_blank>把 ChatGPT 调教成了情诗王子</a></li><li><a href=https://tangx.in/posts/2023/02/06/remove-files-from-git-history/ title="从 git 历史中删除文件" target=_blank>从 git 历史中删除文件</a></li><li><a href=https://tangx.in/posts/2023/01/28/stop-ask-questions-the-stupid-ways/ title="《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问" target=_blank>《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问</a></li><li><a href=https://tangx.in/posts/2023/01/27/golang-envutils-config/ title="「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了" target=_blank>「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了</a></li><li><a href=https://tangx.in/posts/2023/01/26/devopscamp-cobra-interactive-survey/ title="DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案</a></li><li><a href=https://tangx.in/posts/2023/01/24/devopscamp-cobra-binding-config-file/ title="DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案</a></li><li><a href=https://tangx.in/posts/2023/01/23/devopscamp-cobra01/ title="DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://tangx.in/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://tangx.in/categories/blog/>blog (10)</a></li><li><a href=https://tangx.in/categories/books/>books (13)</a></li><li><a href=https://tangx.in/categories/database/>database (1)</a></li><li><a href=https://tangx.in/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://tangx.in/categories/devopscamp/>devopscamp (7)</a></li><li><a href=https://tangx.in/categories/docker/>docker (4)</a></li><li><a href=https://tangx.in/categories/gitlab/>gitlab (1)</a></li><li><a href=https://tangx.in/categories/golang/>golang (8)</a></li><li><a href=https://tangx.in/categories/istio/>istio (16)</a></li><li><a href=https://tangx.in/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://tangx.in/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://tangx.in/categories/kubernetes/>kubernetes (49)</a></li><li><a href=https://tangx.in/categories/linux/>linux (2)</a></li><li><a href=https://tangx.in/categories/only-one/>only-one (1)</a></li><li><a href=https://tangx.in/categories/redis/>redis (2)</a></li><li><a href=https://tangx.in/categories/vue3/>vue3 (2)</a></li><li><a href=https://tangx.in/categories/%E5%91%BD%E4%BB%A4%E5%B7%A5%E5%85%B7/>命令工具 (1)</a></li><li><a href=https://tangx.in/categories/%E9%9A%8F%E7%AC%94/>随笔 (1)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://tangx.in/tags/MSSQL/>MSSQL</a>
-<a href=https://tangx.in/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
-<a href=https://tangx.in/tags/XSS/>XSS</a>
-<a href=https://tangx.in/tags/XXE/>XXE</a>
-<a href=https://tangx.in/tags/aliyun/>aliyun</a>
-<a href=https://tangx.in/tags/ansible/>ansible</a>
-<a href=https://tangx.in/tags/apt/>apt</a>
-<a href=https://tangx.in/tags/aws/>aws</a>
-<a href=https://tangx.in/tags/axios/>axios</a>
-<a href=https://tangx.in/tags/blog/>blog</a>
-<a href=https://tangx.in/tags/calico/>calico</a>
-<a href=https://tangx.in/tags/cdn/>cdn</a>
-<a href=https://tangx.in/tags/cephfs/>cephfs</a>
-<a href=https://tangx.in/tags/cfssl/>cfssl</a>
-<a href=https://tangx.in/tags/chatgpt/>chatgpt</a>
-<a href=https://tangx.in/tags/cicd/>cicd</a>
-<a href=https://tangx.in/tags/cli-tools/>cli-tools</a>
-<a href=https://tangx.in/tags/cloudnative/>cloudnative</a>
-<a href=https://tangx.in/tags/cobra/>cobra</a>
-<a href=https://tangx.in/tags/code/>code</a>
-<a href=https://tangx.in/tags/config/>config</a>
-<a href=https://tangx.in/tags/configmap/>configmap</a>
-<a href=https://tangx.in/tags/database/>database</a>
-<a href=https://tangx.in/tags/defer/>defer</a>
-<a href=https://tangx.in/tags/deployment/>deployment</a>
-<a href=https://tangx.in/tags/dns/>dns</a>
-<a href=https://tangx.in/tags/dnsx/>dnsx</a>
-<a href=https://tangx.in/tags/docker/>docker</a>
-<a href=https://tangx.in/tags/docker-compose/>docker-compose</a>
-<a href=https://tangx.in/tags/dockerfile/>dockerfile</a>
-<a href=https://tangx.in/tags/download/>download</a>
-<a href=https://tangx.in/tags/filebeat/>filebeat</a>
-<a href=https://tangx.in/tags/gin/>gin</a>
-<a href=https://tangx.in/tags/git/>git</a>
-<a href=https://tangx.in/tags/github/>github</a>
-<a href=https://tangx.in/tags/gitlab/>gitlab</a>
-<a href=https://tangx.in/tags/glusterfs/>glusterfs</a>
-<a href=https://tangx.in/tags/golang/>golang</a>
-<a href=https://tangx.in/tags/gorm/>gorm</a>
-<a href=https://tangx.in/tags/haproxy/>haproxy</a>
-<a href=https://tangx.in/tags/html5/>html5</a>
-<a href=https://tangx.in/tags/https/>https</a>
-<a href=https://tangx.in/tags/hugo/>hugo</a>
-<a href=https://tangx.in/tags/informer/>informer</a>
-<a href=https://tangx.in/tags/ingress/>ingress</a>
-<a href=https://tangx.in/tags/iptables/>iptables</a>
-<a href=https://tangx.in/tags/istio/>istio</a>
-<a href=https://tangx.in/tags/js/>js</a>
-<a href=https://tangx.in/tags/k3s/>k3s</a>
-<a href=https://tangx.in/tags/k8s/>k8s</a>
-<a href=https://tangx.in/tags/kubebuilder/>kubebuilder</a>
-<a href=https://tangx.in/tags/kustomize/>kustomize</a>
-<a href=https://tangx.in/tags/kustz/>kustz</a>
-<a href=https://tangx.in/tags/layout/>layout</a>
-<a href=https://tangx.in/tags/lego/>lego</a>
-<a href=https://tangx.in/tags/libaray/>libaray</a>
-<a href=https://tangx.in/tags/library/>library</a>
-<a href=https://tangx.in/tags/linux/>linux</a>
-<a href=https://tangx.in/tags/log/>log</a>
-<a href=https://tangx.in/tags/minio/>minio</a>
-<a href=https://tangx.in/tags/mysql/>mysql</a>
-<a href=https://tangx.in/tags/network/>network</a>
-<a href=https://tangx.in/tags/nginx/>nginx</a>
-<a href=https://tangx.in/tags/pgsql/>pgsql</a>
-<a href=https://tangx.in/tags/proxy/>proxy</a>
-<a href=https://tangx.in/tags/python/>python</a>
-<a href=https://tangx.in/tags/qcloud/>qcloud</a>
-<a href=https://tangx.in/tags/qiniu/>qiniu</a>
-<a href=https://tangx.in/tags/qos/>qos</a>
-<a href=https://tangx.in/tags/redis/>redis</a>
-<a href=https://tangx.in/tags/reflect/>reflect</a>
-<a href=https://tangx.in/tags/repo/>repo</a>
-<a href=https://tangx.in/tags/resetful/>resetful</a>
-<a href=https://tangx.in/tags/s3/>s3</a>
-<a href=https://tangx.in/tags/scope/>scope</a>
-<a href=https://tangx.in/tags/semimonthly-plan/>semimonthly-plan</a>
-<a href=https://tangx.in/tags/service/>service</a>
-<a href=https://tangx.in/tags/shell/>shell</a>
-<a href=https://tangx.in/tags/slice/>slice</a>
-<a href=https://tangx.in/tags/sqlmap/>sqlmap</a>
-<a href=https://tangx.in/tags/storage/>storage</a>
-<a href=https://tangx.in/tags/tag01/>tag01</a>
-<a href=https://tangx.in/tags/tag02/>tag02</a>
-<a href=https://tangx.in/tags/test/>test</a>
-<a href=https://tangx.in/tags/tidb/>tidb</a>
-<a href=https://tangx.in/tags/timezone/>timezone</a>
-<a href=https://tangx.in/tags/tls/>tls</a>
-<a href=https://tangx.in/tags/tools/>tools</a>
-<a href=https://tangx.in/tags/trace/>trace</a>
-<a href=https://tangx.in/tags/typescript/>typescript</a>
-<a href=https://tangx.in/tags/typora/>typora</a>
-<a href=https://tangx.in/tags/v2ray/>v2ray</a>
-<a href=https://tangx.in/tags/vscode/>vscode</a>
-<a href=https://tangx.in/tags/vue/>vue</a>
-<a href=https://tangx.in/tags/vue3/>vue3</a>
-<a href=https://tangx.in/tags/%E5%89%8D%E7%AB%AF/>前端</a>
-<a href=https://tangx.in/tags/%E5%8F%8D%E5%B0%84/>反射</a>
-<a href=https://tangx.in/tags/%E5%AE%89%E5%85%A8/>安全</a>
-<a href=https://tangx.in/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
-<a href=https://tangx.in/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://tangx.in/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
+<script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」答疑， 2023/12/31截止</strong></p><a href title="（免费星球）「运维成长路线」答疑， 2023/12/31截止" target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://typonotes.com/posts/2023/02/19/devopscamp-cobra-06-persistent-run-and-flags/ title="DevOpsCamp第2期：从 《cobra - 06 持久化命令》 开始聊聊 Go语言 指针类型的使用注意事项" target=_blank>DevOpsCamp第2期：从 《cobra - 06 持久化命令》 开始聊聊 Go语言 指针类型的使用注意事项</a></li><li><a href=https://typonotes.com/posts/2023/02/13/devopscamp-cobra-05-layout/ title="DevopsCamp 第 2 期作业: 《cobra - 04 Go 项目的目录结构》" target=_blank>DevopsCamp 第 2 期作业: 《cobra - 04 Go 项目的目录结构》</a></li><li><a href=https://typonotes.com/posts/2023/02/14/devopscamp-cobra-05-subcommand/ title="DevopsCamp 第 2 期作业: 《cobra - 05 Cobra 的子命令》 简单说下 cobra 命令树和 gin 路由树的实现差异" target=_blank>DevopsCamp 第 2 期作业: 《cobra - 05 Cobra 的子命令》 简单说下 cobra 命令树和 gin 路由树的实现差异</a></li><li><a href=https://typonotes.com/posts/2023/02/09/chatgpt-write-poem/ title="把 ChatGPT 调教成了情诗王子" target=_blank>把 ChatGPT 调教成了情诗王子</a></li><li><a href=https://typonotes.com/posts/2023/02/06/remove-files-from-git-history/ title="从 git 历史中删除文件" target=_blank>从 git 历史中删除文件</a></li><li><a href=https://typonotes.com/posts/2023/01/28/stop-ask-questions-the-stupid-ways/ title="《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问" target=_blank>《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问</a></li><li><a href=https://typonotes.com/posts/2023/01/27/golang-envutils-config/ title="「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了" target=_blank>「Golang 反射实战」 - 我用 Golang 反射写了一个配置库 - envutils ， 应用再也不会少变量了</a></li><li><a href=https://typonotes.com/posts/2023/01/26/devopscamp-cobra-interactive-survey/ title="DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 03 交互式命令（简单）》 解题答案</a></li><li><a href=https://typonotes.com/posts/2023/01/24/devopscamp-cobra-binding-config-file/ title="DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 02 配置文件的读取与写入（简单）》 解题答案</a></li><li><a href=https://typonotes.com/posts/2023/01/23/devopscamp-cobra01/ title="DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案" target=_blank>DevopsCamp 第一期作业: 《cobra - 01 实现编译与参数绑定（简单）》 解题答案</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://typonotes.com/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://typonotes.com/categories/blog/>blog (10)</a></li><li><a href=https://typonotes.com/categories/books/>books (13)</a></li><li><a href=https://typonotes.com/categories/database/>database (1)</a></li><li><a href=https://typonotes.com/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://typonotes.com/categories/devopscamp/>devopscamp (7)</a></li><li><a href=https://typonotes.com/categories/docker/>docker (4)</a></li><li><a href=https://typonotes.com/categories/gitlab/>gitlab (1)</a></li><li><a href=https://typonotes.com/categories/golang/>golang (8)</a></li><li><a href=https://typonotes.com/categories/istio/>istio (16)</a></li><li><a href=https://typonotes.com/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://typonotes.com/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://typonotes.com/categories/kubernetes/>kubernetes (49)</a></li><li><a href=https://typonotes.com/categories/linux/>linux (2)</a></li><li><a href=https://typonotes.com/categories/only-one/>only-one (1)</a></li><li><a href=https://typonotes.com/categories/redis/>redis (2)</a></li><li><a href=https://typonotes.com/categories/vue3/>vue3 (2)</a></li><li><a href=https://typonotes.com/categories/%E5%91%BD%E4%BB%A4%E5%B7%A5%E5%85%B7/>命令工具 (1)</a></li><li><a href=https://typonotes.com/categories/%E9%9A%8F%E7%AC%94/>随笔 (1)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://typonotes.com/tags/MSSQL/>MSSQL</a>
+<a href=https://typonotes.com/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://typonotes.com/tags/XSS/>XSS</a>
+<a href=https://typonotes.com/tags/XXE/>XXE</a>
+<a href=https://typonotes.com/tags/aliyun/>aliyun</a>
+<a href=https://typonotes.com/tags/ansible/>ansible</a>
+<a href=https://typonotes.com/tags/apt/>apt</a>
+<a href=https://typonotes.com/tags/aws/>aws</a>
+<a href=https://typonotes.com/tags/axios/>axios</a>
+<a href=https://typonotes.com/tags/blog/>blog</a>
+<a href=https://typonotes.com/tags/calico/>calico</a>
+<a href=https://typonotes.com/tags/cdn/>cdn</a>
+<a href=https://typonotes.com/tags/cephfs/>cephfs</a>
+<a href=https://typonotes.com/tags/cfssl/>cfssl</a>
+<a href=https://typonotes.com/tags/chatgpt/>chatgpt</a>
+<a href=https://typonotes.com/tags/cicd/>cicd</a>
+<a href=https://typonotes.com/tags/cli-tools/>cli-tools</a>
+<a href=https://typonotes.com/tags/cloudnative/>cloudnative</a>
+<a href=https://typonotes.com/tags/cobra/>cobra</a>
+<a href=https://typonotes.com/tags/code/>code</a>
+<a href=https://typonotes.com/tags/config/>config</a>
+<a href=https://typonotes.com/tags/configmap/>configmap</a>
+<a href=https://typonotes.com/tags/database/>database</a>
+<a href=https://typonotes.com/tags/defer/>defer</a>
+<a href=https://typonotes.com/tags/deployment/>deployment</a>
+<a href=https://typonotes.com/tags/dns/>dns</a>
+<a href=https://typonotes.com/tags/dnsx/>dnsx</a>
+<a href=https://typonotes.com/tags/docker/>docker</a>
+<a href=https://typonotes.com/tags/docker-compose/>docker-compose</a>
+<a href=https://typonotes.com/tags/dockerfile/>dockerfile</a>
+<a href=https://typonotes.com/tags/download/>download</a>
+<a href=https://typonotes.com/tags/filebeat/>filebeat</a>
+<a href=https://typonotes.com/tags/gin/>gin</a>
+<a href=https://typonotes.com/tags/git/>git</a>
+<a href=https://typonotes.com/tags/github/>github</a>
+<a href=https://typonotes.com/tags/gitlab/>gitlab</a>
+<a href=https://typonotes.com/tags/glusterfs/>glusterfs</a>
+<a href=https://typonotes.com/tags/golang/>golang</a>
+<a href=https://typonotes.com/tags/gorm/>gorm</a>
+<a href=https://typonotes.com/tags/haproxy/>haproxy</a>
+<a href=https://typonotes.com/tags/html5/>html5</a>
+<a href=https://typonotes.com/tags/https/>https</a>
+<a href=https://typonotes.com/tags/hugo/>hugo</a>
+<a href=https://typonotes.com/tags/informer/>informer</a>
+<a href=https://typonotes.com/tags/ingress/>ingress</a>
+<a href=https://typonotes.com/tags/iptables/>iptables</a>
+<a href=https://typonotes.com/tags/istio/>istio</a>
+<a href=https://typonotes.com/tags/js/>js</a>
+<a href=https://typonotes.com/tags/k3s/>k3s</a>
+<a href=https://typonotes.com/tags/k8s/>k8s</a>
+<a href=https://typonotes.com/tags/kubebuilder/>kubebuilder</a>
+<a href=https://typonotes.com/tags/kustomize/>kustomize</a>
+<a href=https://typonotes.com/tags/kustz/>kustz</a>
+<a href=https://typonotes.com/tags/layout/>layout</a>
+<a href=https://typonotes.com/tags/lego/>lego</a>
+<a href=https://typonotes.com/tags/libaray/>libaray</a>
+<a href=https://typonotes.com/tags/library/>library</a>
+<a href=https://typonotes.com/tags/linux/>linux</a>
+<a href=https://typonotes.com/tags/log/>log</a>
+<a href=https://typonotes.com/tags/minio/>minio</a>
+<a href=https://typonotes.com/tags/mysql/>mysql</a>
+<a href=https://typonotes.com/tags/network/>network</a>
+<a href=https://typonotes.com/tags/nginx/>nginx</a>
+<a href=https://typonotes.com/tags/pgsql/>pgsql</a>
+<a href=https://typonotes.com/tags/proxy/>proxy</a>
+<a href=https://typonotes.com/tags/python/>python</a>
+<a href=https://typonotes.com/tags/qcloud/>qcloud</a>
+<a href=https://typonotes.com/tags/qiniu/>qiniu</a>
+<a href=https://typonotes.com/tags/qos/>qos</a>
+<a href=https://typonotes.com/tags/redis/>redis</a>
+<a href=https://typonotes.com/tags/reflect/>reflect</a>
+<a href=https://typonotes.com/tags/repo/>repo</a>
+<a href=https://typonotes.com/tags/resetful/>resetful</a>
+<a href=https://typonotes.com/tags/s3/>s3</a>
+<a href=https://typonotes.com/tags/scope/>scope</a>
+<a href=https://typonotes.com/tags/semimonthly-plan/>semimonthly-plan</a>
+<a href=https://typonotes.com/tags/service/>service</a>
+<a href=https://typonotes.com/tags/shell/>shell</a>
+<a href=https://typonotes.com/tags/slice/>slice</a>
+<a href=https://typonotes.com/tags/sqlmap/>sqlmap</a>
+<a href=https://typonotes.com/tags/storage/>storage</a>
+<a href=https://typonotes.com/tags/tag01/>tag01</a>
+<a href=https://typonotes.com/tags/tag02/>tag02</a>
+<a href=https://typonotes.com/tags/test/>test</a>
+<a href=https://typonotes.com/tags/tidb/>tidb</a>
+<a href=https://typonotes.com/tags/timezone/>timezone</a>
+<a href=https://typonotes.com/tags/tls/>tls</a>
+<a href=https://typonotes.com/tags/tools/>tools</a>
+<a href=https://typonotes.com/tags/trace/>trace</a>
+<a href=https://typonotes.com/tags/typescript/>typescript</a>
+<a href=https://typonotes.com/tags/typora/>typora</a>
+<a href=https://typonotes.com/tags/v2ray/>v2ray</a>
+<a href=https://typonotes.com/tags/vscode/>vscode</a>
+<a href=https://typonotes.com/tags/vue/>vue</a>
+<a href=https://typonotes.com/tags/vue3/>vue3</a>
+<a href=https://typonotes.com/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://typonotes.com/tags/%E5%8F%8D%E5%B0%84/>反射</a>
+<a href=https://typonotes.com/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://typonotes.com/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
+<a href=https://typonotes.com/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://typonotes.com/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
