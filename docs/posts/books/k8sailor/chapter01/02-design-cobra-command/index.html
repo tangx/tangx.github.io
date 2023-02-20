@@ -47,7 +47,7 @@
 </span></span><span style=display:flex><span>	Config: <span style=color:#d14>&#34;./k8sconfig/config.yml&#34;</span>,
 </span></span><span style=display:flex><span>}
 </span></span></code></pre></td></tr></table></div></div><h3 id=cobra>cobra</h3><p>在 <code>cmd/k8sailor/cmd</code> 中管理所有 cobra 命令。
-<a href=https://static.tangx.in/cmd/k8sailor/cmd/root.go target=_blank rel=noopener>root.go</a></p><p>在代码中使用了
+<a href=https://static.typonotes.com/cmd/k8sailor/cmd/root.go target=_blank rel=noopener>root.go</a></p><p>在代码中使用了
 <a href=https://github.com/go-jarvis/cobrautils target=_blank rel=noopener>cobrautils</a>
 库帮助管理 flag 绑定。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
@@ -56,7 +56,7 @@
 </span></span><span style=display:flex><span>	cobrautils.<span style=color:#900;font-weight:700>BindFlags</span>(rootCmd, global.Flags)
 </span></span><span style=display:flex><span>}
 </span></span></code></pre></td></tr></table></div></div><h3 id=启动>启动</h3><p>在
-<a href=https://static.tangx.in/cmd/k8sailor/main.go target=_blank rel=noopener>main.go</a>
+<a href=https://static.typonotes.com/cmd/k8sailor/main.go target=_blank rel=noopener>main.go</a>
 调用 <code>cmd/root.go</code> 的启动函数。 运行结果如上所示。</p><h2 id=目录结构>目录结构</h2><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
