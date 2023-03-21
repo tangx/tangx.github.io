@@ -1,0 +1,397 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>使用 docker buildx 实现多平台编译 - 环境篇 | 老麦的书房</title><meta property="og:title" content="使用 docker buildx 实现多平台编译 - 环境篇 - 老麦的书房"><meta property="og:type" content="article"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="使用 docker buildx 实现多平台编译 - 环境篇"><meta name=author content="老麦"><meta property="og:url" content="https://typonotes.com/posts/2020/06/10/docker-buildx/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
+<script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?fe891ffeb313a7d084b8baf803d87746",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://typonotes.com/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://typonotes.com/>首页</a>
+<a href=https://typonotes.com/books/ title=开源书>开源书</a>
+<a href=https://typonotes.com/categories/ title=分类>分类</a>
+<a href=https://typonotes.com/tags/ title=标签>标签</a>
+<a href=https://typonotes.com/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://typonotes.com/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://typonotes.com/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#0x01-准备>0x01 准备</a><ul><li><a href=#linux-系统内核>linux 系统内核</a></li><li><a href=#开启实验模式>开启实验模式</a></li><li><a href=#安装-buildx>安装 buildx</a></li><li><a href=#安装-qemu>安装 <code>qemu</code></a></li></ul></li><li><a href=#0x02-example>0x02 example</a><ul><li><a href=#创建-buildx-builder>创建 buildx builder</a></li><li><a href=#创建-dockerfile-和-bakefile>创建 Dockerfile 和 bakefile</a></li><li><a href=#使用-bake-执行编译>使用 <code>bake</code> 执行编译</a></li><li><a href=#使用命令行执行编译>使用命令行执行编译</a></li></ul></li><li><a href=#相关文档>相关文档</a></li><li><a href=#在-github-action-上使用-buildx>在 github action 上使用 buildx</a></li><li><a href=#troubleshoot>troubleshoot</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>使用 docker buildx 实现多平台编译 - 环境篇</h1></header><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/docker target=_blank>docker</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=post-content><h1 id=使用-docker-buildx-实现多平台编译>使用 docker buildx 实现多平台编译</h1><p><a href=https://docs.docker.com/registry/spec/api/ target=_blank rel=noopener><code>docker registry api v2</code></a>
+支持多 CPU 架构镜像.</p><p>同时 <code>harbor v2</code> 也实现了 <code>docker registry api v2</code> 的支持.</p><h2 id=0x01-准备>0x01 准备</h2><ul><li><code>docker</code> 开启实验模式</li><li><code>buildx</code> 插件</li><li><code>qemu</code> 模拟器</li><li><code>Linux kernel >= 4.8</code></li></ul><h3 id=linux-系统内核>linux 系统内核</h3><p>由于 <code>binfmt_misc</code> 机制开启需要依赖 <code>Linux kernel >= 4.8</code> 。 因此，在对 linux 系统操作选型上有一定要求。</p><p>建议使用 <strong>发行版</strong> 出场内核已经满足需求的操作系统。 而不是选择自己升级系统内核。</p><ul><li><code>ubuntu:18.04 LTS</code> 及以上</li><li><code>debian:10</code> 及以上</li></ul><p>参考文章:</p><ul><li><a href=https://medium.com/@artur.klauser/building-multi-architecture-docker-images-with-buildx-27d80f7e2408 target=_blank rel=noopener>build multi architecture docker image with buildx</a></li></ul><h3 id=开启实验模式>开启实验模式</h3><p>当前 buildx 还是一个实验模式, 如需要支持, 需要进行如下配置</p><ol><li>开启实验模式。 修改 <code>/etc/docker/daemon.json</code>, 增加 <code>experimental</code> 字段， 如下。</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># vi /etc/docker/daemon.json</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#d14>&#34;experimental&#34;</span>: <span style=color:#0086b3>true</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>}</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=安装-buildx>安装 buildx</h3><ol><li>将 <code>buildx</code> 放到 <code>~/.docker/cli-plugins/</code> 目录下</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># https://github.com/docker/buildx/blob/master/README.md#docker-ce</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:teal>BUILDX_VERSION</span><span style=color:#000;font-weight:700>=</span>v0.4.1
+</span></span><span style=display:flex><span><span style=color:teal>ARCH</span><span style=color:#000;font-weight:700>=</span><span style=color:#000;font-weight:700>$(</span>uname -m<span style=color:#000;font-weight:700>)</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span> <span style=color:#d14>&#34;</span><span style=color:#d14>${</span><span style=color:teal>ARCH</span><span style=color:#d14>}</span><span style=color:#d14>&#34;</span> <span style=color:#000;font-weight:700>==</span> <span style=color:#d14>&#34;x86_64&#34;</span> <span style=color:#000;font-weight:700>]</span> <span style=color:#000;font-weight:700>&amp;&amp;</span> <span style=color:teal>ARCH</span><span style=color:#000;font-weight:700>=</span>amd64
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span> <span style=color:#d14>&#34;</span><span style=color:#d14>${</span><span style=color:teal>ARCH</span><span style=color:#d14>}</span><span style=color:#d14>&#34;</span> <span style=color:#000;font-weight:700>==</span> <span style=color:#d14>&#34;aarch64&#34;</span> <span style=color:#000;font-weight:700>]</span> <span style=color:#000;font-weight:700>&amp;&amp;</span> <span style=color:teal>ARCH</span><span style=color:#000;font-weight:700>=</span>arm64
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>mkdir -p ~/.docker/cli-plugins
+</span></span><span style=display:flex><span>wget -c https://github.com/docker/buildx/releases/download/<span style=color:#d14>${</span><span style=color:teal>BUILDX_VERSION</span><span style=color:#d14>}</span>/buildx-<span style=color:#d14>${</span><span style=color:teal>BUILDX_VERSION</span><span style=color:#d14>}</span>.linux-<span style=color:#d14>${</span><span style=color:teal>ARCH</span><span style=color:#d14>}</span> -O docker-buildx<span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>    <span style=color:#000;font-weight:700>&amp;&amp;</span> chmod +x docker-buildx   <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>    <span style=color:#000;font-weight:700>&amp;&amp;</span> mv docker-buildx ~/.docker/cli-plugins/
+</span></span></code></pre></td></tr></table></div></div><h3 id=安装-qemu>安装 <code>qemu</code></h3><p>下载并安装 <code>qumu</code> 到 <code>/usr/bin/qemu-$(uname -m)-static</code></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># https://github.com/multiarch/qemu-user-static#multiarchqemu-user-static-images</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:teal>QEMU_VERSION</span><span style=color:#000;font-weight:700>=</span>v5.0.0-2
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>wget -c https://github.com/multiarch/qemu-user-static/releases/download/<span style=color:#d14>${</span><span style=color:teal>QEMU_VERSION</span><span style=color:#d14>}</span>/qemu-<span style=color:#000;font-weight:700>$(</span>uname -m<span style=color:#000;font-weight:700>)</span>-static -O qemu-<span style=color:#000;font-weight:700>$(</span>uname -m<span style=color:#000;font-weight:700>)</span>-static <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>    <span style=color:#000;font-weight:700>&amp;&amp;</span> chmod +x qemu-<span style=color:#000;font-weight:700>$(</span>uname -m<span style=color:#000;font-weight:700>)</span>-static     <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>    <span style=color:#000;font-weight:700>&amp;&amp;</span> mv qemu-<span style=color:#000;font-weight:700>$(</span>uname -m<span style=color:#000;font-weight:700>)</span>-static /usr/local/bin/qemu-<span style=color:#000;font-weight:700>$(</span>uname -m<span style=color:#000;font-weight:700>)</span>-static
+</span></span></code></pre></td></tr></table></div></div><h2 id=0x02-example>0x02 example</h2><h3 id=创建-buildx-builder>创建 buildx builder</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## 1. 创建指定名称及指定平台的builder</span>
+</span></span><span style=display:flex><span>docker buildx create --use --platform<span style=color:#000;font-weight:700>=</span>linux/amd64,linux/arm64 --name localbuilder
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>### 创建随机名称的 默认参数 builder</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># docker buildx create --use</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=创建-dockerfile-和-bakefile>创建 Dockerfile 和 bakefile</h3><p>目录结构如下</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># tree</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># .</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># ├── alpine-bake</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># │   └── alpine.Dockerfile</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># └── bake.hcl</span>
+</span></span></code></pre></td></tr></table></div></div><ul><li><code>alpine-bake/alpine.Dockerfile</code></li></ul><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Dockerfile data-lang=Dockerfile><span style=display:flex><span><span style=color:#000;font-weight:700>FROM</span><span style=color:#d14> alpine:3.12</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span><span style=color:#000;font-weight:700>ARG</span> TARGETARCH<span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span><span style=color:#000;font-weight:700>RUN</span> <span style=color:#0086b3>echo</span> <span style=color:#d14>&#34;TARGETARCH is </span><span style=color:teal>$TARGETARCH</span><span style=color:#d14>&#34;</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span></code></pre></td></tr></table></div></div><ul><li><code>docker-bake.hcl</code></li></ul><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-hcl data-lang=hcl><span style=display:flex><span><span style=color:#000;font-weight:700>group</span> <span style=color:#d14>&#34;default&#34;</span> {
+</span></span><span style=display:flex><span>	targets <span style=color:#000;font-weight:700>=</span> [<span style=color:#d14>&#34;alpine&#34;</span>]
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>target</span> <span style=color:#d14>&#34;alpine&#34;</span> {
+</span></span><span style=display:flex><span>    context <span style=color:#000;font-weight:700>=</span> <span style=color:#d14>&#34;./alpine-bake&#34;</span>
+</span></span><span style=display:flex><span>    dockerfile <span style=color:#000;font-weight:700>=</span> <span style=color:#d14>&#34;alpine.Dockerfile&#34;</span>
+</span></span><span style=display:flex><span>    tags <span style=color:#000;font-weight:700>=</span> [<span style=color:#d14>&#34;docker.io/tangx/alpine:buildx-bake-hcl&#34;</span>]
+</span></span><span style=display:flex><span>    platforms <span style=color:#000;font-weight:700>=</span> [<span style=color:#d14>&#34;linux/amd64&#34;, &#34;linux/arm64&#34;, &#34;linux/arm/v6&#34;, &#34;linux/arm/v7&#34;, &#34;linux/s390x&#34;</span>]<span style=color:#998;font-style:italic>
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>    ## push to registry
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    output <span style=color:#000;font-weight:700>=</span> [&#34;type<span style=color:#000;font-weight:700>=</span><span style=color:#000;font-weight:700>registry</span><span style=color:#a61717;background-color:#e3d2d2>&#34;</span>]<span style=color:#998;font-style:italic>
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>    ## pull base image always
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    pull <span style=color:#000;font-weight:700>=</span> <span style=color:#458;font-weight:700>true</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>target</span> <span style=color:#d14>&#34;debian&#34;</span> {
+</span></span><span style=display:flex><span>    context <span style=color:#000;font-weight:700>=</span> <span style=color:#d14>&#34;./debian-bake&#34;</span><span style=color:#998;font-style:italic>
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>    ## default: Dockerfile
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>    # dockerfile = &#34;Dockerfile&#34;  
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    tags <span style=color:#000;font-weight:700>=</span> [<span style=color:#d14>&#34;docker.io/tangx/debian:buildx-bake-hcl&#34;</span>]
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    platforms <span style=color:#000;font-weight:700>=</span> [<span style=color:#d14>&#34;linux/amd64&#34;, &#34;linux/arm64&#34;, &#34;linux/arm/v6&#34;, &#34;linux/arm/v7&#34;, &#34;linux/s390x&#34;</span>]<span style=color:#998;font-style:italic>
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>    ## push to registry
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    output <span style=color:#000;font-weight:700>=</span> [&#34;type<span style=color:#000;font-weight:700>=</span><span style=color:#000;font-weight:700>registry</span><span style=color:#a61717;background-color:#e3d2d2>&#34;</span>]<span style=color:#998;font-style:italic>
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic>    ## pull base image always
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    pull <span style=color:#000;font-weight:700>=</span> <span style=color:#458;font-weight:700>true</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h3 id=使用-bake-执行编译>使用 <code>bake</code> 执行编译</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>docker buildx bake -f bake.hcl <span style=color:#998;font-style:italic># -f alias to bake</span>
+</span></span></code></pre></td></tr></table></div></div><p>当命令中省略 <code>-f</code> 参数时, 默认 bake 文件为:</p><ul><li>docker-bake.json</li><li>docker-bake.hcl</li><li>docker-compose.yaml</li></ul><h4 id=执行结果>执行结果</h4><p>可以在
+<a href="https://hub.docker.com/repository/docker/tangx/alpine/tags?page=1&name=buildx-bake-hcl" target=_blank rel=noopener>tangx/alpine:buildx-bake-hcl</a>
+看到，生成的镜像， 支持了 5个 cpu 架构。</p><p><img class=mx-auto alt=buildx-bake-demo src=https://static.typonotes.com/posts/2020/06/10/docker-buildx/buildx-bake-hcl-demo-fs8.png!v1></p><ul><li>执行过程</li></ul><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># docker buildx bake -f bake.hcl</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>[</span>+<span style=color:#000;font-weight:700>]</span> Building 46.9s <span style=color:#000;font-weight:700>(</span>19/19<span style=color:#000;font-weight:700>)</span> <span style=color:teal>FINISHED</span>
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>internal<span style=color:#000;font-weight:700>]</span> booting buildkit              3.3s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>internal<span style=color:#000;font-weight:700>]</span> load build definition from alpine.Dockerfile            0.1s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>internal<span style=color:#000;font-weight:700>]</span> load .dockerignore            0.1s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/arm/v6 internal<span style=color:#000;font-weight:700>]</span> load metadata <span style=color:#000;font-weight:700>for</span> docker.io/library/alpine:3.12        13.1s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/arm64 internal<span style=color:#000;font-weight:700>]</span> load metadata <span style=color:#000;font-weight:700>for</span> docker.io/library/alpine:3.12         10.4s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/amd64 internal<span style=color:#000;font-weight:700>]</span> load metadata <span style=color:#000;font-weight:700>for</span> docker.io/library/alpine:3.12         13.1s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/s390x internal<span style=color:#000;font-weight:700>]</span> load metadata <span style=color:#000;font-weight:700>for</span> docker.io/library/alpine:3.12         13.1s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/arm/v7 internal<span style=color:#000;font-weight:700>]</span> load metadata <span style=color:#000;font-weight:700>for</span> docker.io/library/alpine:3.12        13.1s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/amd64 1/2<span style=color:#000;font-weight:700>]</span> FROM docker.io/library/alpine:3.12@sha256:c0e9560cda118f9ec63ddefb4a173a2b2a0347082d7dff7dc14272e7841a5b5a        6.1s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/arm/v7 1/2<span style=color:#000;font-weight:700>]</span> FROM docker.io/library/alpine:3.12@sha256:c0e9560cda118f9ec63ddefb4a173a2b2a0347082d7dff7dc14272e7841a5b5a       5.9s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/arm/v6 1/2<span style=color:#000;font-weight:700>]</span> FROM docker.io/library/alpine:3.12@sha256:c0e9560cda118f9ec63ddefb4a173a2b2a0347082d7dff7dc14272e7841a5b5a       6.0s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/arm64 1/2<span style=color:#000;font-weight:700>]</span> FROM docker.io/library/alpine:3.12@sha256:c0e9560cda118f9ec63ddefb4a173a2b2a0347082d7dff7dc14272e7841a5b5a        6.1s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/s390x 1/2<span style=color:#000;font-weight:700>]</span> FROM docker.io/library/alpine:3.12@sha256:c0e9560cda118f9ec63ddefb4a173a2b2a0347082d7dff7dc14272e7841a5b5a        6.3s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/arm/v7 2/2<span style=color:#000;font-weight:700>]</span> RUN <span style=color:#0086b3>echo</span> <span style=color:#d14>&#34;TARGETARCH is arm&#34;</span>       0.9s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/arm/v6 2/2<span style=color:#000;font-weight:700>]</span> RUN <span style=color:#0086b3>echo</span> <span style=color:#d14>&#34;TARGETARCH is arm&#34;</span>       0.8s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/amd64 2/2<span style=color:#000;font-weight:700>]</span> RUN <span style=color:#0086b3>echo</span> <span style=color:#d14>&#34;TARGETARCH is amd64&#34;</span>      0.7s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/arm64 2/2<span style=color:#000;font-weight:700>]</span> RUN <span style=color:#0086b3>echo</span> <span style=color:#d14>&#34;TARGETARCH is arm64&#34;</span>      0.5s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; <span style=color:#000;font-weight:700>[</span>linux/s390x 2/2<span style=color:#000;font-weight:700>]</span> RUN <span style=color:#0086b3>echo</span> <span style=color:#d14>&#34;TARGETARCH is s390x&#34;</span>      0.4s
+</span></span><span style=display:flex><span> <span style=color:#000;font-weight:700>=</span>&gt; exporting to image         22.9s
+</span></span></code></pre></td></tr></table></div></div><h3 id=使用命令行执行编译>使用命令行执行编译</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># docker buildx build --platform=linux/amd64,linux/arm64 --file alpine-bake/alpine.Dockerfile --tag tangx/alpine:multi-arch --push alpine-bake/</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=参数解释>参数解释</h4><ul><li><code>docker buildx build</code> : 主命令及子命令</li><li><code>--platform=linux/amd64,linux/arm64</code> : 执行 cpu 架构</li><li><code>--file</code> : 指定 <code>Dockerfile</code> 的文件及路径。 省略则表示<strong>当前目录下的 <code>Dockerfile</code></strong></li><li><code>--tag</code> : 镜像名字及TAG</li><li><code>--push</code> : 完成并推送到仓库</li><li><code>alpine-bake</code> : docker context 的目录地址。</li></ul><h4 id=执行结果-1>执行结果</h4><p>略</p><h2 id=相关文档>相关文档</h2><ol><li><code>buildx</code><ul><li><a href=https://github.com/docker/buildx/blob/master/README.md#documentation target=_blank rel=noopener>buildx README.md</a>
+in <code>Github.com</code></li><li><a href=https://docs.docker.com/buildx/working-with-buildx/#high-level-build-options target=_blank rel=noopener>buildx Documents</a>
+in <code>docs.docker.com</code></li></ul></li><li><code>buildx bake</code><ul><li><a href=https://github.com/docker/buildx/blob/e5217f26e2e4ea6e4d35db95750bf7ff9eb9f188/bake/bake.go#L322:6 target=_blank rel=noopener>buildx bake hcl variables</a></li><li><a href=https://github.com/docker/buildx/blob/master/README.md#file-definition target=_blank rel=noopener>buildx bake hcl examples</a></li></ul></li><li><code>docker</code><ul><li><a href=https://docs.docker.com/engine/reference/builder/#arg target=_blank rel=noopener>builder arg</a></li><li><a href=https://docs.docker.com/engine/reference/commandline/manifest/ target=_blank rel=noopener>docker manifest</a></li><li><a href=https://docs.docker.com/registry/spec/api/ target=_blank rel=noopener>docker register v2</a></li><li><a href=https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope target=_blank rel=noopener>global platform args</a></li></ul></li></ol><p><strong>buildx hcl 支持的变量值</strong></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> Target <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	Name <span style=color:#458;font-weight:700>string</span> <span style=color:#d14>`json:&#34;-&#34; hcl:&#34;name,label&#34;`</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// Inherits is the only field that cannot be overridden with --set
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	Inherits []<span style=color:#458;font-weight:700>string</span> <span style=color:#d14>`json:&#34;inherits,omitempty&#34; hcl:&#34;inherits,optional&#34;`</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	Context    <span style=color:#000;font-weight:700>*</span><span style=color:#458;font-weight:700>string</span>           <span style=color:#d14>`json:&#34;context,omitempty&#34; hcl:&#34;context,optional&#34;`</span>
+</span></span><span style=display:flex><span>	Dockerfile <span style=color:#000;font-weight:700>*</span><span style=color:#458;font-weight:700>string</span>           <span style=color:#d14>`json:&#34;dockerfile,omitempty&#34; hcl:&#34;dockerfile,optional&#34;`</span>
+</span></span><span style=display:flex><span>	Args       <span style=color:#000;font-weight:700>map</span>[<span style=color:#458;font-weight:700>string</span>]<span style=color:#458;font-weight:700>string</span> <span style=color:#d14>`json:&#34;args,omitempty&#34; hcl:&#34;args,optional&#34;`</span>
+</span></span><span style=display:flex><span>	Labels     <span style=color:#000;font-weight:700>map</span>[<span style=color:#458;font-weight:700>string</span>]<span style=color:#458;font-weight:700>string</span> <span style=color:#d14>`json:&#34;labels,omitempty&#34; hcl:&#34;labels,optional&#34;`</span>
+</span></span><span style=display:flex><span>	Tags       []<span style=color:#458;font-weight:700>string</span>          <span style=color:#d14>`json:&#34;tags,omitempty&#34; hcl:&#34;tags,optional&#34;`</span>
+</span></span><span style=display:flex><span>	CacheFrom  []<span style=color:#458;font-weight:700>string</span>          <span style=color:#d14>`json:&#34;cache-from,omitempty&#34;  hcl:&#34;cache-from,optional&#34;`</span>
+</span></span><span style=display:flex><span>	CacheTo    []<span style=color:#458;font-weight:700>string</span>          <span style=color:#d14>`json:&#34;cache-to,omitempty&#34;  hcl:&#34;cache-to,optional&#34;`</span>
+</span></span><span style=display:flex><span>	Target     <span style=color:#000;font-weight:700>*</span><span style=color:#458;font-weight:700>string</span>           <span style=color:#d14>`json:&#34;target,omitempty&#34; hcl:&#34;target,optional&#34;`</span>
+</span></span><span style=display:flex><span>	Secrets    []<span style=color:#458;font-weight:700>string</span>          <span style=color:#d14>`json:&#34;secret,omitempty&#34; hcl:&#34;secret,optional&#34;`</span>
+</span></span><span style=display:flex><span>	SSH        []<span style=color:#458;font-weight:700>string</span>          <span style=color:#d14>`json:&#34;ssh,omitempty&#34; hcl:&#34;ssh,optional&#34;`</span>
+</span></span><span style=display:flex><span>	Platforms  []<span style=color:#458;font-weight:700>string</span>          <span style=color:#d14>`json:&#34;platforms,omitempty&#34; hcl:&#34;platforms,optional&#34;`</span>
+</span></span><span style=display:flex><span>	Outputs    []<span style=color:#458;font-weight:700>string</span>          <span style=color:#d14>`json:&#34;output,omitempty&#34; hcl:&#34;output,optional&#34;`</span>
+</span></span><span style=display:flex><span>	Pull       <span style=color:#000;font-weight:700>*</span><span style=color:#458;font-weight:700>bool</span>             <span style=color:#d14>`json:&#34;pull,omitempty&#34; hcl:&#34;pull,optional&#34;`</span>
+</span></span><span style=display:flex><span>	NoCache    <span style=color:#000;font-weight:700>*</span><span style=color:#458;font-weight:700>bool</span>             <span style=color:#d14>`json:&#34;no-cache,omitempty&#34; hcl:&#34;no-cache,optional&#34;`</span>
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// IMPORTANT: if you add more fields here, do not forget to update newOverrides and README.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>}
+</span></span></code></pre></td></tr></table></div></div><h2 id=在-github-action-上使用-buildx>在 github action 上使用 buildx</h2><blockquote><p><a href=https://github.com/marketplace/actions/customizable-docker-buildx target=_blank rel=noopener>https://github.com/marketplace/actions/customizable-docker-buildx</a></p></blockquote><h2 id=troubleshoot>troubleshoot</h2><ol><li><code>multiple platforms feature is currently not supported for docker driver</code></li></ol><p>当前模式不支持 buildx :
+<a href=https://github.com/docker/cli/blob/master/experimental/README.md target=_blank rel=noopener>https://github.com/docker/cli/blob/master/experimental/README.md</a></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># 开始实验模式 </span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># ~/docker/daemon.json</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#d14>&#34;experimental&#34;</span>: <span style=color:#0086b3>true</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># docker version -f &#39;{{.Server.Experimental}}&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>## true</span>
+</span></span></code></pre></td></tr></table></div></div><ol start=2><li><code>auto-push is currently not implemented for docker driver</code></li></ol><p>缺少 builder</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#998;font-style:italic># 创建一个 builder </span>
+</span></span><span style=display:flex><span>docker buildx create --use <span style=color:#998;font-style:italic># a random name</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>docker buildx create --user --name specified_name <span style=color:#998;font-style:italic># specified name</span>
+</span></span></code></pre></td></tr></table></div></div><ol start=2><li><code>failed to solve: rpc error: code = Unknown desc = failed to load LLB: runtime execution on platform linux/arm64 not supported</code></li></ol><p>参考
+<a href=https://github.com/multiarch/qemu-user-static#getting-started target=_blank rel=noopener>qemu-user-static #getting-started</a>
+执行以下命令。 如果正常返回，则表示成功</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ uname -m
+</span></span><span style=display:flex><span>x86_64
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>$ docker run --rm -t arm64v8/ubuntu uname -m
+</span></span><span style=display:flex><span>standard_init_linux.go:211: <span style=color:#0086b3>exec</span> user process caused <span style=color:#d14>&#34;exec format error&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>$ docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>$ docker run --rm -t arm64v8/ubuntu uname -m
+</span></span><span style=display:flex><span>aarch64
+</span></span></code></pre></td></tr></table></div></div><ul><li><a href=https://github.com/multiarch/qemu-user-static#getting-started target=_blank rel=noopener>https://github.com/multiarch/qemu-user-static#getting-started</a></li><li><a href=https://github.com/docker/buildx/issues/132#issuecomment-521759117 target=_blank rel=noopener>https://github.com/docker/buildx/issues/132#issuecomment-521759117</a></li></ul></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://typonotes.com/posts/2020/06/10/docker-buildx/>https://typonotes.com/posts/2020/06/10/docker-buildx/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://typonotes.com/>https://typonotes.com/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2023/03/20/golang-reflect-interface-deeopcopy/>Golang Reflect Interface Deeopcopy</a></li><li><a href=/posts/2023/03/16/docker-sunset-free-team-organizations/>Docker 连夜发文 将强制清理免费组织账号， 是收割还是真穷？</a></li><li><a href=/posts/2023/03/15/golang-context-in-action-trace/>Golang Context 值传递的生产案例(01): 链路追踪</a></li><li><a href=/posts/2023/03/02/cobra-book/>「建议收藏」 十篇文章带你 Golang Cobra 入门到实战（含源码讲解）</a></li><li><a href=/posts/2023/03/01/devopscamp-context-sample/>Golang Context 简介和入门使用(1): 值传递</a></li></ul></div><div class="post-meta meta-tags">没有标签</div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://typonotes.com/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号-3</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」答疑， 2023/12/31截止</strong></p><a href title="（免费星球）「运维成长路线」答疑， 2023/12/31截止" target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://typonotes.com/posts/2023/03/20/golang-reflect-interface-deeopcopy/ title="Golang Reflect Interface Deeopcopy" target=_blank>Golang Reflect Interface Deeopcopy</a></li><li><a href=https://typonotes.com/posts/2023/03/16/docker-sunset-free-team-organizations/ title="Docker 连夜发文 将强制清理免费组织账号， 是收割还是真穷？ " target=_blank>Docker 连夜发文 将强制清理免费组织账号， 是收割还是真穷？</a></li><li><a href=https://typonotes.com/posts/2023/03/15/golang-context-in-action-trace/ title="Golang Context 值传递的生产案例(01): 链路追踪" target=_blank>Golang Context 值传递的生产案例(01): 链路追踪</a></li><li><a href=https://typonotes.com/posts/2023/03/02/cobra-book/ title="「建议收藏」 十篇文章带你 Golang Cobra 入门到实战（含源码讲解）" target=_blank>「建议收藏」 十篇文章带你 Golang Cobra 入门到实战（含源码讲解）</a></li><li><a href=https://typonotes.com/posts/2023/03/01/devopscamp-context-sample/ title="Golang Context 简介和入门使用(1): 值传递" target=_blank>Golang Context 简介和入门使用(1): 值传递</a></li><li><a href=https://typonotes.com/posts/2023/02/28/devopscamp-interface-sample/ title="Golang 接口(interface) 简介和入门使用" target=_blank>Golang 接口(interface) 简介和入门使用</a></li><li><a href=https://typonotes.com/posts/2023/02/22/envsubst2-usage/ title="Linux 工具命令(04): envsubst2 一个比 envsubst 更省心的配置渲染工具" target=_blank>Linux 工具命令(04): envsubst2 一个比 envsubst 更省心的配置渲染工具</a></li><li><a href=https://typonotes.com/posts/2023/02/22/envsubst-usage/ title="Linux 工具命令(03): 使用 envsubst 渲染配置文件" target=_blank>Linux 工具命令(03): 使用 envsubst 渲染配置文件</a></li><li><a href=https://typonotes.com/posts/2023/02/20/duzikai-outsources/ title="Duzikai Outsources" target=_blank>Duzikai Outsources</a></li><li><a href=https://typonotes.com/posts/2023/02/19/devopscamp-cobra-06-persistent-run-and-flags/ title="DevOpsCamp第2期：从 《cobra - 06 持久化命令》 开始聊聊 Go语言 指针类型的使用注意事项" target=_blank>DevOpsCamp第2期：从 《cobra - 06 持久化命令》 开始聊聊 Go语言 指针类型的使用注意事项</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://typonotes.com/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://typonotes.com/categories/blog/>blog (10)</a></li><li><a href=https://typonotes.com/categories/books/>books (13)</a></li><li><a href=https://typonotes.com/categories/database/>database (1)</a></li><li><a href=https://typonotes.com/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://typonotes.com/categories/devopscamp/>devopscamp (10)</a></li><li><a href=https://typonotes.com/categories/docker/>docker (6)</a></li><li><a href=https://typonotes.com/categories/gitlab/>gitlab (1)</a></li><li><a href=https://typonotes.com/categories/golang/>golang (11)</a></li><li><a href=https://typonotes.com/categories/istio/>istio (16)</a></li><li><a href=https://typonotes.com/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://typonotes.com/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://typonotes.com/categories/kubernetes/>kubernetes (49)</a></li><li><a href=https://typonotes.com/categories/linux/>linux (4)</a></li><li><a href=https://typonotes.com/categories/only-one/>only-one (2)</a></li><li><a href=https://typonotes.com/categories/redis/>redis (2)</a></li><li><a href=https://typonotes.com/categories/vue3/>vue3 (2)</a></li><li><a href=https://typonotes.com/categories/%E5%91%BD%E4%BB%A4%E5%B7%A5%E5%85%B7/>命令工具 (1)</a></li><li><a href=https://typonotes.com/categories/%E9%9A%8F%E7%AC%94/>随笔 (1)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://typonotes.com/tags/MSSQL/>MSSQL</a>
+<a href=https://typonotes.com/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://typonotes.com/tags/XSS/>XSS</a>
+<a href=https://typonotes.com/tags/XXE/>XXE</a>
+<a href=https://typonotes.com/tags/aliyun/>aliyun</a>
+<a href=https://typonotes.com/tags/ansible/>ansible</a>
+<a href=https://typonotes.com/tags/apt/>apt</a>
+<a href=https://typonotes.com/tags/aws/>aws</a>
+<a href=https://typonotes.com/tags/axios/>axios</a>
+<a href=https://typonotes.com/tags/blog/>blog</a>
+<a href=https://typonotes.com/tags/calico/>calico</a>
+<a href=https://typonotes.com/tags/cdn/>cdn</a>
+<a href=https://typonotes.com/tags/cephfs/>cephfs</a>
+<a href=https://typonotes.com/tags/cfssl/>cfssl</a>
+<a href=https://typonotes.com/tags/chatgpt/>chatgpt</a>
+<a href=https://typonotes.com/tags/cicd/>cicd</a>
+<a href=https://typonotes.com/tags/cli-tools/>cli-tools</a>
+<a href=https://typonotes.com/tags/cloudnative/>cloudnative</a>
+<a href=https://typonotes.com/tags/cobra/>cobra</a>
+<a href=https://typonotes.com/tags/code/>code</a>
+<a href=https://typonotes.com/tags/config/>config</a>
+<a href=https://typonotes.com/tags/configmap/>configmap</a>
+<a href=https://typonotes.com/tags/context/>context</a>
+<a href=https://typonotes.com/tags/database/>database</a>
+<a href=https://typonotes.com/tags/defer/>defer</a>
+<a href=https://typonotes.com/tags/deployment/>deployment</a>
+<a href=https://typonotes.com/tags/dns/>dns</a>
+<a href=https://typonotes.com/tags/dnsx/>dnsx</a>
+<a href=https://typonotes.com/tags/docker/>docker</a>
+<a href=https://typonotes.com/tags/docker-compose/>docker-compose</a>
+<a href=https://typonotes.com/tags/dockerfile/>dockerfile</a>
+<a href=https://typonotes.com/tags/download/>download</a>
+<a href=https://typonotes.com/tags/filebeat/>filebeat</a>
+<a href=https://typonotes.com/tags/gin/>gin</a>
+<a href=https://typonotes.com/tags/git/>git</a>
+<a href=https://typonotes.com/tags/github/>github</a>
+<a href=https://typonotes.com/tags/gitlab/>gitlab</a>
+<a href=https://typonotes.com/tags/glusterfs/>glusterfs</a>
+<a href=https://typonotes.com/tags/golang/>golang</a>
+<a href=https://typonotes.com/tags/gorm/>gorm</a>
+<a href=https://typonotes.com/tags/haproxy/>haproxy</a>
+<a href=https://typonotes.com/tags/html5/>html5</a>
+<a href=https://typonotes.com/tags/https/>https</a>
+<a href=https://typonotes.com/tags/hugo/>hugo</a>
+<a href=https://typonotes.com/tags/informer/>informer</a>
+<a href=https://typonotes.com/tags/ingress/>ingress</a>
+<a href=https://typonotes.com/tags/interface/>interface</a>
+<a href=https://typonotes.com/tags/iptables/>iptables</a>
+<a href=https://typonotes.com/tags/istio/>istio</a>
+<a href=https://typonotes.com/tags/js/>js</a>
+<a href=https://typonotes.com/tags/k3s/>k3s</a>
+<a href=https://typonotes.com/tags/k8s/>k8s</a>
+<a href=https://typonotes.com/tags/kubebuilder/>kubebuilder</a>
+<a href=https://typonotes.com/tags/kustomize/>kustomize</a>
+<a href=https://typonotes.com/tags/kustz/>kustz</a>
+<a href=https://typonotes.com/tags/layout/>layout</a>
+<a href=https://typonotes.com/tags/lego/>lego</a>
+<a href=https://typonotes.com/tags/libaray/>libaray</a>
+<a href=https://typonotes.com/tags/library/>library</a>
+<a href=https://typonotes.com/tags/linux/>linux</a>
+<a href=https://typonotes.com/tags/log/>log</a>
+<a href=https://typonotes.com/tags/minio/>minio</a>
+<a href=https://typonotes.com/tags/mysql/>mysql</a>
+<a href=https://typonotes.com/tags/network/>network</a>
+<a href=https://typonotes.com/tags/nginx/>nginx</a>
+<a href=https://typonotes.com/tags/opentelemetry/>opentelemetry</a>
+<a href=https://typonotes.com/tags/pgsql/>pgsql</a>
+<a href=https://typonotes.com/tags/proxy/>proxy</a>
+<a href=https://typonotes.com/tags/python/>python</a>
+<a href=https://typonotes.com/tags/qcloud/>qcloud</a>
+<a href=https://typonotes.com/tags/qiniu/>qiniu</a>
+<a href=https://typonotes.com/tags/qos/>qos</a>
+<a href=https://typonotes.com/tags/redis/>redis</a>
+<a href=https://typonotes.com/tags/reflect/>reflect</a>
+<a href=https://typonotes.com/tags/repo/>repo</a>
+<a href=https://typonotes.com/tags/resetful/>resetful</a>
+<a href=https://typonotes.com/tags/s3/>s3</a>
+<a href=https://typonotes.com/tags/scope/>scope</a>
+<a href=https://typonotes.com/tags/semimonthly-plan/>semimonthly-plan</a>
+<a href=https://typonotes.com/tags/service/>service</a>
+<a href=https://typonotes.com/tags/shell/>shell</a>
+<a href=https://typonotes.com/tags/slice/>slice</a>
+<a href=https://typonotes.com/tags/sqlmap/>sqlmap</a>
+<a href=https://typonotes.com/tags/storage/>storage</a>
+<a href=https://typonotes.com/tags/tag01/>tag01</a>
+<a href=https://typonotes.com/tags/tag02/>tag02</a>
+<a href=https://typonotes.com/tags/test/>test</a>
+<a href=https://typonotes.com/tags/tidb/>tidb</a>
+<a href=https://typonotes.com/tags/timezone/>timezone</a>
+<a href=https://typonotes.com/tags/tls/>tls</a>
+<a href=https://typonotes.com/tags/tools/>tools</a>
+<a href=https://typonotes.com/tags/trace/>trace</a>
+<a href=https://typonotes.com/tags/typescript/>typescript</a>
+<a href=https://typonotes.com/tags/typora/>typora</a>
+<a href=https://typonotes.com/tags/v2ray/>v2ray</a>
+<a href=https://typonotes.com/tags/vscode/>vscode</a>
+<a href=https://typonotes.com/tags/vue/>vue</a>
+<a href=https://typonotes.com/tags/vue3/>vue3</a>
+<a href=https://typonotes.com/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://typonotes.com/tags/%E5%8F%8D%E5%B0%84/>反射</a>
+<a href=https://typonotes.com/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://typonotes.com/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
+<a href=https://typonotes.com/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://typonotes.com/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
