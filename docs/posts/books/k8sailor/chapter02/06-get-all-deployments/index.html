@@ -17,19 +17,19 @@ apis -&gt;
     biz -&gt;
     dao -&gt;
 </code></pre><p>将业务逻辑部分分为经典三层，想法是这样的，可能实现有错误。</p><ol><li><code>apis</code> 接入层: 只用于管理 http 请求与交互。</li><li><code>biz</code> 业务层: 用于处理 api 层来的请求， 封装原始数据</li><li><code>dao</code> 数据访问层: 与数据库, cluster 等交互。 存取数据。</li></ol><h2 id=重新调整目录结构>重新调整目录结构</h2><ol><li>新创建 <code>/internal</code> 目录用于存放业务信息</li><li>在 <code>/internal</code> 目录下新创建 <strong>业务层</strong>
-<a href=https://typonotes.com/internal/biz target=_blank rel=noopener>/internal/biz</a>
+<a href=https://static.typonotes.com/internal/biz target=_blank rel=noopener>/internal/biz</a>
 和 <strong>k8s dao 层</strong>
-<a href=https://typonotes.com/internal/k8sdao target=_blank rel=noopener>/internal/k8sdao</a></li><li>将 <code>apis</code> <strong>接入层</strong> 从原来的 <code>/cmd/k8sailor/apis</code> 移动到了
-<a href=https://typonotes.com/internal/apis target=_blank rel=noopener>/internal/apis</a></li></ol><h3 id=使用-jarvis-删除-cobra-flags>使用 jarvis, 删除 cobra flags</h3><ol><li>统一使用 <code>jarvis</code> 进行变量管理， 因此删除了 <code>global/config.go</code> 和 <code>k8s/cluster.go</code> 原来的 <code>flag</code> 相关变量声明使用的代码</li><li>但 <code>cobra cmd</code> 命令相关代码依旧保留， 感觉以后会用到。</li><li>将原来的 <code>/pkg/k8s</code> 重命名为
-<a href=https://typonotes.com/pkg/confk8s target=_blank rel=noopener>/pkg/confk8s</a>
+<a href=https://static.typonotes.com/internal/k8sdao target=_blank rel=noopener>/internal/k8sdao</a></li><li>将 <code>apis</code> <strong>接入层</strong> 从原来的 <code>/cmd/k8sailor/apis</code> 移动到了
+<a href=https://static.typonotes.com/internal/apis target=_blank rel=noopener>/internal/apis</a></li></ol><h3 id=使用-jarvis-删除-cobra-flags>使用 jarvis, 删除 cobra flags</h3><ol><li>统一使用 <code>jarvis</code> 进行变量管理， 因此删除了 <code>global/config.go</code> 和 <code>k8s/cluster.go</code> 原来的 <code>flag</code> 相关变量声明使用的代码</li><li>但 <code>cobra cmd</code> 命令相关代码依旧保留， 感觉以后会用到。</li><li>将原来的 <code>/pkg/k8s</code> 重命名为
+<a href=https://static.typonotes.com/pkg/confk8s target=_blank rel=noopener>/pkg/confk8s</a>
 ， 命名风格更加统一。</li></ol><h2 id=获取-deployments-信息>获取 deployments 信息</h2><ol><li>api 处理用户请求参数， 请求 biz Operator 方法</li><li>biz Operator， 请求 k8sdao Operator， 并 <strong>处理/过滤</strong> 原始数据</li><li>k8sdao 与 cluster 交互， 返回原始数据。</li></ol><blockquote><p>有点问题， 三个模块， 三次同名方法。 有点麻烦。</p></blockquote><h3 id=kuberneteclientset-客户端>kubernete.ClientSet 客户端</h3><p>在
-<a href=https://typonotes.com/cmd/k8sailor/global/config.go target=_blank rel=noopener>/cmd/k8sailor/global/config.go</a>
+<a href=https://static.typonotes.com/cmd/k8sailor/global/config.go target=_blank rel=noopener>/cmd/k8sailor/global/config.go</a>
 中声明 <code>KubeClient</code></p><p>并在
-<a href=https://typonotes.com/internal/k8sdao/clientset.go target=_blank rel=noopener>/internal/k8sdao/clientset.go</a>
+<a href=https://static.typonotes.com/internal/k8sdao/clientset.go target=_blank rel=noopener>/internal/k8sdao/clientset.go</a>
 包中赋值给新变量名保存， 使用短名字方便后续调用。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
 </span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>var</span> clientset = global.KubeClient.<span style=color:#900;font-weight:700>Client</span>()
 </span></span></code></pre></td></tr></table></div></div><h3 id=在-dao-层获取-deployment-数据>在 dao 层获取 deployment 数据</h3><p>在
-<a href=https://typonotes.com/internal/k8sdao/deployments.go target=_blank rel=noopener>/internal/k8sdao/deployments.go</a>
+<a href=https://static.typonotes.com/internal/k8sdao/deployments.go target=_blank rel=noopener>/internal/k8sdao/deployments.go</a>
 中， 封装了一个 <strong>获取指定 namespace</strong> 所有 Pod 的方法。 并返回给下游</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3

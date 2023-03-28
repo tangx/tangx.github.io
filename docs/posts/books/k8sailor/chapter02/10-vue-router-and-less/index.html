@@ -12,13 +12,13 @@
 <a href=/categories/k8sailor target=_blank>k8sailor</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
 <span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=开发-k8s-管理平台---k8sailor-10-前端-使用-vue-router-进行路由管理>开发 k8s 管理平台 - k8sailor 10. (前端) 使用 vue-router 进行路由管理</h1><blockquote><p><strong>原文地址</strong>:
 <a href=https://tangx.in/posts/books/k8sailor/chapter02/10-vue-router-and-less/ target=_blank rel=noopener>https://tangx.in/posts/books/k8sailor/chapter02/10-vue-router-and-less/</a></p></blockquote><blockquote><p>tag:
-<a href=https://github.com/tangx/k8sailor/tree/feat/10-vue-router-and-less target=_blank rel=noopener>https://github.com/tangx/k8sailor/tree/feat/10-vue-router-and-less</a></p></blockquote><p><img class=mx-auto alt=index src=https://typonotes.com/posts/books/k8sailor/chapter02/10-vue-router-and-less/index.png%3cnil%3e></p><h2 id=使用-vue-router-路由管理>使用 vue-router 路由管理</h2><p>安装 <code>vue-router</code> 支持参考
+<a href=https://github.com/tangx/k8sailor/tree/feat/10-vue-router-and-less target=_blank rel=noopener>https://github.com/tangx/k8sailor/tree/feat/10-vue-router-and-less</a></p></blockquote><p><img class=mx-auto alt=index src=https://static.typonotes.com/posts/books/k8sailor/chapter02/10-vue-router-and-less/index-fs8.png!v1></p><h2 id=使用-vue-router-路由管理>使用 vue-router 路由管理</h2><p>安装 <code>vue-router</code> 支持参考
 <a href=https://tangx.in/2021/09/28/vue3-vue-router/ target=_blank rel=noopener>https://tangx.in/2021/09/28/vue3-vue-router/</a></p><ol><li><p>将默认的
-<a href=https://typonotes.com/webapp/src/App.vue target=_blank rel=noopener>/webapp/src/App.vue</a>
+<a href=https://static.typonotes.com/webapp/src/App.vue target=_blank rel=noopener>/webapp/src/App.vue</a>
 作为最基本的入口， 除了引入 <code>Index.vue</code> 文件模块，不进行其他操作， 保持整洁。 其行为类似 golang 中的 <code>main.go</code>。</p></li><li><p>创建
-<a href=https://typonotes.com/webapp/src/components/Index.vue target=_blank rel=noopener>/webapp/src/components/Index.vue</a>
+<a href=https://static.typonotes.com/webapp/src/components/Index.vue target=_blank rel=noopener>/webapp/src/components/Index.vue</a>
 模块作为 index 入口文件， 也是主要的布局页面。</p><ol><li>路由信息(<code>router-link</code>) 将放置在页面左侧</li><li>路由展示(<code>router-view</code>) 作为占位符放在右侧。</li></ol></li><li><p>所有数据展示类模块都放在
-<a href=https://typonotes.com/webapp/src/components/views target=_blank rel=noopener>/webapp/src/components/views</a>
+<a href=https://static.typonotes.com/webapp/src/components/views target=_blank rel=noopener>/webapp/src/components/views</a>
 目录下。 所有内容将通过 <code>vue-router</code> 组件渲染， 展示在 <code>Index.vue</code> 模块的 <code>router-view</code> 区域。</p></li></ol><h2 id=使用-less-进行-index-部署>使用 less 进行 Index 部署</h2><p>less
 <a href=https://lesscss.org/ target=_blank rel=noopener>https://lesscss.org/</a>
 是 css 的超级。 不仅语法与 css 相同。 而且支持 <strong>嵌套</strong> 书写， 可以直观的展现组件之间的层级关系。</p><p><code>div</code> 本身是 <strong>行元素</strong> ， 即 <strong>一个 div 就需要占用一行</strong>。 在 css 布局中使用 <code>display: flex;</code> 后将脱离数据流， 悬浮并排在一起。 默认为水平排列。</p><p>配合使用 <code>flex-direction: column;</code> 将垂直排列。</p><pre tabindex=0><code class=language-less data-lang=less>
