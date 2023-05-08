@@ -11,19 +11,23 @@
 <a href=/categories/logging target=_blank>logging</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
 <span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=nginx-和-nginx-ingress-controller-配置-json-日志格式>Nginx 和 Nginx-Ingress-Controller 配置 JSON 日志格式</h1><p>如果在 <strong>公众号</strong> 文章发现状态为 <strong>已更新</strong>， 建议点击 <strong>查看原文</strong> 查看最新内容。</p><p>状态: <strong>未更新</strong></p><blockquote><p><strong>原文链接:</strong>
 <a href=https://typonotes.com/posts/2023/05/08/nginx-log-format/ target=_blank rel=noopener>https://typonotes.com/posts/2023/05/08/nginx-log-format/</a></p></blockquote><h2 id=nginx>Nginx</h2><pre tabindex=0><code class=language-jsonc data-lang=jsonc>{
-    &#34;time&#34;: &#34;$time_iso8601&#34;,
-    &#34;request_method&#34;: &#34;$request_method&#34;,
-    &#34;host&#34;: &#34;$host&#34;,
-    &#34;request_uri&#34;: &#34;$request_uri&#34;,
-    &#34;request_time&#34;:$request_time,
-    &#34;status&#34;:$status,
-    &#34;remote_addr&#34;: &#34;$remote_addr&#34;,
-    &#34;http_x_forwarded_for&#34;: &#34;$http_x_forwarded_for&#34;,
-    &#34;upstream_addr&#34;: &#34;$upstream_addr&#34;,
-    &#34;user_agent&#34;: &#34;$http_user_agent&#34;,
-    &#34;request_length&#34;:$request_length,
-    &#34;resp_body_size&#34;:$body_bytes_sent,
-    &#34;cost&#34;:&#34;$request_time&#34;
+  &#34;time&#34;: &#34;$time_iso8601&#34;,
+  &#34;remote_addr&#34;: &#34;$remote_addr&#34;,
+  &#34;remote_user&#34;: &#34;$remote_user&#34;,
+  &#34;request_method&#34;: &#34;$request_method&#34;,
+  &#34;host&#34;: &#34;$host&#34;,
+  &#34;request_uri&#34;: &#34;$request_uri&#34;,
+  &#34;status&#34;: $status,
+  &#34;request_time&#34;: $request_time,
+  &#34;cost&#34;: &#34;$request_time&#34;,
+  &#34;body_bytes_sent&#34;: $body_bytes_sent,
+  &#34;http_referer&#34;: &#34;$http_referer&#34;,
+  &#34;http_user_agent&#34;: &#34;$http_user_agent&#34;,
+  &#34;request_length&#34;: $request_length,
+  &#34;upstream_addr&#34;: &#34;$upstream_addr&#34;,
+  &#34;upstream_response_length&#34;: $upstream_response_length,
+  &#34;upstream_response_time&#34;: $upstream_response_time,
+  &#34;upstream_status&#34;: $upstream_status
 }
 </code></pre><ol><li>Nginx 提供了多种 <strong>时间格式</strong> 变量， 包括 <code>time_iso8601</code>, <code>time_local</code> 等其他字段</li><li><code>request_method</code>: 请求方法， <code>GET, POST ...</code></li><li><code>host</code>: 访问域名， 例如 <code>www.example.com</code></li><li><code>request_uri</code>: 资源地址。 例如 <code>/abc/index.html</code>。 与 <code>host</code> 组合在一起就是完整资源。</li><li><code>request_time</code>: 请求耗时（单位 <strong>毫秒</strong>）。 以 <strong>收到客户端发送</strong> 的第一个字符开始， 以 <strong>发送给客户端</strong> 最后一个字符结束。<ul><li><code>cost</code> 就是 <code>request_time</code>。 更具有字面意思。</li></ul></li><li><code>status</code>: 响应状态。 例如 <code>200, 404 ...</code></li></ol><h2 id=nginx-ingress-controller>Nginx Ingress Controller</h2><p>这里是 <strong>Aliyun</strong> Nginx Ingress Controller 配置规则， 其中部分参与可能在其他地方不可用， 需要自己测试。</p><p>展开之后结果如下， <strong>其中</strong> 数字字段没有使用 <strong>双引号</strong> 括起来。</p><pre tabindex=0><code class=language-jsonc data-lang=jsonc>{
     &#34;remote_addr&#34;: &#34;$remote_addr&#34;,
