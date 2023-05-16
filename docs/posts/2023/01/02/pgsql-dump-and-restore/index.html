@@ -86,6 +86,8 @@
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
 </span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#999;font-weight:700;font-style:italic>#!/bin/bash
 </span></span></span><span style=display:flex><span><span style=color:#999;font-weight:700;font-style:italic></span><span style=color:#998;font-style:italic># filename: pgsql-dump-and-restore.sh</span>
 </span></span><span style=display:flex><span>
@@ -121,12 +123,14 @@
 </span></span><span style=display:flex><span><span style=color:#998;font-style:italic># https://www.postgresql.org/docs/13/app-pgrestore.html</span>
 </span></span><span style=display:flex><span><span style=color:#998;font-style:italic># --no-owner</span>
 </span></span><span style=display:flex><span><span style=color:#998;font-style:italic># --role=new_user</span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic># PGPASSWORD=${Dest_PgPASS} pg_restore -U ${Dest_PgUSER} -h ${Dest_HOST} --port ${Dest_PORT} -d ${Dest_DBName} --no-owner --role=${Dest_PgUSER} ${FromFile}</span>
 </span></span><span style=display:flex><span><span style=color:#000;font-weight:700>function</span> restore<span style=color:#000;font-weight:700>(){</span>
 </span></span><span style=display:flex><span>    <span style=color:#0086b3>echo</span> <span style=color:#d14>&#34;# import: pg_restore -U </span><span style=color:#d14>${</span><span style=color:teal>Dest_PgUSER</span><span style=color:#d14>}</span><span style=color:#d14> -h </span><span style=color:#d14>${</span><span style=color:teal>Dest_HOST</span><span style=color:#d14>}</span><span style=color:#d14> --port </span><span style=color:#d14>${</span><span style=color:teal>Dest_PORT</span><span style=color:#d14>}</span><span style=color:#d14>&#34;</span>
 </span></span><span style=display:flex><span>    <span style=color:#0086b3>echo</span> <span style=color:#d14>&#34;#   from: </span><span style=color:#d14>${</span><span style=color:teal>FromFile</span><span style=color:#d14>}</span><span style=color:#d14>&#34;</span>
 </span></span><span style=display:flex><span>    <span style=color:#0086b3>echo</span> <span style=color:#d14>&#34;wait 15s to cacle : Ctrl+C&#34;</span>
 </span></span><span style=display:flex><span>    sleep <span style=color:#099>15</span>
-</span></span><span style=display:flex><span>    <span style=color:teal>PGPASSWORD</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>${</span><span style=color:teal>Dest_PgPASS</span><span style=color:#d14>}</span> pg_restore -U <span style=color:#d14>${</span><span style=color:teal>Dest_PgUSER</span><span style=color:#d14>}</span> -h <span style=color:#d14>${</span><span style=color:teal>Dest_HOST</span><span style=color:#d14>}</span> --port <span style=color:#d14>${</span><span style=color:teal>Dest_PORT</span><span style=color:#d14>}</span> -d <span style=color:#d14>${</span><span style=color:teal>Dest_DBName</span><span style=color:#d14>}</span> --no-woner --role<span style=color:#000;font-weight:700>=</span><span style=color:#d14>${</span><span style=color:teal>Dest_PgUSER</span><span style=color:#d14>}</span> <span style=color:#d14>${</span><span style=color:teal>FromFile</span><span style=color:#d14>}</span>
+</span></span><span style=display:flex><span>    <span style=color:teal>PGPASSWORD</span><span style=color:#000;font-weight:700>=</span><span style=color:#d14>${</span><span style=color:teal>Dest_PgPASS</span><span style=color:#d14>}</span> psql -U <span style=color:#d14>${</span><span style=color:teal>Dest_PgUSER</span><span style=color:#d14>}</span> -h <span style=color:#d14>${</span><span style=color:teal>Dest_HOST</span><span style=color:#d14>}</span> --port <span style=color:#d14>${</span><span style=color:teal>Dest_PORT</span><span style=color:#d14>}</span> -d <span style=color:#d14>${</span><span style=color:teal>Dest_DBName</span><span style=color:#d14>}</span> -f <span style=color:#d14>${</span><span style=color:teal>FromFile</span><span style=color:#d14>}</span>
+</span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#000;font-weight:700>}</span>
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span>
