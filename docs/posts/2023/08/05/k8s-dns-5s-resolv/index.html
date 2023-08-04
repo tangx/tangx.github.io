@@ -1,0 +1,660 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>kubernetes集群中夺命的5秒DNS延迟 | 老麦的书房</title><meta property="og:title" content="kubernetes集群中夺命的5秒DNS延迟 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2023-08-05T01:05:52+08:00"><meta property="article:modified_time" content="2023-08-05T01:05:52+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="kubernetes集群中夺命的5秒DNS延迟"><meta name=author content="老麦"><meta property="og:url" content="https://typonotes.com/posts/2023/08/05/k8s-dns-5s-resolv/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
+<script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?fe891ffeb313a7d084b8baf803d87746",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://typonotes.com/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://typonotes.com/>首页</a>
+<a href=https://typonotes.com/books/ title=开源书>开源书</a>
+<a href=https://typonotes.com/categories/ title=分类>分类</a>
+<a href=https://typonotes.com/tags/ title=标签>标签</a>
+<a href=https://typonotes.com/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://typonotes.com/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://typonotes.com/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#相关文章>相关文章</a></li><li><a href=#本质原因>本质原因</a></li><li><a href=#解决方式>解决方式</a><ul><li><a href=#通过-dnsoption-参数-解决并发解析>通过 <code>dnsOption</code> 参数 解决并发解析</a></li><li><a href=#coredns-禁用-aaaa-ipv6-解析><code>CoreDNS</code> 禁用 <code>AAAA</code> ipv6 解析</a></li><li><a href=#使用-nodelocaldns-cache--实现本地缓存>使用 <code>NodeLocalDNS Cache</code> 实现本地缓存</a></li></ul></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>kubernetes集群中夺命的5秒DNS延迟</h1></header><time datetime=2023-08-04T17:05:52Z class="post-meta meta-date dt-published">2023年8月5日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/cloudnative target=_blank>cloudnative</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=kubernetes集群中夺命的5秒dns延迟>kubernetes集群中夺命的5秒DNS延迟</h1><p>如果在 <strong>公众号</strong> 文章发现状态为 <strong>已更新</strong>， 建议点击 <strong>查看原文</strong> 查看最新内容。</p><p>状态: <strong>未更新</strong></p><blockquote><p><strong>原文链接:</strong>
+<a href=https://typonotes.com/posts/2023/08/05/k8s-dns-5s-resolv/ target=_blank rel=noopener>https://typonotes.com/posts/2023/08/05/k8s-dns-5s-resolv/</a></p></blockquote><h1 id=kubernetes集群中夺命的5秒dns延迟-1>kubernetes集群中夺命的5秒DNS延迟</h1><h1 id=问题原因>问题原因</h1><h2 id=相关文章>相关文章</h2><p><a href=https://tencentcloudcontainerteam.github.io/2018/10/26/DNS-5-seconds-delay/ target=_blank rel=noopener>kubernetes集群中夺命的5秒DNS延迟</a>
+<a href=https://mp.weixin.qq.com/s/7lUJCCnBnoxjyu3h-PyVaw target=_blank rel=noopener>破案：Kubernetes/Docker 上无法解释的连接超时</a></p><p>Weave works的工程师
+<a href=https://tencentcloudcontainerteam.github.io/2018/10/26/DNS-5-seconds-delay/martynas@weave.works target=_blank rel=noopener>Martynas Pumputis</a>
+对这个问题做了很详细的分析：
+<a href=https://www.weave.works/blog/racy-conntrack-and-dns-lookup-timeouts target=_blank rel=noopener>https://www.weave.works/blog/racy-conntrack-and-dns-lookup-timeouts</a></p><pre><code>+ `conntract`: http://people.netfilter.org/pablo/docs/login.pdf
+</code></pre><h2 id=本质原因>本质原因</h2><pre tabindex=0><code>DNS client (glibc 或 musl libc) 会并发请求 A 和 AAAA 记录，跟 DNS Server 通信自然会先 connect (建立 fd)，后面请求报文使用这个 fd 来发送，由于 UDP 是无状态协议， connect 时并不会发包，也就不会创建 conntrack 表项, 而并发请求的 A 和 AAAA 记录默认使用同一个 fd 发包，send 时各自发的包它们源 Port 相同(因为用的同一个 socket 发送)，当并发发包时，两个包都还没有被插入 conntrack 表项，所以 netfilter 会为它们分别创建 conntrack 表项，而集群内请求 kube-dns 或 coredns 都是访问的 CLUSTER-IP，报文最终会被 DNAT 成一个 endpoint 的 POD IP，当两个包恰好又被 DNAT 成同一个 POD IP 时，它们的五元组就相同了，在最终插入的时候后面那个包就会被丢掉，如果 dns 的 pod 副本只有一个实例的情况就很容易发生(始终被 DNAT 成同一个 POD IP)，现象就是 dns 请求超时，client 默认策略是等待 5s 自动重试，如果重试成功，我们看到的现象就是 dns 请求有 5s 的延时。
+</code></pre><p><strong>划重点</strong>
+1. <code>A</code> 与 <code>AAAA</code>
+2. 并发冲突</p><h2 id=解决方式>解决方式</h2><h3 id=通过-dnsoption-参数-解决并发解析>通过 <code>dnsOption</code> 参数 解决并发解析</h3><p><a href=https://github.com/Azure/AKS/issues/667 target=_blank rel=noopener>https://github.com/Azure/AKS/issues/667</a>
+<a href=https://studygolang.com/articles/25303 target=_blank rel=noopener>https://studygolang.com/articles/25303</a></p><pre tabindex=0><code>dnsConfig:  
+  options:  
+    - name: single-request-reopen
+</code></pre><p><a href=https://github.com/Azure/AKS/issues/667#issuecomment-425821085 target=_blank rel=noopener>https://github.com/Azure/AKS/issues/667#issuecomment-425821085</a></p><h3 id=coredns-禁用-aaaa-ipv6-解析><code>CoreDNS</code> 禁用 <code>AAAA</code> ipv6 解析</h3><pre><code>1. [k8s与dns--coredns的一些实战经验 - kubernetes solutions - SegmentFault 思否](https://segmentfault.com/a/1190000020403096)
+2. [coredns plugin template](https://coredns.io/plugins/template/)
+</code></pre><h3 id=使用-nodelocaldns-cache--实现本地缓存>使用 <code>NodeLocalDNS Cache</code> 实现本地缓存</h3><pre><code>1.  [设置 NodeLocal DNSCache  |  Kubernetes Engine 文档  |  Google Cloud](https://cloud.google.com/kubernetes-engine/docs/how-to/nodelocal-dns-cache?hl=zh-cn)
+2. https://cloud.google.com/kubernetes-engine/docs/concepts/service-discovery?hl=zh-cn
+3. [在 Kubernetes 集群中使用 NodeLocal DNSCache-阳明的博客|Kubernetes|Istio|Prometheus|Python|Golang|云原生](https://www.qikqiak.com/post/use-nodelocal-dns-cache/)
+	+ 但是到这里还没有完，如果 kube-proxy 组件使用的是 ipvs 模式的话我们还需要修改 kubelet 的 —cluster-dns 参数，将其指向 169.254.20.10，Daemonset 会在每个节点创建一个网卡来绑这个 IP，Pod 向本节点这个 IP 发 DNS 请求，缓存没有命中的时候才会再代理到上游集群 DNS 进行查询。 iptables 模式下 Pod 还是向原来的集群 DNS 请求，节点上有这个 IP 监听，会被本机拦截，再请求集群上游 DNS，所以不需要更改 —cluster-dns 参数
+</code></pre><h1 id=corednsyaml>coredns.yaml</h1><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">  9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 48
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 51
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 52
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 53
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 54
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 55
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 56
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 57
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 58
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 59
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 60
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 61
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 62
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 63
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 64
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 65
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 66
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 67
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 68
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 69
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 70
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 71
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 72
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 73
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 74
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 75
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 76
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 77
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 78
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 79
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 80
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 81
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 82
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 83
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 84
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 85
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 86
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 87
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 88
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 89
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 90
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 91
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 92
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 93
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 94
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 95
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 96
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 97
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 98
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 99
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">100
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">101
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">102
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">103
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">104
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">105
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">106
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">107
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">108
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">109
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">110
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">111
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">112
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">113
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">114
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">115
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">116
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">117
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">118
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">119
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">120
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">121
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">122
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">123
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">124
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">125
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">126
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">127
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">128
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">129
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">130
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">131
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">132
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">133
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">134
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">135
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">136
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">137
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">138
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">139
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">140
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">141
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">142
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">143
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">144
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">145
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">146
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">147
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">148
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">149
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">150
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">151
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">152
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">153
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">154
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">155
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">156
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">157
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">158
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">159
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">160
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">161
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">162
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">163
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">164
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">165
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">166
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">167
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">168
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">169
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">170
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">171
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">172
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">173
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">174
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">175
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">176
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">177
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">178
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">179
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">180
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">181
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">182
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">183
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">184
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">185
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">186
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">187
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">188
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">189
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">190
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">191
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">192
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">193
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">194
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">195
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">196
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">197
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">198
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">199
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">200
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">201
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">202
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">203
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">204
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">205
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">206
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">207
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">208
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">209
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">210
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">211
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">212
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">213
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">214
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">215
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">216
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">217
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">218
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">219
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">220
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">221
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">222
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">223
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">224
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">225
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">226
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">227
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">228
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">229
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">230
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">231
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">232
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">233
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">234
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">235
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">236
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">237
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">238
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">239
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">240
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">241
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">242
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">243
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">244
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">245
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">246
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">247
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">248
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">249
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">250
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">251
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">252
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">253
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">254
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#998;font-style:italic># __MACHINE_GENERATED_WARNING__</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>apiVersion</span>:<span style=color:#bbb> </span>v1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>kind</span>:<span style=color:#bbb> </span>ServiceAccount<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>metadata</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>coredns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>namespace</span>:<span style=color:#bbb> </span>kube-system<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>labels</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>kubernetes.io/cluster-service</span>:<span style=color:#bbb> </span><span style=color:#d14>&#34;true&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>addonmanager.kubernetes.io/mode</span>:<span style=color:#bbb> </span>Reconcile<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#555>---</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>apiVersion</span>:<span style=color:#bbb> </span>rbac.authorization.k8s.io/v1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>kind</span>:<span style=color:#bbb> </span>ClusterRole<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>metadata</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>labels</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>kubernetes.io/bootstrapping</span>:<span style=color:#bbb> </span>rbac-defaults<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>addonmanager.kubernetes.io/mode</span>:<span style=color:#bbb> </span>Reconcile<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>system:coredns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>rules</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>- <span style=color:navy>apiGroups</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:#d14>&#34;&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>resources</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- endpoints<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- services<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- pods<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- namespaces<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>verbs</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- list<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- watch<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>- <span style=color:navy>apiGroups</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:#d14>&#34;&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>resources</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- nodes<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>verbs</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- get<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#555>---</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>apiVersion</span>:<span style=color:#bbb> </span>rbac.authorization.k8s.io/v1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>kind</span>:<span style=color:#bbb> </span>ClusterRoleBinding<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>metadata</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>annotations</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>rbac.authorization.kubernetes.io/autoupdate</span>:<span style=color:#bbb> </span><span style=color:#d14>&#34;true&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>labels</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>kubernetes.io/bootstrapping</span>:<span style=color:#bbb> </span>rbac-defaults<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>addonmanager.kubernetes.io/mode</span>:<span style=color:#bbb> </span>EnsureExists<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>system:coredns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>roleRef</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>apiGroup</span>:<span style=color:#bbb> </span>rbac.authorization.k8s.io<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>kind</span>:<span style=color:#bbb> </span>ClusterRole<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>system:coredns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>subjects</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>- <span style=color:navy>kind</span>:<span style=color:#bbb> </span>ServiceAccount<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>coredns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>namespace</span>:<span style=color:#bbb> </span>kube-system<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#555>---</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>apiVersion</span>:<span style=color:#bbb> </span>v1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>kind</span>:<span style=color:#bbb> </span>ConfigMap<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>metadata</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>coredns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>namespace</span>:<span style=color:#bbb> </span>kube-system<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>labels</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>addonmanager.kubernetes.io/mode</span>:<span style=color:#bbb> </span>EnsureExists<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>data</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>Corefile</span>:<span style=color:#bbb> </span>|<span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>    pek3.qingcloud.com:53 {
+</span></span></span><span style=display:flex><span><span style=color:#d14>      forward . 100.64.9.5 100.64.9.9
+</span></span></span><span style=display:flex><span><span style=color:#d14>      # log
+</span></span></span><span style=display:flex><span><span style=color:#d14>      # errors
+</span></span></span><span style=display:flex><span><span style=color:#d14>      # cache 300 ## https://coredns.io/plugins/cache/
+</span></span></span><span style=display:flex><span><span style=color:#d14>      # cancel 1s  ## https://coredns.io/plugins/cancel/
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>      #### working
+</span></span></span><span style=display:flex><span><span style=color:#d14>      # loop
+</span></span></span><span style=display:flex><span><span style=color:#d14>      # reload 5s
+</span></span></span><span style=display:flex><span><span style=color:#d14>    }
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>    qingstor.com:53 {
+</span></span></span><span style=display:flex><span><span style=color:#d14>      forward . 100.64.9.5 100.64.9.9
+</span></span></span><span style=display:flex><span><span style=color:#d14>      # log
+</span></span></span><span style=display:flex><span><span style=color:#d14>      # errors
+</span></span></span><span style=display:flex><span><span style=color:#d14>      # loop
+</span></span></span><span style=display:flex><span><span style=color:#d14>      # reload 5s
+</span></span></span><span style=display:flex><span><span style=color:#d14>    }
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>    .:53 {
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # https://coredns.io/plugins/template/
+</span></span></span><span style=display:flex><span><span style=color:#d14>        ## 遇到 ipv6 解析 立即返回找不到
+</span></span></span><span style=display:flex><span><span style=color:#d14>        template ANY AAAA {
+</span></span></span><span style=display:flex><span><span style=color:#d14>            rcode NXDOMAIN
+</span></span></span><span style=display:flex><span><span style=color:#d14>        }
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>        #### debug
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # whoami
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # errors
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # log . {&#34;local&#34;:&#34;{local}&#34;,&#34;client&#34;:&#34;{remote}:{port}&#34;,&#34;id&#34;:&#34;{&gt;id}&#34;,&#34;type&#34;:&#34;{type}&#34;,&#34;class&#34;:&#34;{class}&#34;,&#34;name&#34;:&#34;{name}&#34;,&#34;proto&#34;:&#34;{proto}&#34;,&#34;size&#34;:{size},&#34;do&#34;:&#34;{&gt;do}&#34;,&#34;bufsize&#34;:{&gt;bufsize},&#34;rflags&#34;:&#34;{&gt;rflags}&#34;,&#34;rsize&#34;:{rsize},&#34;duration&#34;:&#34;{duration}&#34;,&#34;rcode&#34;:&#34;{rcode}&#34;}
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # log
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>        #### working
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # loop
+</span></span></span><span style=display:flex><span><span style=color:#d14>        reload 5s
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>        #### health check and performance
+</span></span></span><span style=display:flex><span><span style=color:#d14>        health
+</span></span></span><span style=display:flex><span><span style=color:#d14>        ready
+</span></span></span><span style=display:flex><span><span style=color:#d14>        prometheus :9153
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>        kubernetes cluster.local. in-addr.arpa ip6.arpa {
+</span></span></span><span style=display:flex><span><span style=color:#d14>            # https://coredns.io/plugins/kubernetes/
+</span></span></span><span style=display:flex><span><span style=color:#d14>            pods insecure
+</span></span></span><span style=display:flex><span><span style=color:#d14>            upstream
+</span></span></span><span style=display:flex><span><span style=color:#d14>            fallthrough in-addr.arpa ip6.arpa
+</span></span></span><span style=display:flex><span><span style=color:#d14>            ttl 1
+</span></span></span><span style=display:flex><span><span style=color:#d14>        }
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # hosts in line
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # specify global hosts for containers
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # hosts {
+</span></span></span><span style=display:flex><span><span style=color:#d14>        #     1.1.1.1 a.example.com
+</span></span></span><span style=display:flex><span><span style=color:#d14>        #     2.2.2.2 b.example.com
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>        #     fallthrough # must be keep at bottom
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # }
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>        #### resolver
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # 如果是 ubuntu18.04 使用 /etc/resolv.conf 会出现无法解析的问题
+</span></span></span><span style=display:flex><span><span style=color:#d14>        ## 因为 nameserver 127.0.0.53 
+</span></span></span><span style=display:flex><span><span style=color:#d14>        forward . 114.114.114.114 
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # forward . /etc/resolv.conf
+</span></span></span><span style=display:flex><span><span style=color:#d14>      
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # loadbalance ## https://coredns.io/plugins/loadbalance/
+</span></span></span><span style=display:flex><span><span style=color:#d14>
+</span></span></span><span style=display:flex><span><span style=color:#d14>        #### cache
+</span></span></span><span style=display:flex><span><span style=color:#d14>        cache 60   ## https://coredns.io/plugins/cache/
+</span></span></span><span style=display:flex><span><span style=color:#d14>        cancel 1s  ## https://coredns.io/plugins/cancel/
+</span></span></span><span style=display:flex><span><span style=color:#d14>    
+</span></span></span><span style=display:flex><span><span style=color:#d14>    }</span><span style=color:#bbb>    
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#555>---</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>apiVersion</span>:<span style=color:#bbb> </span>extensions/v1beta1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>kind</span>:<span style=color:#bbb> </span>Deployment<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>metadata</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>coredns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>namespace</span>:<span style=color:#bbb> </span>kube-system<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>labels</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>k8s-app</span>:<span style=color:#bbb> </span>kube-dns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>kubernetes.io/cluster-service</span>:<span style=color:#bbb> </span><span style=color:#d14>&#34;true&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>addonmanager.kubernetes.io/mode</span>:<span style=color:#bbb> </span>Reconcile<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>kubernetes.io/name</span>:<span style=color:#bbb> </span><span style=color:#d14>&#34;CoreDNS&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>spec</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>replicas</span>:<span style=color:#bbb> </span><span style=color:#099>3</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>strategy</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>type</span>:<span style=color:#bbb> </span>RollingUpdate<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>rollingUpdate</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>maxUnavailable</span>:<span style=color:#bbb> </span><span style=color:#099>1</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>selector</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>matchLabels</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>k8s-app</span>:<span style=color:#bbb> </span>kube-dns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>template</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>metadata</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>labels</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>k8s-app</span>:<span style=color:#bbb> </span>kube-dns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>annotations</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>seccomp.security.alpha.kubernetes.io/pod</span>:<span style=color:#bbb> </span><span style=color:#d14>&#39;docker/default&#39;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>spec</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>priorityClassName</span>:<span style=color:#bbb> </span>system-cluster-critical<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>serviceAccountName</span>:<span style=color:#bbb> </span>coredns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>tolerations</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>- <span style=color:navy>key</span>:<span style=color:#bbb> </span><span style=color:#d14>&#34;CriticalAddonsOnly&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>operator</span>:<span style=color:#bbb> </span><span style=color:#d14>&#34;Exists&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>nodeSelector</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>beta.kubernetes.io/os</span>:<span style=color:#bbb> </span>linux<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>containers</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span>- <span style=color:navy>name</span>:<span style=color:#bbb> </span>coredns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>image</span>:<span style=color:#bbb> </span>coredns/coredns:1.6.2<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>imagePullPolicy</span>:<span style=color:#bbb> </span>IfNotPresent<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>resources</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>limits</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>memory</span>:<span style=color:#bbb> </span>300Mi<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>requests</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>cpu</span>:<span style=color:#bbb> </span>300m<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>memory</span>:<span style=color:#bbb> </span>300Mi<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>args</span>:<span style=color:#bbb> </span>[<span style=color:#bbb> </span><span style=color:#d14>&#34;-conf&#34;</span>,<span style=color:#bbb> </span><span style=color:#d14>&#34;/etc/coredns/Corefile&#34;</span><span style=color:#bbb> </span>]<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>volumeMounts</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>- <span style=color:navy>name</span>:<span style=color:#bbb> </span>config-volume<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>mountPath</span>:<span style=color:#bbb> </span>/etc/coredns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>readOnly</span>:<span style=color:#bbb> </span><span style=color:#000;font-weight:700>true</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>ports</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>- <span style=color:navy>containerPort</span>:<span style=color:#bbb> </span><span style=color:#099>53</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>dns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>protocol</span>:<span style=color:#bbb> </span>UDP<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>- <span style=color:navy>containerPort</span>:<span style=color:#bbb> </span><span style=color:#099>53</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>dns-tcp<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>protocol</span>:<span style=color:#bbb> </span>TCP<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>- <span style=color:navy>containerPort</span>:<span style=color:#bbb> </span><span style=color:#099>9153</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>metrics<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>protocol</span>:<span style=color:#bbb> </span>TCP<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>livenessProbe</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>httpGet</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>path</span>:<span style=color:#bbb> </span>/health<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>port</span>:<span style=color:#bbb> </span><span style=color:#099>8080</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>scheme</span>:<span style=color:#bbb> </span>HTTP<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>initialDelaySeconds</span>:<span style=color:#bbb> </span><span style=color:#099>60</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>timeoutSeconds</span>:<span style=color:#bbb> </span><span style=color:#099>5</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>successThreshold</span>:<span style=color:#bbb> </span><span style=color:#099>1</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>failureThreshold</span>:<span style=color:#bbb> </span><span style=color:#099>5</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>readinessProbe</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>httpGet</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>path</span>:<span style=color:#bbb> </span>/health<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>port</span>:<span style=color:#bbb> </span><span style=color:#099>8080</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>scheme</span>:<span style=color:#bbb> </span>HTTP<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:navy>securityContext</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>allowPrivilegeEscalation</span>:<span style=color:#bbb> </span><span style=color:#000;font-weight:700>false</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>capabilities</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>add</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span>- NET_BIND_SERVICE<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>drop</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span>- all<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>readOnlyRootFilesystem</span>:<span style=color:#bbb> </span><span style=color:#000;font-weight:700>true</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>dnsPolicy</span>:<span style=color:#bbb> </span>Default<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>      </span><span style=color:navy>volumes</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>- <span style=color:navy>name</span>:<span style=color:#bbb> </span>config-volume<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>          </span><span style=color:navy>configMap</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>coredns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span><span style=color:navy>items</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span>- <span style=color:navy>key</span>:<span style=color:#bbb> </span>Corefile<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>              </span><span style=color:navy>path</span>:<span style=color:#bbb> </span>Corefile<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#555>---</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>apiVersion</span>:<span style=color:#bbb> </span>v1<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>kind</span>:<span style=color:#bbb> </span>Service<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>metadata</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>name</span>:<span style=color:#bbb> </span>kube-dns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>namespace</span>:<span style=color:#bbb> </span>kube-system<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>annotations</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>prometheus.io/port</span>:<span style=color:#bbb> </span><span style=color:#d14>&#34;9153&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>prometheus.io/scrape</span>:<span style=color:#bbb> </span><span style=color:#d14>&#34;true&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>labels</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>k8s-app</span>:<span style=color:#bbb> </span>kube-dns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>kubernetes.io/cluster-service</span>:<span style=color:#bbb> </span><span style=color:#d14>&#34;true&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>addonmanager.kubernetes.io/mode</span>:<span style=color:#bbb> </span>Reconcile<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>kubernetes.io/name</span>:<span style=color:#bbb> </span><span style=color:#d14>&#34;CoreDNS&#34;</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>spec</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>selector</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>k8s-app</span>:<span style=color:#bbb> </span>kube-dns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>clusterIP</span>:<span style=color:#bbb> </span><span style=color:#099>10.66.0.2</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span><span style=color:navy>ports</span>:<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:navy>name</span>:<span style=color:#bbb> </span>dns<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>port</span>:<span style=color:#bbb> </span><span style=color:#099>53</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>protocol</span>:<span style=color:#bbb> </span>UDP<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:navy>name</span>:<span style=color:#bbb> </span>dns-tcp<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>port</span>:<span style=color:#bbb> </span><span style=color:#099>53</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>protocol</span>:<span style=color:#bbb> </span>TCP<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>  </span>- <span style=color:navy>name</span>:<span style=color:#bbb> </span>metrics<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>port</span>:<span style=color:#bbb> </span><span style=color:#099>9153</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:navy>protocol</span>:<span style=color:#bbb> </span>TCP<span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://typonotes.com/posts/2023/08/05/k8s-dns-5s-resolv/>https://typonotes.com/posts/2023/08/05/k8s-dns-5s-resolv/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://typonotes.com/>https://typonotes.com/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2023/06/27/cloudnative-k8s-debug-flow/>《容器云平台排错一览图》</a></li><li><a href=/posts/2023/05/08/aliyun-logtail-collect-json-format-logs/>Aliyun Logtail 收集 JSON 格式日志</a></li><li><a href=/posts/2023/05/08/nginx-log-json-format/>Nginx 和 Nginx-Ingress-Controller 配置 JSON 日志格式</a></li><li><a href=/posts/2023/03/22/docker-100-questions-for-developers/>云原生: 为开发朋友解答的 100 个问题</a></li><li><a href=/posts/books/k8sailor/chapter02/08-fetch-and-display-deployments/>开发 k8s 管理平台 - k8sailor 08. 获取并展示 Deployments 信息</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/k8s target=_blank>k8s</a></li><li><a href=/tags/coredns target=_blank>coredns</a></li><li><a href=/tags/dns target=_blank>dns</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://typonotes.com/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」答疑， 2023/12/31截止</strong></p><a href title="（免费星球）「运维成长路线」答疑， 2023/12/31截止" target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://typonotes.com/posts/2023/08/05/k8s-dns-5s-resolv/ title=kubernetes集群中夺命的5秒DNS延迟 target=_blank>kubernetes集群中夺命的5秒DNS延迟</a></li><li><a href=https://typonotes.com/posts/2023/07/13/shell-using-env-var-as-named-arg/ title="Shell: 将环境变量作为具名参数使用" target=_blank>Shell: 将环境变量作为具名参数使用</a></li><li><a href=https://typonotes.com/posts/2023/07/11/docker-image-all-in-one-policy/ title="Docker 制作容器镜像实践： Nginx+Php 二合一" target=_blank>Docker 制作容器镜像实践： Nginx+Php 二合一</a></li><li><a href=https://typonotes.com/posts/2023/06/29/grafana-function-extends-support/ title="Grafana(6): 使用数据源实现扩展函数支持" target=_blank>Grafana(6): 使用数据源实现扩展函数支持</a></li><li><a href=https://typonotes.com/posts/2023/06/27/cloudnative-k8s-debug-flow/ title=《容器云平台排错一览图》 target=_blank>《容器云平台排错一览图》</a></li><li><a href=https://typonotes.com/posts/2023/06/17/grafana-datasource-relation/ title="Grafana: (5) Data Source 绑定/联动的解决方案（曲线救国）" target=_blank>Grafana: (5) Data Source 绑定/联动的解决方案（曲线救国）</a></li><li><a href=https://typonotes.com/posts/2023/06/16/grafana-outer-join-table/ title="Grafana: (4) 使用外联表格(Outer Join Table) 展示多个查询结果" target=_blank>Grafana: (4) 使用外联表格(Outer Join Table) 展示多个查询结果</a></li><li><a href=https://typonotes.com/posts/2023/06/08/grafana-variable-management/ title="Grafana: (3) 变量的创建、管理与使用" target=_blank>Grafana: (3) 变量的创建、管理与使用</a></li><li><a href=https://typonotes.com/posts/2023/06/06/grafana-create-1st-table-panel/ title="Grafana: (2) 创建第一个 Table 表格面板" target=_blank>Grafana: (2) 创建第一个 Table 表格面板</a></li><li><a href=https://typonotes.com/posts/2023/06/06/grafana-datasource-management/ title="Grafana: (1) DataSource 数据源管理" target=_blank>Grafana: (1) DataSource 数据源管理</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://typonotes.com/categories/linux/>linux (1)</a></li><li><a href=https://typonotes.com/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://typonotes.com/categories/blog/>blog (10)</a></li><li><a href=https://typonotes.com/categories/books/>books (13)</a></li><li><a href=https://typonotes.com/categories/cloudnative/>cloudnative (3)</a></li><li><a href=https://typonotes.com/categories/database/>database (1)</a></li><li><a href=https://typonotes.com/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://typonotes.com/categories/devopscamp/>devopscamp (10)</a></li><li><a href=https://typonotes.com/categories/docker/>docker (8)</a></li><li><a href=https://typonotes.com/categories/gitlab/>gitlab (1)</a></li><li><a href=https://typonotes.com/categories/golang/>golang (11)</a></li><li><a href=https://typonotes.com/categories/istio/>istio (16)</a></li><li><a href=https://typonotes.com/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://typonotes.com/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://typonotes.com/categories/kubernetes/>kubernetes (52)</a></li><li><a href=https://typonotes.com/categories/linux/>linux (5)</a></li><li><a href=https://typonotes.com/categories/logging/>logging (3)</a></li><li><a href=https://typonotes.com/categories/monitor/>monitor (7)</a></li><li><a href=https://typonotes.com/categories/nginx/>nginx (1)</a></li><li><a href=https://typonotes.com/categories/only-one/>only-one (2)</a></li><li><a href=https://typonotes.com/categories/redis/>redis (2)</a></li><li><a href=https://typonotes.com/categories/sharing/>sharing (4)</a></li><li><a href=https://typonotes.com/categories/shell/>shell (1)</a></li><li><a href=https://typonotes.com/categories/vue3/>vue3 (2)</a></li><li><a href=https://typonotes.com/categories/%E5%91%BD%E4%BB%A4%E5%B7%A5%E5%85%B7/>命令工具 (1)</a></li><li><a href=https://typonotes.com/categories/%E9%9A%8F%E7%AC%94/>随笔 (1)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://typonotes.com/tags/MSSQL/>MSSQL</a>
+<a href=https://typonotes.com/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://typonotes.com/tags/XSS/>XSS</a>
+<a href=https://typonotes.com/tags/XXE/>XXE</a>
+<a href=https://typonotes.com/tags/aliyun/>aliyun</a>
+<a href=https://typonotes.com/tags/ansible/>ansible</a>
+<a href=https://typonotes.com/tags/apt/>apt</a>
+<a href=https://typonotes.com/tags/aws/>aws</a>
+<a href=https://typonotes.com/tags/axios/>axios</a>
+<a href=https://typonotes.com/tags/blog/>blog</a>
+<a href=https://typonotes.com/tags/calico/>calico</a>
+<a href=https://typonotes.com/tags/cdn/>cdn</a>
+<a href=https://typonotes.com/tags/cephfs/>cephfs</a>
+<a href=https://typonotes.com/tags/cfssl/>cfssl</a>
+<a href=https://typonotes.com/tags/chatgpt/>chatgpt</a>
+<a href=https://typonotes.com/tags/cicd/>cicd</a>
+<a href=https://typonotes.com/tags/cli-tools/>cli-tools</a>
+<a href=https://typonotes.com/tags/cloudnative/>cloudnative</a>
+<a href=https://typonotes.com/tags/cobra/>cobra</a>
+<a href=https://typonotes.com/tags/code/>code</a>
+<a href=https://typonotes.com/tags/config/>config</a>
+<a href=https://typonotes.com/tags/configmap/>configmap</a>
+<a href=https://typonotes.com/tags/context/>context</a>
+<a href=https://typonotes.com/tags/coredns/>coredns</a>
+<a href=https://typonotes.com/tags/database/>database</a>
+<a href=https://typonotes.com/tags/defer/>defer</a>
+<a href=https://typonotes.com/tags/deployment/>deployment</a>
+<a href=https://typonotes.com/tags/dind/>dind</a>
+<a href=https://typonotes.com/tags/dns/>dns</a>
+<a href=https://typonotes.com/tags/dnsx/>dnsx</a>
+<a href=https://typonotes.com/tags/docker/>docker</a>
+<a href=https://typonotes.com/tags/docker-compose/>docker-compose</a>
+<a href=https://typonotes.com/tags/dockerfile/>dockerfile</a>
+<a href=https://typonotes.com/tags/download/>download</a>
+<a href=https://typonotes.com/tags/filebeat/>filebeat</a>
+<a href=https://typonotes.com/tags/find/>find</a>
+<a href=https://typonotes.com/tags/gin/>gin</a>
+<a href=https://typonotes.com/tags/git/>git</a>
+<a href=https://typonotes.com/tags/github/>github</a>
+<a href=https://typonotes.com/tags/gitlab/>gitlab</a>
+<a href=https://typonotes.com/tags/glusterfs/>glusterfs</a>
+<a href=https://typonotes.com/tags/golang/>golang</a>
+<a href=https://typonotes.com/tags/gorm/>gorm</a>
+<a href=https://typonotes.com/tags/grafana/>grafana</a>
+<a href=https://typonotes.com/tags/grep/>grep</a>
+<a href=https://typonotes.com/tags/haproxy/>haproxy</a>
+<a href=https://typonotes.com/tags/html5/>html5</a>
+<a href=https://typonotes.com/tags/https/>https</a>
+<a href=https://typonotes.com/tags/hugo/>hugo</a>
+<a href=https://typonotes.com/tags/image/>image</a>
+<a href=https://typonotes.com/tags/informer/>informer</a>
+<a href=https://typonotes.com/tags/ingress/>ingress</a>
+<a href=https://typonotes.com/tags/interface/>interface</a>
+<a href=https://typonotes.com/tags/iptables/>iptables</a>
+<a href=https://typonotes.com/tags/istio/>istio</a>
+<a href=https://typonotes.com/tags/js/>js</a>
+<a href=https://typonotes.com/tags/k3s/>k3s</a>
+<a href=https://typonotes.com/tags/k8s/>k8s</a>
+<a href=https://typonotes.com/tags/kubebuilder/>kubebuilder</a>
+<a href=https://typonotes.com/tags/kubectl/>kubectl</a>
+<a href=https://typonotes.com/tags/kustomize/>kustomize</a>
+<a href=https://typonotes.com/tags/kustz/>kustz</a>
+<a href=https://typonotes.com/tags/layout/>layout</a>
+<a href=https://typonotes.com/tags/lego/>lego</a>
+<a href=https://typonotes.com/tags/libaray/>libaray</a>
+<a href=https://typonotes.com/tags/library/>library</a>
+<a href=https://typonotes.com/tags/linux/>linux</a>
+<a href=https://typonotes.com/tags/log/>log</a>
+<a href=https://typonotes.com/tags/minio/>minio</a>
+<a href=https://typonotes.com/tags/mysql/>mysql</a>
+<a href=https://typonotes.com/tags/network/>network</a>
+<a href=https://typonotes.com/tags/nginx/>nginx</a>
+<a href=https://typonotes.com/tags/openai/>openai</a>
+<a href=https://typonotes.com/tags/opentelemetry/>opentelemetry</a>
+<a href=https://typonotes.com/tags/pgsql/>pgsql</a>
+<a href=https://typonotes.com/tags/php/>php</a>
+<a href=https://typonotes.com/tags/prometheus/>prometheus</a>
+<a href=https://typonotes.com/tags/proxy/>proxy</a>
+<a href=https://typonotes.com/tags/python/>python</a>
+<a href=https://typonotes.com/tags/qcloud/>qcloud</a>
+<a href=https://typonotes.com/tags/qiniu/>qiniu</a>
+<a href=https://typonotes.com/tags/qos/>qos</a>
+<a href=https://typonotes.com/tags/redis/>redis</a>
+<a href=https://typonotes.com/tags/reflect/>reflect</a>
+<a href=https://typonotes.com/tags/repo/>repo</a>
+<a href=https://typonotes.com/tags/resetful/>resetful</a>
+<a href=https://typonotes.com/tags/s3/>s3</a>
+<a href=https://typonotes.com/tags/scope/>scope</a>
+<a href=https://typonotes.com/tags/semimonthly-plan/>semimonthly-plan</a>
+<a href=https://typonotes.com/tags/service/>service</a>
+<a href=https://typonotes.com/tags/shell/>shell</a>
+<a href=https://typonotes.com/tags/slice/>slice</a>
+<a href=https://typonotes.com/tags/sqlmap/>sqlmap</a>
+<a href=https://typonotes.com/tags/storage/>storage</a>
+<a href=https://typonotes.com/tags/tag01/>tag01</a>
+<a href=https://typonotes.com/tags/tag02/>tag02</a>
+<a href=https://typonotes.com/tags/tech-sharing/>tech-sharing</a>
+<a href=https://typonotes.com/tags/test/>test</a>
+<a href=https://typonotes.com/tags/tidb/>tidb</a>
+<a href=https://typonotes.com/tags/timezone/>timezone</a>
+<a href=https://typonotes.com/tags/tls/>tls</a>
+<a href=https://typonotes.com/tags/tools/>tools</a>
+<a href=https://typonotes.com/tags/trace/>trace</a>
+<a href=https://typonotes.com/tags/typescript/>typescript</a>
+<a href=https://typonotes.com/tags/typora/>typora</a>
+<a href=https://typonotes.com/tags/v2ray/>v2ray</a>
+<a href=https://typonotes.com/tags/variable/>variable</a>
+<a href=https://typonotes.com/tags/vscode/>vscode</a>
+<a href=https://typonotes.com/tags/vue/>vue</a>
+<a href=https://typonotes.com/tags/vue3/>vue3</a>
+<a href=https://typonotes.com/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://typonotes.com/tags/%E5%8F%8D%E5%B0%84/>反射</a>
+<a href=https://typonotes.com/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://typonotes.com/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
+<a href=https://typonotes.com/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://typonotes.com/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
