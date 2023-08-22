@@ -282,6 +282,8 @@
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">252
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">253
 </span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">254
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">255
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">256
 </span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#998;font-style:italic># __MACHINE_GENERATED_WARNING__</span><span style=color:#bbb>
 </span></span></span><span style=display:flex><span><span style=color:#bbb>
 </span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:navy>apiVersion</span>:<span style=color:#bbb> </span>v1<span style=color:#bbb>
@@ -369,9 +371,11 @@
 </span></span></span><span style=display:flex><span><span style=color:#d14>
 </span></span></span><span style=display:flex><span><span style=color:#d14>        # https://coredns.io/plugins/template/
 </span></span></span><span style=display:flex><span><span style=color:#d14>        ## 遇到 ipv6 解析 立即返回找不到
-</span></span></span><span style=display:flex><span><span style=color:#d14>        template ANY AAAA {
-</span></span></span><span style=display:flex><span><span style=color:#d14>            rcode NXDOMAIN
-</span></span></span><span style=display:flex><span><span style=color:#d14>        }
+</span></span></span><span style=display:flex><span><span style=color:#d14>        ## NXNOMAIN 意味着 「查找正确， 但无解析记录」
+</span></span></span><span style=display:flex><span><span style=color:#d14>        ## alpine3.13 之后， 默认优先 ipv6。 会出现解析错误。
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # template ANY AAAA {
+</span></span></span><span style=display:flex><span><span style=color:#d14>        #     rcode NXDOMAIN
+</span></span></span><span style=display:flex><span><span style=color:#d14>        # }
 </span></span></span><span style=display:flex><span><span style=color:#d14>
 </span></span></span><span style=display:flex><span><span style=color:#d14>        #### debug
 </span></span></span><span style=display:flex><span><span style=color:#d14>        # whoami
