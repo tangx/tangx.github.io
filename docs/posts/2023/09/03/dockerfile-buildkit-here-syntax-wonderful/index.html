@@ -1,0 +1,190 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>Dockerfile Buildkit Here Syntax Wonderful | 老麦的书房</title><meta property="og:title" content="Dockerfile Buildkit Here Syntax Wonderful - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2023-09-03T15:32:38+08:00"><meta property="article:modified_time" content="2023-09-03T15:32:38+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="Dockerfile Buildkit Here Syntax Wonderful"><meta name=author content="老麦"><meta property="og:url" content="https://typonotes.com/posts/2023/09/03/dockerfile-buildkit-here-syntax-wonderful/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
+<script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?fe891ffeb313a7d084b8baf803d87746",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://typonotes.com/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://typonotes.com/>首页</a>
+<a href=https://typonotes.com/books/ title=开源书>开源书</a>
+<a href=https://typonotes.com/categories/ title=分类>分类</a>
+<a href=https://typonotes.com/tags/ title=标签>标签</a>
+<a href=https://typonotes.com/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://typonotes.com/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://typonotes.com/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#超级棒的-dockerfile-here-syntax-语法>超级棒的 Dockerfile Here Syntax 语法</a></li><li><a href=#here-doc-语法介绍>Here-Doc 语法介绍</a><ul><li><a href=#1-run>1. RUN</a></li><li><a href=#2-copy>2. COPY</a></li></ul></li><li><a href=#使用-buildx-执行>使用 buildx 执行</a></li><li><a href=#总结>总结</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>Dockerfile Buildkit Here Syntax Wonderful</h1></header><time datetime=2023-09-03T07:32:38Z class="post-meta meta-date dt-published">2023年9月3日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/only-one target=_blank>only-one</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=dockerfile-buildkit-here-syntax-wonderful>Dockerfile Buildkit Here Syntax Wonderful</h1><p>建议点击 <strong>查看原文</strong> 查看最新内容。</p><blockquote><p><strong>原文链接:</strong>
+<a href=https://typonotes.com/posts/2023/09/03/dockerfile-buildkit-here-syntax-wonderful/ target=_blank rel=noopener>https://typonotes.com/posts/2023/09/03/dockerfile-buildkit-here-syntax-wonderful/</a></p></blockquote><p>重新看了 docker 官网文档， 从 <code>docker engine 23.0</code> 开始，
+<a href=https://docs.docker.com/build/buildkit/ target=_blank rel=noopener>buildkit</a>
+就是默认 builder 了。</p><blockquote><p>BuildKitopen_in_new is an improved backend to replace the legacy builder. BuildKit is the default builder for users on Docker Desktop, and Docker Engine as of version 23.0.</p></blockquote><p>前几天， 我测试 dockerfile 的 Here-Doc 语法， 说其是 <strong>鸡肋语法</strong>， 是我太浅薄了。</p><p>造成这个结论的原因，</p><ol><li>我测试服务器上的 docker 版本过低， <code>(20.x)</code> 。</li><li>太久没写 <strong>基础镜像</strong> 了， 因此没有复杂的 <code>RUN</code> 和 <code>COPY</code> 命令。</li></ol><p>于是我根据官网文档， 在
+<a href=https://docs.docker.com/engine/install/ubuntu/ target=_blank rel=noopener>ubuntu - docker</a>
+上重新安装 docker engine， 升级到了 <code>24.0.5</code>，</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+</span></span></code></pre></td></tr></table></div></div><p>重新测试之后， 我更正之前的看法， <strong>Here-Doc 语法， 真的是 太香了</strong>。</p><h2 id=超级棒的-dockerfile-here-syntax-语法>超级棒的 Dockerfile Here Syntax 语法</h2><p>今天在看 docker 文档的时候， 发现了一个新语法
+<a href=https://docs.docker.com/engine/reference/builder/#here-documents target=_blank rel=noopener>Dockerfile - here documents 语法</a>
+, 即 <strong>多行语法</strong>。 在 Dockerfile 1.4 中添加。</p><p>如果你知道 cat 的 here document 语法， 就会很好理解。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>cat &gt; demo.txt <span style=color:#d14>&lt;&lt;EOF
+</span></span></span><span style=display:flex><span><span style=color:#d14>&gt; 123
+</span></span></span><span style=display:flex><span><span style=color:#d14>&gt; asdb
+</span></span></span><span style=display:flex><span><span style=color:#d14>&gt; EOF</span>
+</span></span></code></pre></td></tr></table></div></div><p>该语法在使用时有一些限制条件</p><ol><li>该语法只支持在 <code>RUN</code> 和 <code>COPY</code> 下使用。</li><li>需要通过 buildkit 解析语法。 简单的说， 就是 <code>docker buildx build</code> 构建镜像</li></ol><h2 id=here-doc-语法介绍>Here-Doc 语法介绍</h2><p>这是一个特性语法， 必须在 Dockerfile 申明 <code># syntax=docker/dockerfile:1</code> ， 否则即使使用 buildkit 也无法解析。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Dockerfile data-lang=Dockerfile><span style=display:flex><span><span style=color:#998;font-style:italic># syntax=docker/dockerfile:1</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span>其他<span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span></code></pre></td></tr></table></div></div><h3 id=1-run>1. RUN</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Dockerfile data-lang=Dockerfile><span style=display:flex><span><span style=color:#998;font-style:italic># syntax=docker/dockerfile:1</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span><span style=color:#000;font-weight:700>FROM</span><span style=color:#d14> debian</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span><span style=color:#000;font-weight:700>RUN</span> &lt;&lt;EOT bash<span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span>  <span style=color:#0086b3>set</span> -ex<span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span>  apt-get update<span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span>  apt-get install -y vim<span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span>EOT<span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span></code></pre></td></tr></table></div></div><blockquote><p>注意： <code>EOT</code> 只是一个标识符， 可以换成其他任意的符号， 只要 <strong>成对</strong> 即可。 例如 <code>PANDA</code></p></blockquote><h3 id=2-copy>2. COPY</h3><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Dockerfile data-lang=Dockerfile><span style=display:flex><span><span style=color:#998;font-style:italic># syntax=docker/dockerfile:1</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span><span style=color:#000;font-weight:700>FROM</span><span style=color:#d14> alpine</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span><span style=color:#000;font-weight:700>COPY</span> &lt;&lt;-<span style=color:#d14>&#34;EOT&#34;</span> /app/script.sh<span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span>	<span style=color:#0086b3>echo</span> hello <span style=color:#d14>${</span><span style=color:teal>FOO</span><span style=color:#d14>}</span><span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span>EOT<span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span><span style=color:#000;font-weight:700>RUN</span> <span style=color:teal>FOO</span><span style=color:#000;font-weight:700>=</span>abc ash /app/script.sh<span style=color:#a61717;background-color:#e3d2d2>
+</span></span></span></code></pre></td></tr></table></div></div><blockquote><p>注意： 这里使用的是符号 <code>&lt;&lt;-</code></p></blockquote><h2 id=使用-buildx-执行>使用 buildx 执行</h2><p>还是很简单的， 直接使用 <code>docker buildx build</code> 就行了</p><p>例如:</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>docker buildx build <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>    -t example.com/debian:here <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>    -f here.Dockerfile <span style=color:#d14>\
+</span></span></span><span style=display:flex><span><span style=color:#d14></span>    .
+</span></span></code></pre></td></tr></table></div></div><p><img class=mx-auto alt src=https://static.typonotes.com/posts/2023/09/03/dockerfile-buildkit-here-syntax/dockerfile-here.jpg!v1></p><h2 id=总结>总结</h2><p>有一点用。 但并没有太大的意义。</p></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://typonotes.com/posts/2023/09/03/dockerfile-buildkit-here-syntax-wonderful/>https://typonotes.com/posts/2023/09/03/dockerfile-buildkit-here-syntax-wonderful/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://typonotes.com/>https://typonotes.com/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2023/02/20/duzikai-outsources/>Duzikai Outsources</a></li><li><a href=/posts/2023/01/28/stop-ask-questions-the-stupid-ways/>《别像弱智一样提问》 300 fork 700 star - 没想到大家都讨厌巨婴提问</a></li><li><a href=/posts/2023/09/01/dockerfile-buildkit-here-syntax/>Dockerfile: 通过 buildkit 支持多行语法</a></li><li><a href=/posts/2023/08/29/opentelmetry-introduce-techsharing/>Opentelmetry(2): 【内部分享】 从入门到精通</a></li><li><a href=/posts/2023/08/28/nginx-http-https-redirect-scenarios/>Nginx: 最常见的 2 中 http to https 跳转场景</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/tag01 target=_blank>tag01</a></li><li><a href=/tags/tag02 target=_blank>tag02</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2023 <a href=https://typonotes.com/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」答疑， 2023/12/31截止</strong></p><a href title="（免费星球）「运维成长路线」答疑， 2023/12/31截止" target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://typonotes.com/posts/2023/09/03/dockerfile-buildkit-here-syntax-wonderful/ title="Dockerfile Buildkit Here Syntax Wonderful" target=_blank>Dockerfile Buildkit Here Syntax Wonderful</a></li><li><a href=https://typonotes.com/posts/2023/09/01/dockerfile-buildkit-here-syntax/ title="Dockerfile: 通过 buildkit 支持多行语法" target=_blank>Dockerfile: 通过 buildkit 支持多行语法</a></li><li><a href=https://typonotes.com/posts/2023/08/29/opentelmetry-introduce-techsharing/ title="Opentelmetry(2): 【内部分享】 从入门到精通" target=_blank>Opentelmetry(2): 【内部分享】 从入门到精通</a></li><li><a href=https://typonotes.com/posts/2023/08/28/nginx-http-https-redirect-scenarios/ title="Nginx: 最常见的 2 中 http to https 跳转场景" target=_blank>Nginx: 最常见的 2 中 http to https 跳转场景</a></li><li><a href=https://typonotes.com/posts/2023/08/22/aliyun-cli-update-cdn-https-certificate/ title="使用 Aliyun Cli 更新 CDN HTTPS 证书" target=_blank>使用 Aliyun Cli 更新 CDN HTTPS 证书</a></li><li><a href=https://typonotes.com/posts/2023/08/22/aliyun-sso-login-and-configure/ title="使用 STS 登陆 Aliyun 命令行" target=_blank>使用 STS 登陆 Aliyun 命令行</a></li><li><a href=https://typonotes.com/posts/2023/08/14/golang-opentelemetry-notes/ title="Golang 接入 OpenTelemetry 完整过程和思路（附源码）- Gin Demo" target=_blank>Golang 接入 OpenTelemetry 完整过程和思路（附源码）- Gin Demo</a></li><li><a href=https://typonotes.com/posts/2023/08/05/k8s-dns-5s-resolv/ title=kubernetes集群中夺命的5秒DNS延迟 target=_blank>kubernetes集群中夺命的5秒DNS延迟</a></li><li><a href=https://typonotes.com/posts/2023/07/14/aliyun-rds-pgsql-permission-best-practise/ title="Aliyun RDS PostgreSQL权限管理最佳实践" target=_blank>Aliyun RDS PostgreSQL权限管理最佳实践</a></li><li><a href=https://typonotes.com/posts/2023/07/13/pgsql-stop-spliting-values-in-mulitple-lines/ title="Pgsql Stop Spliting Values in Mulitple Lines" target=_blank>Pgsql Stop Spliting Values in Mulitple Lines</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://typonotes.com/categories/linux/>linux (1)</a></li><li><a href=https://typonotes.com/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://typonotes.com/categories/aliyun/>aliyun (2)</a></li><li><a href=https://typonotes.com/categories/blog/>blog (10)</a></li><li><a href=https://typonotes.com/categories/books/>books (13)</a></li><li><a href=https://typonotes.com/categories/cloudnative/>cloudnative (6)</a></li><li><a href=https://typonotes.com/categories/database/>database (3)</a></li><li><a href=https://typonotes.com/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://typonotes.com/categories/devopscamp/>devopscamp (10)</a></li><li><a href=https://typonotes.com/categories/docker/>docker (8)</a></li><li><a href=https://typonotes.com/categories/gitlab/>gitlab (1)</a></li><li><a href=https://typonotes.com/categories/golang/>golang (11)</a></li><li><a href=https://typonotes.com/categories/istio/>istio (16)</a></li><li><a href=https://typonotes.com/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://typonotes.com/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://typonotes.com/categories/kubernetes/>kubernetes (52)</a></li><li><a href=https://typonotes.com/categories/linux/>linux (5)</a></li><li><a href=https://typonotes.com/categories/logging/>logging (3)</a></li><li><a href=https://typonotes.com/categories/monitor/>monitor (7)</a></li><li><a href=https://typonotes.com/categories/nginx/>nginx (2)</a></li><li><a href=https://typonotes.com/categories/only-one/>only-one (3)</a></li><li><a href=https://typonotes.com/categories/OpenTelemetry/>OpenTelemetry (1)</a></li><li><a href=https://typonotes.com/categories/redis/>redis (2)</a></li><li><a href=https://typonotes.com/categories/sharing/>sharing (4)</a></li><li><a href=https://typonotes.com/categories/shell/>shell (1)</a></li><li><a href=https://typonotes.com/categories/vue3/>vue3 (2)</a></li><li><a href=https://typonotes.com/categories/%E5%91%BD%E4%BB%A4%E5%B7%A5%E5%85%B7/>命令工具 (1)</a></li><li><a href=https://typonotes.com/categories/%E9%9A%8F%E7%AC%94/>随笔 (1)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://typonotes.com/tags/MSSQL/>MSSQL</a>
+<a href=https://typonotes.com/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://typonotes.com/tags/XSS/>XSS</a>
+<a href=https://typonotes.com/tags/XXE/>XXE</a>
+<a href=https://typonotes.com/tags/aliyun/>aliyun</a>
+<a href=https://typonotes.com/tags/ansible/>ansible</a>
+<a href=https://typonotes.com/tags/apt/>apt</a>
+<a href=https://typonotes.com/tags/aws/>aws</a>
+<a href=https://typonotes.com/tags/axios/>axios</a>
+<a href=https://typonotes.com/tags/blog/>blog</a>
+<a href=https://typonotes.com/tags/calico/>calico</a>
+<a href=https://typonotes.com/tags/cdn/>cdn</a>
+<a href=https://typonotes.com/tags/cephfs/>cephfs</a>
+<a href=https://typonotes.com/tags/cfssl/>cfssl</a>
+<a href=https://typonotes.com/tags/chatgpt/>chatgpt</a>
+<a href=https://typonotes.com/tags/cicd/>cicd</a>
+<a href=https://typonotes.com/tags/cli-tools/>cli-tools</a>
+<a href=https://typonotes.com/tags/cloudnative/>cloudnative</a>
+<a href=https://typonotes.com/tags/cobra/>cobra</a>
+<a href=https://typonotes.com/tags/code/>code</a>
+<a href=https://typonotes.com/tags/config/>config</a>
+<a href=https://typonotes.com/tags/configmap/>configmap</a>
+<a href=https://typonotes.com/tags/context/>context</a>
+<a href=https://typonotes.com/tags/coredns/>coredns</a>
+<a href=https://typonotes.com/tags/database/>database</a>
+<a href=https://typonotes.com/tags/defer/>defer</a>
+<a href=https://typonotes.com/tags/deployment/>deployment</a>
+<a href=https://typonotes.com/tags/dind/>dind</a>
+<a href=https://typonotes.com/tags/dns/>dns</a>
+<a href=https://typonotes.com/tags/dnsx/>dnsx</a>
+<a href=https://typonotes.com/tags/docker/>docker</a>
+<a href=https://typonotes.com/tags/docker-compose/>docker-compose</a>
+<a href=https://typonotes.com/tags/dockerfile/>dockerfile</a>
+<a href=https://typonotes.com/tags/download/>download</a>
+<a href=https://typonotes.com/tags/filebeat/>filebeat</a>
+<a href=https://typonotes.com/tags/find/>find</a>
+<a href=https://typonotes.com/tags/gin/>gin</a>
+<a href=https://typonotes.com/tags/git/>git</a>
+<a href=https://typonotes.com/tags/github/>github</a>
+<a href=https://typonotes.com/tags/gitlab/>gitlab</a>
+<a href=https://typonotes.com/tags/glusterfs/>glusterfs</a>
+<a href=https://typonotes.com/tags/golang/>golang</a>
+<a href=https://typonotes.com/tags/gorm/>gorm</a>
+<a href=https://typonotes.com/tags/grafana/>grafana</a>
+<a href=https://typonotes.com/tags/grep/>grep</a>
+<a href=https://typonotes.com/tags/haproxy/>haproxy</a>
+<a href=https://typonotes.com/tags/html5/>html5</a>
+<a href=https://typonotes.com/tags/https/>https</a>
+<a href=https://typonotes.com/tags/hugo/>hugo</a>
+<a href=https://typonotes.com/tags/image/>image</a>
+<a href=https://typonotes.com/tags/informer/>informer</a>
+<a href=https://typonotes.com/tags/ingress/>ingress</a>
+<a href=https://typonotes.com/tags/interface/>interface</a>
+<a href=https://typonotes.com/tags/iptables/>iptables</a>
+<a href=https://typonotes.com/tags/istio/>istio</a>
+<a href=https://typonotes.com/tags/js/>js</a>
+<a href=https://typonotes.com/tags/k3s/>k3s</a>
+<a href=https://typonotes.com/tags/k8s/>k8s</a>
+<a href=https://typonotes.com/tags/kubebuilder/>kubebuilder</a>
+<a href=https://typonotes.com/tags/kubectl/>kubectl</a>
+<a href=https://typonotes.com/tags/kustomize/>kustomize</a>
+<a href=https://typonotes.com/tags/kustz/>kustz</a>
+<a href=https://typonotes.com/tags/layout/>layout</a>
+<a href=https://typonotes.com/tags/lego/>lego</a>
+<a href=https://typonotes.com/tags/libaray/>libaray</a>
+<a href=https://typonotes.com/tags/library/>library</a>
+<a href=https://typonotes.com/tags/linux/>linux</a>
+<a href=https://typonotes.com/tags/log/>log</a>
+<a href=https://typonotes.com/tags/minio/>minio</a>
+<a href=https://typonotes.com/tags/mysql/>mysql</a>
+<a href=https://typonotes.com/tags/network/>network</a>
+<a href=https://typonotes.com/tags/nginx/>nginx</a>
+<a href=https://typonotes.com/tags/openai/>openai</a>
+<a href=https://typonotes.com/tags/opentelemetry/>opentelemetry</a>
+<a href=https://typonotes.com/tags/pgsql/>pgsql</a>
+<a href=https://typonotes.com/tags/php/>php</a>
+<a href=https://typonotes.com/tags/prometheus/>prometheus</a>
+<a href=https://typonotes.com/tags/proxy/>proxy</a>
+<a href=https://typonotes.com/tags/python/>python</a>
+<a href=https://typonotes.com/tags/qcloud/>qcloud</a>
+<a href=https://typonotes.com/tags/qiniu/>qiniu</a>
+<a href=https://typonotes.com/tags/qos/>qos</a>
+<a href=https://typonotes.com/tags/redis/>redis</a>
+<a href=https://typonotes.com/tags/reflect/>reflect</a>
+<a href=https://typonotes.com/tags/repo/>repo</a>
+<a href=https://typonotes.com/tags/resetful/>resetful</a>
+<a href=https://typonotes.com/tags/s3/>s3</a>
+<a href=https://typonotes.com/tags/scope/>scope</a>
+<a href=https://typonotes.com/tags/semimonthly-plan/>semimonthly-plan</a>
+<a href=https://typonotes.com/tags/service/>service</a>
+<a href=https://typonotes.com/tags/shell/>shell</a>
+<a href=https://typonotes.com/tags/slice/>slice</a>
+<a href=https://typonotes.com/tags/sqlmap/>sqlmap</a>
+<a href=https://typonotes.com/tags/storage/>storage</a>
+<a href=https://typonotes.com/tags/tag01/>tag01</a>
+<a href=https://typonotes.com/tags/tag02/>tag02</a>
+<a href=https://typonotes.com/tags/tech-sharing/>tech-sharing</a>
+<a href=https://typonotes.com/tags/test/>test</a>
+<a href=https://typonotes.com/tags/tidb/>tidb</a>
+<a href=https://typonotes.com/tags/timezone/>timezone</a>
+<a href=https://typonotes.com/tags/tls/>tls</a>
+<a href=https://typonotes.com/tags/tools/>tools</a>
+<a href=https://typonotes.com/tags/trace/>trace</a>
+<a href=https://typonotes.com/tags/typescript/>typescript</a>
+<a href=https://typonotes.com/tags/typora/>typora</a>
+<a href=https://typonotes.com/tags/v2ray/>v2ray</a>
+<a href=https://typonotes.com/tags/variable/>variable</a>
+<a href=https://typonotes.com/tags/vscode/>vscode</a>
+<a href=https://typonotes.com/tags/vue/>vue</a>
+<a href=https://typonotes.com/tags/vue3/>vue3</a>
+<a href=https://typonotes.com/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://typonotes.com/tags/%E5%8F%8D%E5%B0%84/>反射</a>
+<a href=https://typonotes.com/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://typonotes.com/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
+<a href=https://typonotes.com/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://typonotes.com/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
