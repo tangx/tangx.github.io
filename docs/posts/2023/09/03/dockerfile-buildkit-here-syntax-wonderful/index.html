@@ -50,8 +50,54 @@
 </span></span></span><span style=display:flex><span><span style=color:#a61717;background-color:#e3d2d2></span>EOT<span style=color:#a61717;background-color:#e3d2d2>
 </span></span></span></code></pre></td></tr></table></div></div><p>这种模式下， wget 行实际解析出来的命令为</p><pre tabindex=0><code>wget -O example.com/app-Linux app-Linux
 </code></pre><p>符合预期</p><h3 id=没有-buildkit-配置文件>没有 buildkit 配置文件</h3><pre tabindex=0><code>ls: cannot access &#39;/root/.docker/buildx/instances/default&#39;: No such file or directory
-</code></pre><p>找不到默认的 buildx 配置， 使用如下即可。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{<span style=color:navy>&#34;Name&#34;</span>:<span style=color:#d14>&#34;localbuilder&#34;</span>,<span style=color:navy>&#34;Driver&#34;</span>:<span style=color:#d14>&#34;docker-container&#34;</span>,<span style=color:navy>&#34;Nodes&#34;</span>:[{<span style=color:navy>&#34;Name&#34;</span>:<span style=color:#d14>&#34;localbuilder0&#34;</span>,<span style=color:navy>&#34;Endpoint&#34;</span>:<span style=color:#d14>&#34;unix:///var/run/docker.sock&#34;</span>,<span style=color:navy>&#34;Platforms&#34;</span>:[{<span style=color:navy>&#34;architecture&#34;</span>:<span style=color:#d14>&#34;amd64&#34;</span>,<span style=color:navy>&#34;os&#34;</span>:<span style=color:#d14>&#34;linux&#34;</span>},{<span style=color:navy>&#34;architecture&#34;</span>:<span style=color:#d14>&#34;arm64&#34;</span>,<span style=color:navy>&#34;os&#34;</span>:<span style=color:#d14>&#34;linux&#34;</span>}],<span style=color:navy>&#34;Flags&#34;</span>:<span style=color:#000;font-weight:700>null</span>,<span style=color:navy>&#34;ConfigFile&#34;</span>:<span style=color:#d14>&#34;&#34;</span>,<span style=color:navy>&#34;DriverOpts&#34;</span>:{}}],<span style=color:navy>&#34;Dynamic&#34;</span>:<span style=color:#000;font-weight:700>false</span>}
+</code></pre><p>找不到默认的 buildx 配置， 使用如下即可。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:navy>&#34;Name&#34;</span>: <span style=color:#d14>&#34;localbuilder&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:navy>&#34;Driver&#34;</span>: <span style=color:#d14>&#34;docker-container&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:navy>&#34;Nodes&#34;</span>: [
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            <span style=color:navy>&#34;Name&#34;</span>: <span style=color:#d14>&#34;localbuilder0&#34;</span>,
+</span></span><span style=display:flex><span>            <span style=color:navy>&#34;Endpoint&#34;</span>: <span style=color:#d14>&#34;unix:///var/run/docker.sock&#34;</span>,
+</span></span><span style=display:flex><span>            <span style=color:navy>&#34;Platforms&#34;</span>: [
+</span></span><span style=display:flex><span>                {
+</span></span><span style=display:flex><span>                    <span style=color:navy>&#34;architecture&#34;</span>: <span style=color:#d14>&#34;amd64&#34;</span>,
+</span></span><span style=display:flex><span>                    <span style=color:navy>&#34;os&#34;</span>: <span style=color:#d14>&#34;linux&#34;</span>
+</span></span><span style=display:flex><span>                },
+</span></span><span style=display:flex><span>                {
+</span></span><span style=display:flex><span>                    <span style=color:navy>&#34;architecture&#34;</span>: <span style=color:#d14>&#34;arm64&#34;</span>,
+</span></span><span style=display:flex><span>                    <span style=color:navy>&#34;os&#34;</span>: <span style=color:#d14>&#34;linux&#34;</span>
+</span></span><span style=display:flex><span>                }
+</span></span><span style=display:flex><span>            ],
+</span></span><span style=display:flex><span>            <span style=color:navy>&#34;Flags&#34;</span>: <span style=color:#000;font-weight:700>null</span>,
+</span></span><span style=display:flex><span>            <span style=color:navy>&#34;ConfigFile&#34;</span>: <span style=color:#d14>&#34;&#34;</span>,
+</span></span><span style=display:flex><span>            <span style=color:navy>&#34;DriverOpts&#34;</span>: {}
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    ],
+</span></span><span style=display:flex><span>    <span style=color:navy>&#34;Dynamic&#34;</span>: <span style=color:#000;font-weight:700>false</span>
+</span></span><span style=display:flex><span>}
 </span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://typonotes.com/posts/2023/09/03/dockerfile-buildkit-here-syntax-wonderful/>https://typonotes.com/posts/2023/09/03/dockerfile-buildkit-here-syntax-wonderful/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
 <span style=background-color:#e8e8e9><code>Go与云原生</code></span>
 或 <strong>订阅网站</strong>
