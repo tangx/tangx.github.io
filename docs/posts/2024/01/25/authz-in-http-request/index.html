@@ -1,0 +1,393 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>几种封装 HTTP Authorization 的分装方式 | 老麦的书房</title><meta property="og:title" content="几种封装 HTTP Authorization 的分装方式 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2024-01-25T10:35:44+08:00"><meta property="article:modified_time" content="2024-01-25T10:35:44+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="几种封装 HTTP Authorization 的分装方式"><meta name=author content="老麦"><meta property="og:url" content="https://typonotes.com/posts/2024/01/25/authz-in-http-request/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
+<script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?fe891ffeb313a7d084b8baf803d87746",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://typonotes.com/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://typonotes.com/>首页</a>
+<a href=https://typonotes.com/books/ title=开源书>开源书</a>
+<a href=https://typonotes.com/categories/ title=分类>分类</a>
+<a href=https://typonotes.com/tags/ title=标签>标签</a>
+<a href=https://typonotes.com/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://typonotes.com/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://typonotes.com/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#几种常见的-authorization-封装方式>几种常见的 Authorization 封装方式</a><ul><li><a href=#1-直接封装>1. 直接封装</a></li><li><a href=#2-context-传递>2. Context 传递</a></li><li><a href=#3-defaultheader-传递>3. DefaultHeader 传递</a></li><li><a href=#4-接口传递>4. 接口传递</a></li></ul></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>几种封装 HTTP Authorization 的分装方式</h1></header><time datetime=2024-01-25T02:35:44Z class="post-meta meta-date dt-published">2024年1月25日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/golang target=_blank>golang</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=几种封装-http-authorization-的分装方式>几种封装 HTTP Authorization 的分装方式</h1><p>建议点击 <strong>查看原文</strong> 查看最新内容。</p><blockquote><p><strong>原文链接:</strong>
+<a href=https://typonotes.com/posts/2024/01/25/authz-in-http-request/ target=_blank rel=noopener>https://typonotes.com/posts/2024/01/25/authz-in-http-request/</a></p></blockquote><p>大家都知道， 在做 HTTP 请求的时候， 通常需要提供 <strong>账号名和密码</strong>， 例如</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ curl -u username:password http://api.example.com
+</span></span></code></pre></td></tr></table></div></div><p>其实， 这种就是
+<a href=https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication target=_blank rel=noopener>HTTP Authentication</a>
+中的 <strong>Basic 模式(Schema)</strong></p><p>翻译一下</p><ol><li>首先将账号密码使用 <strong>冒号:</strong> 链接</li><li>随后进行 <strong>base64</strong> 编码</li><li>最后放在 Header 的 Authorization 中。</li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ <span style=color:teal>val</span><span style=color:#000;font-weight:700>=</span>base64<span style=color:#000;font-weight:700>(</span><span style=color:#d14>&#34;username:password&#34;</span><span style=color:#000;font-weight:700>)</span>
+</span></span><span style=display:flex><span>$ curl -H <span style=color:#d14>&#34;Authorization: Basic </span><span style=color:#d14>${</span><span style=color:teal>username</span>:<span style=color:teal>password</span><span style=color:#d14>}</span><span style=color:#d14> http://api.example.com
+</span></span></span></code></pre></td></tr></table></div></div><p>除了 Basic 之外，
+<a href=https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#authentication_schemes target=_blank rel=noopener>HTTP 标准 Schema</a>
+包括以下</p><ul><li><strong>Basic</strong>: 常见</li><li><strong>Bearer</strong>: 常见</li><li><strong>Digest</strong></li><li>HOBA</li><li>Mutual</li><li>Negotiate / NTLM</li><li>VAPID</li><li>SCRAM</li><li><strong>AWS4-HMAC-SHA256</strong></li></ul><p>除了以上之外， 你当然可以 <strong>自定义</strong> 自己服务器的 <strong>验证</strong> 模式， 走非标路线让黑客琢磨不透。</p><h2 id=几种常见的-authorization-封装方式>几种常见的 Authorization 封装方式</h2><p>分享几种我见过的封装方式</p><h3 id=1-直接封装>1. 直接封装</h3><p>这种数据比较初级阶段， <strong>只提供</strong> 固定验证方式的封装。</p><p><strong>但</strong> 如果需要再增加一种验证方式， 例如 <code>Bearer Token</code>，就比较无力了。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> BasicConfig <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	Username <span style=color:#458;font-weight:700>string</span> <span style=color:#d14>`json:&#34;user&#34;`</span>
+</span></span><span style=display:flex><span>	Password <span style=color:#458;font-weight:700>string</span> <span style=color:#d14>`json:&#34;name&#34;`</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (bc <span style=color:#000;font-weight:700>*</span>BasicConfig) <span style=color:#900;font-weight:700>request</span>(method <span style=color:#458;font-weight:700>string</span>, url <span style=color:#458;font-weight:700>string</span>, body io.Reader) {
+</span></span><span style=display:flex><span>	req, _ <span style=color:#000;font-weight:700>:=</span> http.<span style=color:#900;font-weight:700>NewRequest</span>(method, url, body)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// 硬编码
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	auth <span style=color:#000;font-weight:700>:=</span> bc.Username <span style=color:#000;font-weight:700>+</span> <span style=color:#d14>&#34;:&#34;</span> <span style=color:#000;font-weight:700>+</span> bc.Password
+</span></span><span style=display:flex><span>	authz <span style=color:#000;font-weight:700>:=</span> base64.StdEncoding.<span style=color:#900;font-weight:700>EncodeToString</span>([]<span style=color:#0086b3>byte</span>(auth))
+</span></span><span style=display:flex><span>	req.Header.<span style=color:#900;font-weight:700>Set</span>(<span style=color:#d14>&#34;Authorization&#34;</span>, <span style=color:#d14>&#34;Basic &#34;</span><span style=color:#000;font-weight:700>+</span>authz)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	_, _ = http.DefaultClient.<span style=color:#900;font-weight:700>Do</span>(req)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h3 id=2-context-传递>2. Context 传递</h3><p>这种方式使用 Context 进行验证参数的传递， 具有一定扩展性， <strong>但</strong> 依旧存在 <strong>枚举</strong> 验证方式的问题。</p><h4 id=21-定义-context-key-类型>2.1 定义 Context Key 类型</h4><p><strong>注意</strong>： 在定义 context key 的时候， 不能直接使用 <strong>简单类型</strong>， 例如 <code>stirng, int</code> 等。 <strong>而是</strong> 通过这些简单类型创建一个新类型，再使用。 这是类型的基础知识！！！</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> contextKey <span style=color:#458;font-weight:700>string</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (c contextKey) <span style=color:#900;font-weight:700>String</span>() <span style=color:#458;font-weight:700>string</span> {
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> <span style=color:#d14>&#34;auth &#34;</span> <span style=color:#000;font-weight:700>+</span> <span style=color:#0086b3>string</span>(c)
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>var</span> (
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// ContextOAuth2 takes a oauth2.TokenSource as authentication for the request.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	ContextOAuth2 = <span style=color:#900;font-weight:700>contextKey</span>(<span style=color:#d14>&#34;token&#34;</span>)
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// ContextBasicAuth takes BasicAuth as authentication for the request.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	ContextBasicAuth = <span style=color:#900;font-weight:700>contextKey</span>(<span style=color:#d14>&#34;basic&#34;</span>)
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// ContextAccessToken takes a string oauth2 access token as authentication for the request.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	ContextAccessToken = <span style=color:#900;font-weight:700>contextKey</span>(<span style=color:#d14>&#34;accesstoken&#34;</span>)
+</span></span><span style=display:flex><span>	<span style=color:#998;font-style:italic>// ContextAPIKey takes an APIKey as authentication for the request
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>	ContextAPIKey = <span style=color:#900;font-weight:700>contextKey</span>(<span style=color:#d14>&#34;apikey&#34;</span>)
+</span></span><span style=display:flex><span>)
+</span></span></code></pre></td></tr></table></div></div><p>源代码在
+<a href=https://github.com/gfleury/go-bitbucket-v1/blob/6e30c5760c87b9095bafc130f209edcee4903a19/configuration.go#L15 target=_blank rel=noopener>go-bamboo-v1/configuation.go - Github</a></p><h4 id=22-通过-context-获取验证信息>2.2 通过 Context 获取验证信息</h4><p>接下来， 在构建 request 的时候， 就通过 <code>ctx.Value</code> <strong>获取</strong> 相应值。 如果 <strong>断言</strong> 成功， 则添加到 HTTP Header 中。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#998;font-style:italic>// prepareRequest build the request
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span> (c <span style=color:#000;font-weight:700>*</span>APIClient) <span style=color:#900;font-weight:700>prepareRequest</span>(
+</span></span><span style=display:flex><span>	ctx context.Context) (localVarRequest <span style=color:#000;font-weight:700>*</span>http.Request, err <span style=color:#458;font-weight:700>error</span>) {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>if</span> ctx <span style=color:#000;font-weight:700>!=</span> <span style=color:#000;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>		<span style=color:#998;font-style:italic>// add context to the request
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>		localVarRequest = localVarRequest.<span style=color:#900;font-weight:700>WithContext</span>(ctx)
+</span></span><span style=display:flex><span>		<span style=color:#998;font-style:italic>// Walk through any authentication.
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>		<span style=color:#998;font-style:italic>// OAuth2 authentication
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>		<span style=color:#000;font-weight:700>if</span> tok, ok <span style=color:#000;font-weight:700>:=</span> ctx.<span style=color:#900;font-weight:700>Value</span>(ContextOAuth2).(oauth2.TokenSource); ok {
+</span></span><span style=display:flex><span>			<span style=color:#998;font-style:italic>// We were able to grab an oauth2 token from the context
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>			<span style=color:#000;font-weight:700>var</span> latestToken <span style=color:#000;font-weight:700>*</span>oauth2.Token
+</span></span><span style=display:flex><span>			<span style=color:#000;font-weight:700>if</span> latestToken, err = tok.<span style=color:#900;font-weight:700>Token</span>(); err <span style=color:#000;font-weight:700>!=</span> <span style=color:#000;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>				<span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>nil</span>, err
+</span></span><span style=display:flex><span>			}
+</span></span><span style=display:flex><span>			latestToken.<span style=color:#900;font-weight:700>SetAuthHeader</span>(localVarRequest)
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>		<span style=color:#998;font-style:italic>// Basic HTTP Authentication
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>		<span style=color:#000;font-weight:700>if</span> auth, ok <span style=color:#000;font-weight:700>:=</span> ctx.<span style=color:#900;font-weight:700>Value</span>(ContextBasicAuth).(BasicAuth); ok {
+</span></span><span style=display:flex><span>			localVarRequest.<span style=color:#900;font-weight:700>SetBasicAuth</span>(auth.UserName, auth.Password)
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>		<span style=color:#998;font-style:italic>// AccessToken Authentication
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>		<span style=color:#000;font-weight:700>if</span> auth, ok <span style=color:#000;font-weight:700>:=</span> ctx.<span style=color:#900;font-weight:700>Value</span>(ContextAccessToken).(<span style=color:#458;font-weight:700>string</span>); ok {
+</span></span><span style=display:flex><span>			localVarRequest.Header.<span style=color:#900;font-weight:700>Add</span>(<span style=color:#d14>&#34;Authorization&#34;</span>, <span style=color:#d14>&#34;Bearer &#34;</span><span style=color:#000;font-weight:700>+</span>auth)
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> localVarRequest, <span style=color:#000;font-weight:700>nil</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>源代码在
+<a href=https://github.com/gfleury/go-bitbucket-v1/blob/6e30c5760c87b9095bafc130f209edcee4903a19/api_client.go#L288 target=_blank rel=noopener>go-bamboo-v1/api_client.go - Github</a></p><h3 id=3-defaultheader-传递>3. DefaultHeader 传递</h3><p>这种方式就解决了 <strong>枚举</strong> 带来的有限性。 <strong>简单粗暴</strong></p><p>在定义配置的时候， 直接设置一个 <strong>DefaultHeader</strong> 来承载所有。 当然， 这个 DefaultHeader 不仅仅只用来保存验证方式。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#998;font-style:italic>// Configuration provides the configuration to connect
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>type</span> Configuration <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	DefaultHeader <span style=color:#000;font-weight:700>map</span>[<span style=color:#458;font-weight:700>string</span>]<span style=color:#458;font-weight:700>string</span> <span style=color:#d14>`json:&#34;defaultHeader,omitempty&#34;`</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>源代码在
+<a href=https://github.com/gfleury/go-bitbucket-v1/blob/6e30c5760c87b9095bafc130f209edcee4903a19/configuration.go#L52 target=_blank rel=noopener>go-bamboo-v1/configuration#L52 - Github</a></p><p>在初始化 Request 的时候， 直接从 Map 转移到 Request Header 中即可。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#998;font-style:italic>// prepareRequest build the request
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span> (c <span style=color:#000;font-weight:700>*</span>APIClient) <span style=color:#900;font-weight:700>prepareRequest</span>(
+</span></span><span style=display:flex><span>	ctx context.Context, cfg <span style=color:#000;font-weight:700>*</span>Configuration) (localVarRequest <span style=color:#000;font-weight:700>*</span>http.Request, err <span style=color:#458;font-weight:700>error</span>) {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>for</span> header, value <span style=color:#000;font-weight:700>:=</span> <span style=color:#000;font-weight:700>range</span> cfg.DefaultHeader {
+</span></span><span style=display:flex><span>		localVarRequest.Header.<span style=color:#900;font-weight:700>Add</span>(header, value)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> localVarRequest, <span style=color:#000;font-weight:700>nil</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>源代码在
+<a href=https://github.com/gfleury/go-bitbucket-v1/blob/6e30c5760c87b9095bafc130f209edcee4903a19/api_client.go#L293 target=_blank rel=noopener>go-bamboo-v1/api_client.go - Github</a></p><h3 id=4-接口传递>4. 接口传递</h3><p>这种方式同样不存在 <strong>枚举</strong> 的局限性。 同时看起来要比 DefaultHeader 更优雅。</p><h4 id=41-定义接口>4.1 定义接口</h4><p>首先定义一个接口， 用于返回 HTTP Request Authorization 的值（包含 <strong>验证模式</strong> 和 <strong>验证值</strong>）。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> Authorizer <span style=color:#000;font-weight:700>interface</span> {
+</span></span><span style=display:flex><span>	<span style=color:#900;font-weight:700>Authorization</span>() <span style=color:#458;font-weight:700>string</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>在 Client 作为字段使用， 并在初始化 Client 的时候传入</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> Client <span style=color:#000;font-weight:700>struct</span> {
+</span></span><span style=display:flex><span>	authorizer Authorizer <span style=color:#998;font-style:italic>// User credentials
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>NewClient</span>(httpClient <span style=color:#000;font-weight:700>*</span>http.Client, creds Authorizer) <span style=color:#000;font-weight:700>*</span>Client {
+</span></span><span style=display:flex><span>	c <span style=color:#000;font-weight:700>:=</span> <span style=color:#000;font-weight:700>&amp;</span>Client{
+</span></span><span style=display:flex><span>		client:     httpClient,
+</span></span><span style=display:flex><span>		BaseURL:    baseURL,
+</span></span><span style=display:flex><span>		authorizer: creds,
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> c
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><h4 id=42-通过接口获取验证信息>4.2 通过接口获取验证信息</h4><p>在构建 HTTP Request， 直接调用 Authorzer 接口即可返回值。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (c <span style=color:#000;font-weight:700>*</span>Client) <span style=color:#900;font-weight:700>NewRequest</span>(method, urlStr <span style=color:#458;font-weight:700>string</span>, body <span style=color:#000;font-weight:700>interface</span>{}) (<span style=color:#000;font-weight:700>*</span>http.Request, <span style=color:#458;font-weight:700>error</span>) {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	req, err <span style=color:#000;font-weight:700>:=</span> http.<span style=color:#900;font-weight:700>NewRequest</span>(method, u.<span style=color:#900;font-weight:700>String</span>(), buf)
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>if</span> err <span style=color:#000;font-weight:700>!=</span> <span style=color:#000;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>		<span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>nil</span>, err
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	creds <span style=color:#000;font-weight:700>:=</span> c.authorizer
+</span></span><span style=display:flex><span>	req.Header.<span style=color:#900;font-weight:700>Set</span>(<span style=color:#d14>&#34;Authorization&#34;</span>, creds.<span style=color:#900;font-weight:700>Authorization</span>())
+</span></span><span style=display:flex><span>	req.Header.<span style=color:#900;font-weight:700>Set</span>(<span style=color:#d14>&#34;Accept&#34;</span>, <span style=color:#d14>&#34;application/json&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> req, <span style=color:#000;font-weight:700>nil</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>源码在
+<a href=https://github.com/tangx/go-bamboo/blob/b50568b35addef27a4bd0f04b841db86b50feb70/client.go#L100 target=_blank rel=noopener>go-bamboo/client.go#L100 - Github</a></p><h4 id=43-案例扩展>4.3. 案例扩展</h4><p><strong>注意</strong>： 这个案例可以扩展， <strong>同时返回 Header 名称和值</strong></p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> Authorizer <span style=color:#000;font-weight:700>interface</span> {
+</span></span><span style=display:flex><span>	<span style=color:#900;font-weight:700>Authorization</span>() (<span style=color:#458;font-weight:700>string</span>, <span style=color:#458;font-weight:700>string</span>)
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> (c <span style=color:#000;font-weight:700>*</span>Client) <span style=color:#900;font-weight:700>NewRequest</span>(method, urlStr <span style=color:#458;font-weight:700>string</span>, body <span style=color:#000;font-weight:700>interface</span>{}) (<span style=color:#000;font-weight:700>*</span>http.Request, <span style=color:#458;font-weight:700>error</span>) {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	req, err <span style=color:#000;font-weight:700>:=</span> http.<span style=color:#900;font-weight:700>NewRequest</span>(method, u.<span style=color:#900;font-weight:700>String</span>(), buf)
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>if</span> err <span style=color:#000;font-weight:700>!=</span> <span style=color:#000;font-weight:700>nil</span> {
+</span></span><span style=display:flex><span>		<span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>nil</span>, err
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	k, creds <span style=color:#000;font-weight:700>:=</span> c.authorizer
+</span></span><span style=display:flex><span>	req.Header.<span style=color:#900;font-weight:700>Set</span>(k, creds)
+</span></span><span style=display:flex><span>	req.Header.<span style=color:#900;font-weight:700>Set</span>(<span style=color:#d14>&#34;Accept&#34;</span>, <span style=color:#d14>&#34;application/json&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#000;font-weight:700>return</span> req, <span style=color:#000;font-weight:700>nil</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://typonotes.com/posts/2024/01/25/authz-in-http-request/>https://typonotes.com/posts/2024/01/25/authz-in-http-request/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://typonotes.com/>https://typonotes.com/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2024/01/22/do-not-trust-user-input/>不要相信用户输入， 自己的也不行</a></li><li><a href=/posts/2024/01/20/github-ssh-22-time-out/>不用代理， 解决 Github ssh 协议方式超时失败解决方法</a></li><li><a href=/posts/2024/01/09/golang-tag-inline/>Golang 使用 inline 处理 JSON/YAML 内联字段的 2 点注意事项</a></li><li><a href=/posts/2024/01/02/http-request-multiple-times-read/>如何实现 Http Request Body 多次读取</a></li><li><a href=/posts/2023/11/10/aliyun-sls-trace-best-practices/>Aliyun Sls Trace Best Practices</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/http target=_blank>http</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2024 <a href=https://typonotes.com/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='//cdn.bootcdn.net/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://typonotes.com/posts/2024/01/25/authz-in-http-request/ title="几种封装 HTTP Authorization 的分装方式" target=_blank>几种封装 HTTP Authorization 的分装方式</a></li><li><a href=https://typonotes.com/posts/2024/01/22/do-not-trust-user-input/ title="不要相信用户输入， 自己的也不行" target=_blank>不要相信用户输入， 自己的也不行</a></li><li><a href=https://typonotes.com/posts/2024/01/20/github-ssh-22-time-out/ title="不用代理， 解决 Github ssh 协议方式超时失败解决方法" target=_blank>不用代理， 解决 Github ssh 协议方式超时失败解决方法</a></li><li><a href=https://typonotes.com/posts/2024/01/09/golang-tag-inline/ title="Golang 使用 inline 处理 JSON/YAML 内联字段的 2 点注意事项" target=_blank>Golang 使用 inline 处理 JSON/YAML 内联字段的 2 点注意事项</a></li><li><a href=https://typonotes.com/posts/2024/01/02/http-request-multiple-times-read/ title="如何实现 Http Request Body 多次读取" target=_blank>如何实现 Http Request Body 多次读取</a></li><li><a href=https://typonotes.com/posts/2023/11/10/aliyun-sls-trace-best-practices/ title="Aliyun Sls Trace Best Practices" target=_blank>Aliyun Sls Trace Best Practices</a></li><li><a href=https://typonotes.com/posts/2023/10/25/pgsql-create-readonly-account/ title="Pgsql Create Readonly Account" target=_blank>Pgsql Create Readonly Account</a></li><li><a href=https://typonotes.com/posts/2023/10/07/otel-collector-contrib-with-auth-supportive/ title="OpenTelemetry(05): Otel Collector Contrib 添加鉴权支持" target=_blank>OpenTelemetry(05): Otel Collector Contrib 添加鉴权支持</a></li><li><a href=https://typonotes.com/posts/2023/09/18/install-go-tools-after-upgrade-macos/ title="Install Go Tools After Upgrade Macos" target=_blank>Install Go Tools After Upgrade Macos</a></li><li><a href=https://typonotes.com/posts/2023/09/08/irregular-verbs/ title="英语: 不规则动词" target=_blank>英语: 不规则动词</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://typonotes.com/categories/linux/>linux (1)</a></li><li><a href=https://typonotes.com/categories/aliyun/>aliyun (3)</a></li><li><a href=https://typonotes.com/categories/blog/>blog (11)</a></li><li><a href=https://typonotes.com/categories/books/>books (13)</a></li><li><a href=https://typonotes.com/categories/cloudnative/>cloudnative (7)</a></li><li><a href=https://typonotes.com/categories/database/>database (4)</a></li><li><a href=https://typonotes.com/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://typonotes.com/categories/devopscamp/>devopscamp (10)</a></li><li><a href=https://typonotes.com/categories/docker/>docker (10)</a></li><li><a href=https://typonotes.com/categories/english/>english (1)</a></li><li><a href=https://typonotes.com/categories/gitlab/>gitlab (1)</a></li><li><a href=https://typonotes.com/categories/golang/>golang (14)</a></li><li><a href=https://typonotes.com/categories/istio/>istio (16)</a></li><li><a href=https://typonotes.com/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://typonotes.com/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://typonotes.com/categories/kubernetes/>kubernetes (52)</a></li><li><a href=https://typonotes.com/categories/linux/>linux (6)</a></li><li><a href=https://typonotes.com/categories/logging/>logging (3)</a></li><li><a href=https://typonotes.com/categories/monitor/>monitor (7)</a></li><li><a href=https://typonotes.com/categories/nginx/>nginx (2)</a></li><li><a href=https://typonotes.com/categories/only-one/>only-one (4)</a></li><li><a href=https://typonotes.com/categories/opentelemetry/>opentelemetry (1)</a></li><li><a href=https://typonotes.com/categories/redis/>redis (2)</a></li><li><a href=https://typonotes.com/categories/sharing/>sharing (4)</a></li><li><a href=https://typonotes.com/categories/shell/>shell (1)</a></li><li><a href=https://typonotes.com/categories/vue3/>vue3 (2)</a></li><li><a href=https://typonotes.com/categories/%E5%91%BD%E4%BB%A4%E5%B7%A5%E5%85%B7/>命令工具 (1)</a></li><li><a href=https://typonotes.com/categories/%E9%9A%8F%E7%AC%94/>随笔 (1)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://typonotes.com/tags/MSSQL/>MSSQL</a>
+<a href=https://typonotes.com/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://typonotes.com/tags/XSS/>XSS</a>
+<a href=https://typonotes.com/tags/XXE/>XXE</a>
+<a href=https://typonotes.com/tags/aliyun/>aliyun</a>
+<a href=https://typonotes.com/tags/ansible/>ansible</a>
+<a href=https://typonotes.com/tags/apt/>apt</a>
+<a href=https://typonotes.com/tags/aws/>aws</a>
+<a href=https://typonotes.com/tags/axios/>axios</a>
+<a href=https://typonotes.com/tags/blog/>blog</a>
+<a href=https://typonotes.com/tags/calico/>calico</a>
+<a href=https://typonotes.com/tags/cdn/>cdn</a>
+<a href=https://typonotes.com/tags/cephfs/>cephfs</a>
+<a href=https://typonotes.com/tags/cfssl/>cfssl</a>
+<a href=https://typonotes.com/tags/chatgpt/>chatgpt</a>
+<a href=https://typonotes.com/tags/cicd/>cicd</a>
+<a href=https://typonotes.com/tags/cli-tools/>cli-tools</a>
+<a href=https://typonotes.com/tags/cloudnative/>cloudnative</a>
+<a href=https://typonotes.com/tags/cobra/>cobra</a>
+<a href=https://typonotes.com/tags/code/>code</a>
+<a href=https://typonotes.com/tags/config/>config</a>
+<a href=https://typonotes.com/tags/configmap/>configmap</a>
+<a href=https://typonotes.com/tags/context/>context</a>
+<a href=https://typonotes.com/tags/coredns/>coredns</a>
+<a href=https://typonotes.com/tags/database/>database</a>
+<a href=https://typonotes.com/tags/defer/>defer</a>
+<a href=https://typonotes.com/tags/deployment/>deployment</a>
+<a href=https://typonotes.com/tags/dind/>dind</a>
+<a href=https://typonotes.com/tags/dns/>dns</a>
+<a href=https://typonotes.com/tags/dnsx/>dnsx</a>
+<a href=https://typonotes.com/tags/docker/>docker</a>
+<a href=https://typonotes.com/tags/docker-compose/>docker-compose</a>
+<a href=https://typonotes.com/tags/dockerfile/>dockerfile</a>
+<a href=https://typonotes.com/tags/download/>download</a>
+<a href=https://typonotes.com/tags/extension/>extension</a>
+<a href=https://typonotes.com/tags/filebeat/>filebeat</a>
+<a href=https://typonotes.com/tags/find/>find</a>
+<a href=https://typonotes.com/tags/gin/>gin</a>
+<a href=https://typonotes.com/tags/git/>git</a>
+<a href=https://typonotes.com/tags/github/>github</a>
+<a href=https://typonotes.com/tags/gitlab/>gitlab</a>
+<a href=https://typonotes.com/tags/glusterfs/>glusterfs</a>
+<a href=https://typonotes.com/tags/golang/>golang</a>
+<a href=https://typonotes.com/tags/gorm/>gorm</a>
+<a href=https://typonotes.com/tags/grafana/>grafana</a>
+<a href=https://typonotes.com/tags/grep/>grep</a>
+<a href=https://typonotes.com/tags/haproxy/>haproxy</a>
+<a href=https://typonotes.com/tags/html5/>html5</a>
+<a href=https://typonotes.com/tags/http/>http</a>
+<a href=https://typonotes.com/tags/https/>https</a>
+<a href=https://typonotes.com/tags/hugo/>hugo</a>
+<a href=https://typonotes.com/tags/image/>image</a>
+<a href=https://typonotes.com/tags/informer/>informer</a>
+<a href=https://typonotes.com/tags/ingress/>ingress</a>
+<a href=https://typonotes.com/tags/interface/>interface</a>
+<a href=https://typonotes.com/tags/iptables/>iptables</a>
+<a href=https://typonotes.com/tags/istio/>istio</a>
+<a href=https://typonotes.com/tags/js/>js</a>
+<a href=https://typonotes.com/tags/json/>json</a>
+<a href=https://typonotes.com/tags/k3s/>k3s</a>
+<a href=https://typonotes.com/tags/k8s/>k8s</a>
+<a href=https://typonotes.com/tags/kubebuilder/>kubebuilder</a>
+<a href=https://typonotes.com/tags/kubectl/>kubectl</a>
+<a href=https://typonotes.com/tags/kustomize/>kustomize</a>
+<a href=https://typonotes.com/tags/kustz/>kustz</a>
+<a href=https://typonotes.com/tags/layout/>layout</a>
+<a href=https://typonotes.com/tags/lego/>lego</a>
+<a href=https://typonotes.com/tags/libaray/>libaray</a>
+<a href=https://typonotes.com/tags/library/>library</a>
+<a href=https://typonotes.com/tags/linux/>linux</a>
+<a href=https://typonotes.com/tags/log/>log</a>
+<a href=https://typonotes.com/tags/minio/>minio</a>
+<a href=https://typonotes.com/tags/mysql/>mysql</a>
+<a href=https://typonotes.com/tags/network/>network</a>
+<a href=https://typonotes.com/tags/nginx/>nginx</a>
+<a href=https://typonotes.com/tags/openai/>openai</a>
+<a href=https://typonotes.com/tags/opentelemetry/>opentelemetry</a>
+<a href=https://typonotes.com/tags/pgsql/>pgsql</a>
+<a href=https://typonotes.com/tags/php/>php</a>
+<a href=https://typonotes.com/tags/prometheus/>prometheus</a>
+<a href=https://typonotes.com/tags/proxy/>proxy</a>
+<a href=https://typonotes.com/tags/python/>python</a>
+<a href=https://typonotes.com/tags/qcloud/>qcloud</a>
+<a href=https://typonotes.com/tags/qiniu/>qiniu</a>
+<a href=https://typonotes.com/tags/qos/>qos</a>
+<a href=https://typonotes.com/tags/readonly/>readonly</a>
+<a href=https://typonotes.com/tags/redis/>redis</a>
+<a href=https://typonotes.com/tags/reflect/>reflect</a>
+<a href=https://typonotes.com/tags/repo/>repo</a>
+<a href=https://typonotes.com/tags/resetful/>resetful</a>
+<a href=https://typonotes.com/tags/s3/>s3</a>
+<a href=https://typonotes.com/tags/scope/>scope</a>
+<a href=https://typonotes.com/tags/semimonthly-plan/>semimonthly-plan</a>
+<a href=https://typonotes.com/tags/service/>service</a>
+<a href=https://typonotes.com/tags/shell/>shell</a>
+<a href=https://typonotes.com/tags/slice/>slice</a>
+<a href=https://typonotes.com/tags/sqlmap/>sqlmap</a>
+<a href=https://typonotes.com/tags/storage/>storage</a>
+<a href=https://typonotes.com/tags/tag01/>tag01</a>
+<a href=https://typonotes.com/tags/tag02/>tag02</a>
+<a href=https://typonotes.com/tags/tech-sharing/>tech-sharing</a>
+<a href=https://typonotes.com/tags/test/>test</a>
+<a href=https://typonotes.com/tags/tidb/>tidb</a>
+<a href=https://typonotes.com/tags/timezone/>timezone</a>
+<a href=https://typonotes.com/tags/tls/>tls</a>
+<a href=https://typonotes.com/tags/tools/>tools</a>
+<a href=https://typonotes.com/tags/trace/>trace</a>
+<a href=https://typonotes.com/tags/typescript/>typescript</a>
+<a href=https://typonotes.com/tags/typora/>typora</a>
+<a href=https://typonotes.com/tags/v2ray/>v2ray</a>
+<a href=https://typonotes.com/tags/variable/>variable</a>
+<a href=https://typonotes.com/tags/verbs/>verbs</a>
+<a href=https://typonotes.com/tags/vscode/>vscode</a>
+<a href=https://typonotes.com/tags/vue/>vue</a>
+<a href=https://typonotes.com/tags/vue3/>vue3</a>
+<a href=https://typonotes.com/tags/yaml/>yaml</a>
+<a href=https://typonotes.com/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://typonotes.com/tags/%E5%8F%8D%E5%B0%84/>反射</a>
+<a href=https://typonotes.com/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://typonotes.com/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
+<a href=https://typonotes.com/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://typonotes.com/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
