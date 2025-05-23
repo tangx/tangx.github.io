@@ -1,0 +1,332 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>Go1.23 Iterators 迭代器 | 老麦的书房</title><meta property="og:title" content="Go1.23 Iterators 迭代器 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2025-05-22T17:08:43+08:00"><meta property="article:modified_time" content="2025-05-22T17:08:43+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="Go1.23 Iterators 迭代器"><meta name=author content="老麦"><meta property="og:url" content="https://typonotes.com/posts/2025/05/22/go1.23-iterators/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.4.1/jquery.min.js></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
+<script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?fe891ffeb313a7d084b8baf803d87746",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://typonotes.com/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://typonotes.com/>首页</a>
+<a href=https://typonotes.com/books/ title=开源书>开源书</a>
+<a href=https://typonotes.com/categories/ title=分类>分类</a>
+<a href=https://typonotes.com/tags/ title=标签>标签</a>
+<a href=https://typonotes.com/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://typonotes.com/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://typonotes.com/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#1-标准库的迭代器>1. 标准库的迭代器</a></li><li><a href=#2-迭代器对象的使用>2. 迭代器对象的使用</a></li><li><a href=#3-第三类迭代对象>3. 第三类迭代对象</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>Go1.23 Iterators 迭代器</h1></header><time datetime=2025-05-22T09:08:43Z class="post-meta meta-date dt-published">2025年5月22日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/golang target=_blank>golang</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=go123-iterators-迭代器>Go1.23 Iterators 迭代器</h1><p>建议点击 <strong>查看原文</strong> 查看最新内容。</p><blockquote><p><strong>原文链接:</strong>
+<a href=https://typonotes.com/posts/2025/05/22/go1.23-iterators/ target=_blank rel=noopener>https://typonotes.com/posts/2025/05/22/go1.23-iterators/</a></p></blockquote><p>在 Go1.23 新引入了一个概念
+<a href=https://tip.golang.org/doc/go1.23#iterators target=_blank rel=noopener>迭代器 Iterator</a>
+。 可以返回一个 <strong>可迭代对象 - 函数</strong>， <strong>该对象</strong> 接受一个 <strong>回调函数 - yield</strong> 。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>type</span> (
+</span></span><span style=display:flex><span>    Seq[V any]     <span style=color:#000;font-weight:700>func</span>(yield <span style=color:#000;font-weight:700>func</span>(V) <span style=color:#458;font-weight:700>bool</span>)
+</span></span><span style=display:flex><span>    Seq2[K, V any] <span style=color:#000;font-weight:700>func</span>(yield <span style=color:#000;font-weight:700>func</span>(K, V) <span style=color:#458;font-weight:700>bool</span>)
+</span></span><span style=display:flex><span>)
+</span></span></code></pre></td></tr></table></div></div><p><code>Seq2</code> 的命名方式看起来很奇怪， 感觉不太符合 golang 的命名习惯。 这里推测 <code>2</code> 表示接受的回调有两个参数。 <code>func(yield func(K, V) bool)</code></p><h2 id=1-标准库的迭代器>1. 标准库的迭代器</h2><p>截至 go1.24 ， 目前已经有 <strong>4个</strong> 标准包支持返回迭代器了。</p><ul><li><code>slices</code>, <code>maps</code>:
+<a href=https://tip.golang.org/doc/go1.23#iterators target=_blank rel=noopener>https://tip.golang.org/doc/go1.23#iterators</a></li><li><code>strings</code>:
+<a href=https://tip.golang.org/doc/go1.24#stringspkgstrings target=_blank rel=noopener>https://tip.golang.org/doc/go1.24#stringspkgstrings</a></li><li><code>bytes</code>:
+<a href=https://tip.golang.org/doc/go1.24#bytespkgbytes target=_blank rel=noopener>https://tip.golang.org/doc/go1.24#bytespkgbytes</a></li></ul><p>这个没什么好说的， 直接看文档就行了。</p><h2 id=2-迭代器对象的使用>2. 迭代器对象的使用</h2><p>迭代器的两种使用方式 <strong>回调函数</strong> 与 <strong>for</strong> 循环。</p><ol><li><p>使用 <strong>回调函数</strong> 时， 可以通过 <code>return false</code> 提前终止遍历。</p></li><li><p>使用 <strong>for</strong> 循环时</p><ul><li><code>Seq</code> 返回的对象是 <strong>值</strong>， 类似于 <code>for _, v := range []int{1,2,3}</code> 中的 v</li><li><code>Seq2</code> 返回的对象是 <strong>键、值</strong>。 普通的 for 循环类似。</li></ul></li></ol><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#998;font-style:italic>// Seq
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>l <span style=color:#000;font-weight:700>:=</span> []<span style=color:#458;font-weight:700>int</span>{<span style=color:#099>1</span>, <span style=color:#099>2</span>, <span style=color:#099>3</span>, <span style=color:#099>4</span>, <span style=color:#099>5</span>, <span style=color:#099>6</span>, <span style=color:#099>7</span>, <span style=color:#099>8</span>, <span style=color:#099>9</span>, <span style=color:#099>10</span>}
+</span></span><span style=display:flex><span>it1 <span style=color:#000;font-weight:700>:=</span> slices.<span style=color:#900;font-weight:700>Values</span>(l)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>for</span> v <span style=color:#000;font-weight:700>:=</span> <span style=color:#000;font-weight:700>range</span> it1 {  <span style=color:#998;font-style:italic>// Seq 返回的是 v
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#0086b3>println</span>(v)
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>call1 <span style=color:#000;font-weight:700>:=</span> <span style=color:#000;font-weight:700>func</span>(v <span style=color:#458;font-weight:700>int</span>) <span style=color:#458;font-weight:700>bool</span> {
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>if</span> v &gt; <span style=color:#099>5</span> {
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>false</span>  <span style=color:#998;font-style:italic>// false 提前退出
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    }
+</span></span><span style=display:flex><span>    fmt.<span style=color:#900;font-weight:700>Println</span>(v)
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>true</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span><span style=color:#900;font-weight:700>it1</span>(call1) <span style=color:#998;font-style:italic>// 1,2,3,4,5
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#998;font-style:italic>// Seq2
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>m <span style=color:#000;font-weight:700>:=</span> <span style=color:#000;font-weight:700>map</span>[<span style=color:#458;font-weight:700>string</span>]<span style=color:#458;font-weight:700>string</span>{
+</span></span><span style=display:flex><span>    <span style=color:#d14>&#34;key1&#34;</span>: <span style=color:#d14>&#34;value1&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#d14>&#34;key2&#34;</span>: <span style=color:#d14>&#34;value2&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#d14>&#34;key3&#34;</span>: <span style=color:#d14>&#34;value3&#34;</span>,
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>it2 <span style=color:#000;font-weight:700>:=</span> maps.<span style=color:#900;font-weight:700>All</span>(m)
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>for</span> k, v <span style=color:#000;font-weight:700>:=</span> <span style=color:#000;font-weight:700>range</span> it2 {  <span style=color:#998;font-style:italic>// Seq2 返回的是 k, v
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#0086b3>println</span>(k, v)
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>call2 <span style=color:#000;font-weight:700>:=</span> <span style=color:#000;font-weight:700>func</span>(k, v <span style=color:#458;font-weight:700>string</span>) <span style=color:#458;font-weight:700>bool</span> {
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>if</span> k <span style=color:#000;font-weight:700>==</span> <span style=color:#d14>&#34;key2&#34;</span> {
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>false</span>
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#0086b3>println</span>(k, v)
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>true</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#900;font-weight:700>it2</span>(call2)
+</span></span></code></pre></td></tr></table></div></div><h2 id=3-第三类迭代对象>3. 第三类迭代对象</h2><p>在
+<a href=https://tip.golang.org/doc/go1.23#language target=_blank rel=noopener>Go1.23 的 Release Notes</a>
+中提到的 <strong>无参数迭代对象</strong>， 并没有在标准包中找到。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#000;font-weight:700>func</span>(<span style=color:#000;font-weight:700>func</span>() <span style=color:#458;font-weight:700>bool</span>) <span style=color:#998;font-style:italic>// 无参数
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span>(<span style=color:#000;font-weight:700>func</span>(K) <span style=color:#458;font-weight:700>bool</span>)  <span style=color:#998;font-style:italic>// Seq: 1 参数
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span>(<span style=color:#000;font-weight:700>func</span>(K, V) <span style=color:#458;font-weight:700>bool</span>) <span style=color:#998;font-style:italic>// Seq2: 2 参数
+</span></span></span></code></pre></td></tr></table></div></div><p>目前我这边没想到有什么使用场景， 从语法上来看， 配合 <strong>柯里化函数</strong> 、 <strong>通道</strong> 等手段， 还是有操作性的。</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#998;font-style:italic>// currylock 返回了一个自身计数的迭代器
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>currylock</span>() <span style=color:#000;font-weight:700>func</span>() <span style=color:#458;font-weight:700>bool</span> {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    n <span style=color:#000;font-weight:700>:=</span> <span style=color:#099>3</span>
+</span></span><span style=display:flex><span>    i <span style=color:#000;font-weight:700>:=</span> <span style=color:#099>1</span>
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>func</span>() <span style=color:#458;font-weight:700>bool</span> {
+</span></span><span style=display:flex><span>        <span style=color:#0086b3>println</span>(i, <span style=color:#d14>&#34;&lt;&#34;</span>, n)
+</span></span><span style=display:flex><span>        i<span style=color:#000;font-weight:700>++</span>
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>if</span> i &gt; n {
+</span></span><span style=display:flex><span>            <span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>false</span>
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>true</span>
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>func</span> <span style=color:#900;font-weight:700>seq0</span>() {
+</span></span><span style=display:flex><span>    it0 <span style=color:#000;font-weight:700>:=</span> <span style=color:#900;font-weight:700>currylock</span>()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>for</span> <span style=color:#900;font-weight:700>it0</span>() {  <span style=color:#998;font-style:italic>// 调用的时候就像死循环。
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>                 <span style=color:#998;font-style:italic>// 其实感觉有没什么特别的。
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>                 <span style=color:#998;font-style:italic>// 就是 `for bool {}` 的模式。
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    }
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic>// 1 &lt; 3
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#998;font-style:italic>// 2 &lt; 3
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>    <span style=color:#998;font-style:italic>// 3 &lt; 3
+</span></span></span><span style=display:flex><span><span style=color:#998;font-style:italic></span>}
+</span></span></code></pre></td></tr></table></div></div></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://typonotes.com/posts/2025/05/22/go1.23-iterators/>https://typonotes.com/posts/2025/05/22/go1.23-iterators/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://typonotes.com/>https://typonotes.com/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2025/05/19/goreleaser-release-app-in-github/>Goreleaser: 快速发布 Github 项目</a></li><li><a href=/posts/2025/05/16/read-file-line-by-line-go124/>Go1.24 - 按行读取文件</a></li><li><a href=/posts/2025/05/16/os-root-in-go124/>Go 1.24 - os.Root 锁定工作目录</a></li><li><a href=/posts/2025/04/28/intepreted-language-docker-image-optimization/>容器镜像优化 (解释型语言)</a></li><li><a href=/posts/2025/03/27/go-build-with-private-bitbucket/>Go 编译时使用私有仓库</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/docs target=_blank>docs</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2025 <a href=https://typonotes.com/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='/cdn/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」</strong></p><a href=https://wx.zsxq.com/ title=（免费星球）「运维成长路线」 target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://typonotes.com/posts/2025/05/22/go1.23-iterators/ title="Go1.23 Iterators 迭代器" target=_blank>Go1.23 Iterators 迭代器</a></li><li><a href=https://typonotes.com/posts/2025/05/19/goreleaser-release-app-in-github/ title="Goreleaser: 快速发布 Github 项目" target=_blank>Goreleaser: 快速发布 Github 项目</a></li><li><a href=https://typonotes.com/posts/2025/05/16/read-file-line-by-line-go124/ title="Go1.24 - 按行读取文件" target=_blank>Go1.24 - 按行读取文件</a></li><li><a href=https://typonotes.com/posts/2025/05/16/os-root-in-go124/ title="Go 1.24 - os.Root 锁定工作目录" target=_blank>Go 1.24 - os.Root 锁定工作目录</a></li><li><a href=https://typonotes.com/posts/2025/04/28/intepreted-language-docker-image-optimization/ title="容器镜像优化 (解释型语言)" target=_blank>容器镜像优化 (解释型语言)</a></li><li><a href=https://typonotes.com/posts/2025/03/27/go-build-with-private-bitbucket/ title="Go 编译时使用私有仓库" target=_blank>Go 编译时使用私有仓库</a></li><li><a href=https://typonotes.com/posts/2025/03/17/gorm-model-declaration/ title="Gorm: 声明模型（1）" target=_blank>Gorm: 声明模型（1）</a></li><li><a href=https://typonotes.com/posts/2025/03/04/ai-powered-terminals/ title="AI 加强版的命令行客户端" target=_blank>AI 加强版的命令行客户端</a></li><li><a href=https://typonotes.com/posts/2025/03/01/intro-of-npm-package-publish/ title="Typescript NPM 制包/发包问题解析" target=_blank>Typescript NPM 制包/发包问题解析</a></li><li><a href=https://typonotes.com/posts/2025/02/09/gin-static-fs-301-redirect/ title="(6) 静态前端网站容器化 - 【源码解读】 使用 gin FS 模式为什么无限 301 重定向了？" target=_blank>(6) 静态前端网站容器化 - 【源码解读】 使用 gin FS 模式为什么无限 301 重定向了？</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://typonotes.com/categories/linux/>linux (1)</a></li><li><a href=https://typonotes.com/categories/aliyun/>aliyun (3)</a></li><li><a href=https://typonotes.com/categories/aws/>aws (2)</a></li><li><a href=https://typonotes.com/categories/blog/>blog (11)</a></li><li><a href=https://typonotes.com/categories/books/>books (13)</a></li><li><a href=https://typonotes.com/categories/cloudnative/>cloudnative (9)</a></li><li><a href=https://typonotes.com/categories/database/>database (6)</a></li><li><a href=https://typonotes.com/categories/devops/>devops (1)</a></li><li><a href=https://typonotes.com/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://typonotes.com/categories/devopscamp/>devopscamp (10)</a></li><li><a href=https://typonotes.com/categories/docker/>docker (12)</a></li><li><a href=https://typonotes.com/categories/dockerize/>dockerize (4)</a></li><li><a href=https://typonotes.com/categories/english/>english (2)</a></li><li><a href=https://typonotes.com/categories/github/>github (1)</a></li><li><a href=https://typonotes.com/categories/gitlab/>gitlab (1)</a></li><li><a href=https://typonotes.com/categories/go/>go (3)</a></li><li><a href=https://typonotes.com/categories/golang/>golang (16)</a></li><li><a href=https://typonotes.com/categories/heroku/>heroku (1)</a></li><li><a href=https://typonotes.com/categories/istio/>istio (16)</a></li><li><a href=https://typonotes.com/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://typonotes.com/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://typonotes.com/categories/kubernetes/>kubernetes (53)</a></li><li><a href=https://typonotes.com/categories/linux/>linux (8)</a></li><li><a href=https://typonotes.com/categories/logging/>logging (3)</a></li><li><a href=https://typonotes.com/categories/monitor/>monitor (8)</a></li><li><a href=https://typonotes.com/categories/nginx/>nginx (2)</a></li><li><a href=https://typonotes.com/categories/node/>node (1)</a></li><li><a href=https://typonotes.com/categories/nodejs/>nodejs (2)</a></li><li><a href=https://typonotes.com/categories/only-one/>only-one (8)</a></li><li><a href=https://typonotes.com/categories/opentelemetry/>opentelemetry (1)</a></li><li><a href=https://typonotes.com/categories/python/>python (8)</a></li><li><a href=https://typonotes.com/categories/redis/>redis (2)</a></li><li><a href=https://typonotes.com/categories/sharing/>sharing (4)</a></li><li><a href=https://typonotes.com/categories/shell/>shell (1)</a></li><li><a href=https://typonotes.com/categories/vue3/>vue3 (2)</a></li><li><a href=https://typonotes.com/categories/%E5%91%BD%E4%BB%A4%E5%B7%A5%E5%85%B7/>命令工具 (1)</a></li><li><a href=https://typonotes.com/categories/%E9%9A%8F%E7%AC%94/>随笔 (1)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://typonotes.com/tags/MSSQL/>MSSQL</a>
+<a href=https://typonotes.com/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://typonotes.com/tags/XSS/>XSS</a>
+<a href=https://typonotes.com/tags/XXE/>XXE</a>
+<a href=https://typonotes.com/tags/aliyun/>aliyun</a>
+<a href=https://typonotes.com/tags/ansible/>ansible</a>
+<a href=https://typonotes.com/tags/apt/>apt</a>
+<a href=https://typonotes.com/tags/aws/>aws</a>
+<a href=https://typonotes.com/tags/axios/>axios</a>
+<a href=https://typonotes.com/tags/backup/>backup</a>
+<a href=https://typonotes.com/tags/blog/>blog</a>
+<a href=https://typonotes.com/tags/calico/>calico</a>
+<a href=https://typonotes.com/tags/cdn/>cdn</a>
+<a href=https://typonotes.com/tags/cephfs/>cephfs</a>
+<a href=https://typonotes.com/tags/cfssl/>cfssl</a>
+<a href=https://typonotes.com/tags/chatgpt/>chatgpt</a>
+<a href=https://typonotes.com/tags/cicd/>cicd</a>
+<a href=https://typonotes.com/tags/cli/>cli</a>
+<a href=https://typonotes.com/tags/cli-tools/>cli-tools</a>
+<a href=https://typonotes.com/tags/client/>client</a>
+<a href=https://typonotes.com/tags/cloudnative/>cloudnative</a>
+<a href=https://typonotes.com/tags/cobra/>cobra</a>
+<a href=https://typonotes.com/tags/code/>code</a>
+<a href=https://typonotes.com/tags/command/>command</a>
+<a href=https://typonotes.com/tags/config/>config</a>
+<a href=https://typonotes.com/tags/configmap/>configmap</a>
+<a href=https://typonotes.com/tags/context/>context</a>
+<a href=https://typonotes.com/tags/coredns/>coredns</a>
+<a href=https://typonotes.com/tags/database/>database</a>
+<a href=https://typonotes.com/tags/defer/>defer</a>
+<a href=https://typonotes.com/tags/deployment/>deployment</a>
+<a href=https://typonotes.com/tags/devkit/>devkit</a>
+<a href=https://typonotes.com/tags/dict/>dict</a>
+<a href=https://typonotes.com/tags/dind/>dind</a>
+<a href=https://typonotes.com/tags/dns/>dns</a>
+<a href=https://typonotes.com/tags/dnsx/>dnsx</a>
+<a href=https://typonotes.com/tags/docker/>docker</a>
+<a href=https://typonotes.com/tags/docker-compose/>docker-compose</a>
+<a href=https://typonotes.com/tags/dockerfile/>dockerfile</a>
+<a href=https://typonotes.com/tags/docs/>docs</a>
+<a href=https://typonotes.com/tags/download/>download</a>
+<a href=https://typonotes.com/tags/ec2/>ec2</a>
+<a href=https://typonotes.com/tags/english/>english</a>
+<a href=https://typonotes.com/tags/extension/>extension</a>
+<a href=https://typonotes.com/tags/filebeat/>filebeat</a>
+<a href=https://typonotes.com/tags/find/>find</a>
+<a href=https://typonotes.com/tags/gin/>gin</a>
+<a href=https://typonotes.com/tags/git/>git</a>
+<a href=https://typonotes.com/tags/github/>github</a>
+<a href=https://typonotes.com/tags/gitlab/>gitlab</a>
+<a href=https://typonotes.com/tags/glusterfs/>glusterfs</a>
+<a href=https://typonotes.com/tags/go/>go</a>
+<a href=https://typonotes.com/tags/golang/>golang</a>
+<a href=https://typonotes.com/tags/gorm/>gorm</a>
+<a href=https://typonotes.com/tags/grafana/>grafana</a>
+<a href=https://typonotes.com/tags/grep/>grep</a>
+<a href=https://typonotes.com/tags/haproxy/>haproxy</a>
+<a href=https://typonotes.com/tags/hint/>hint</a>
+<a href=https://typonotes.com/tags/html/>html</a>
+<a href=https://typonotes.com/tags/http/>http</a>
+<a href=https://typonotes.com/tags/https/>https</a>
+<a href=https://typonotes.com/tags/hugo/>hugo</a>
+<a href=https://typonotes.com/tags/image/>image</a>
+<a href=https://typonotes.com/tags/informer/>informer</a>
+<a href=https://typonotes.com/tags/ingress/>ingress</a>
+<a href=https://typonotes.com/tags/interface/>interface</a>
+<a href=https://typonotes.com/tags/iptables/>iptables</a>
+<a href=https://typonotes.com/tags/istio/>istio</a>
+<a href=https://typonotes.com/tags/jira/>jira</a>
+<a href=https://typonotes.com/tags/json/>json</a>
+<a href=https://typonotes.com/tags/k3s/>k3s</a>
+<a href=https://typonotes.com/tags/k8s/>k8s</a>
+<a href=https://typonotes.com/tags/keywords/>keywords</a>
+<a href=https://typonotes.com/tags/kubebuilder/>kubebuilder</a>
+<a href=https://typonotes.com/tags/kubectl/>kubectl</a>
+<a href=https://typonotes.com/tags/kustomize/>kustomize</a>
+<a href=https://typonotes.com/tags/kustz/>kustz</a>
+<a href=https://typonotes.com/tags/layout/>layout</a>
+<a href=https://typonotes.com/tags/lego/>lego</a>
+<a href=https://typonotes.com/tags/libaray/>libaray</a>
+<a href=https://typonotes.com/tags/library/>library</a>
+<a href=https://typonotes.com/tags/linux/>linux</a>
+<a href=https://typonotes.com/tags/log/>log</a>
+<a href=https://typonotes.com/tags/minio/>minio</a>
+<a href=https://typonotes.com/tags/module/>module</a>
+<a href=https://typonotes.com/tags/mysql/>mysql</a>
+<a href=https://typonotes.com/tags/network/>network</a>
+<a href=https://typonotes.com/tags/nginx/>nginx</a>
+<a href=https://typonotes.com/tags/nodejs/>nodejs</a>
+<a href=https://typonotes.com/tags/npm/>npm</a>
+<a href=https://typonotes.com/tags/openai/>openai</a>
+<a href=https://typonotes.com/tags/opentelemetry/>opentelemetry</a>
+<a href=https://typonotes.com/tags/package/>package</a>
+<a href=https://typonotes.com/tags/pgsql/>pgsql</a>
+<a href=https://typonotes.com/tags/php/>php</a>
+<a href=https://typonotes.com/tags/pigar/>pigar</a>
+<a href=https://typonotes.com/tags/pip/>pip</a>
+<a href=https://typonotes.com/tags/pipreqs/>pipreqs</a>
+<a href=https://typonotes.com/tags/prisma/>prisma</a>
+<a href=https://typonotes.com/tags/prometheus/>prometheus</a>
+<a href=https://typonotes.com/tags/proxy/>proxy</a>
+<a href=https://typonotes.com/tags/python/>python</a>
+<a href=https://typonotes.com/tags/pyyaml/>pyyaml</a>
+<a href=https://typonotes.com/tags/qcloud/>qcloud</a>
+<a href=https://typonotes.com/tags/qiniu/>qiniu</a>
+<a href=https://typonotes.com/tags/qos/>qos</a>
+<a href=https://typonotes.com/tags/react/>react</a>
+<a href=https://typonotes.com/tags/readonly/>readonly</a>
+<a href=https://typonotes.com/tags/redis/>redis</a>
+<a href=https://typonotes.com/tags/reflect/>reflect</a>
+<a href=https://typonotes.com/tags/repo/>repo</a>
+<a href=https://typonotes.com/tags/resetful/>resetful</a>
+<a href=https://typonotes.com/tags/s3/>s3</a>
+<a href=https://typonotes.com/tags/sap/>sap</a>
+<a href=https://typonotes.com/tags/sap-dockerize/>sap-dockerize</a>
+<a href=https://typonotes.com/tags/scope/>scope</a>
+<a href=https://typonotes.com/tags/security-group/>security-group</a>
+<a href=https://typonotes.com/tags/semimonthly-plan/>semimonthly-plan</a>
+<a href=https://typonotes.com/tags/service/>service</a>
+<a href=https://typonotes.com/tags/shell/>shell</a>
+<a href=https://typonotes.com/tags/slice/>slice</a>
+<a href=https://typonotes.com/tags/sqlmap/>sqlmap</a>
+<a href=https://typonotes.com/tags/ssl/>ssl</a>
+<a href=https://typonotes.com/tags/storage/>storage</a>
+<a href=https://typonotes.com/tags/tag01/>tag01</a>
+<a href=https://typonotes.com/tags/tag02/>tag02</a>
+<a href=https://typonotes.com/tags/tech-sharing/>tech-sharing</a>
+<a href=https://typonotes.com/tags/terminal/>terminal</a>
+<a href=https://typonotes.com/tags/test/>test</a>
+<a href=https://typonotes.com/tags/tidb/>tidb</a>
+<a href=https://typonotes.com/tags/time/>time</a>
+<a href=https://typonotes.com/tags/timezone/>timezone</a>
+<a href=https://typonotes.com/tags/tls/>tls</a>
+<a href=https://typonotes.com/tags/tools/>tools</a>
+<a href=https://typonotes.com/tags/trace/>trace</a>
+<a href=https://typonotes.com/tags/try...catch/>try...catch</a>
+<a href=https://typonotes.com/tags/typescript/>typescript</a>
+<a href=https://typonotes.com/tags/typora/>typora</a>
+<a href=https://typonotes.com/tags/v2ray/>v2ray</a>
+<a href=https://typonotes.com/tags/variable/>variable</a>
+<a href=https://typonotes.com/tags/verbs/>verbs</a>
+<a href=https://typonotes.com/tags/vscode/>vscode</a>
+<a href=https://typonotes.com/tags/vue/>vue</a>
+<a href=https://typonotes.com/tags/vue3/>vue3</a>
+<a href=https://typonotes.com/tags/website/>website</a>
+<a href=https://typonotes.com/tags/workspace/>workspace</a>
+<a href=https://typonotes.com/tags/yaml/>yaml</a>
+<a href=https://typonotes.com/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://typonotes.com/tags/%E5%8F%8D%E5%B0%84/>反射</a>
+<a href=https://typonotes.com/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://typonotes.com/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
+<a href=https://typonotes.com/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://typonotes.com/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
