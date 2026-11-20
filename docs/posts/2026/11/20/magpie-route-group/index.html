@@ -1,0 +1,187 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>节约点钱：Magpie 自动路由选择策略 | 老麦的书房</title><meta property="og:title" content="节约点钱：Magpie 自动路由选择策略 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2026-11-20T22:47:05+08:00"><meta property="article:modified_time" content="2026-11-20T22:47:05+08:00"><meta name=Keywords content="[Magpie,AI模型路由,意图路由,Claude Code,成本优化]"><meta name=description content="介绍如何用 Magpie 路由组、意图规则和子进程任务标签，为日常检索、开发与复杂审查选择不同模型，在成本、速度和质量之间取得平衡。"><meta name=author content="老麦"><meta property="og:url" content="https://typonotes.com/posts/2026/11/20/magpie-route-group/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.4.1/jquery.min.js></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
+<script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?fe891ffeb313a7d084b8baf803d87746",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://typonotes.com/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://typonotes.com/>首页</a>
+<a href=https://typonotes.com/books/ title=开源书>开源书</a>
+<a href=https://typonotes.com/categories/ title=分类>分类</a>
+<a href=https://typonotes.com/tags/ title=标签>标签</a>
+<a href=https://typonotes.com/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://typonotes.com/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://typonotes.com/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#magpie-路由组如何工作>Magpie 路由组如何工作</a></li><li><a href=#先用任务标签稳定子进程路由>先用任务标签稳定子进程路由</a></li><li><a href=#把任务类型与优先级变成模型阶梯>把任务类型与优先级变成模型阶梯</a><ul><li><a href=#任务类型和优先级是两个维度>任务类型和优先级是两个维度</a></li></ul></li><li><a href=#多个意图怎么写>多个意图怎么写</a></li><li><a href=#并发时别只看模型名称>并发时别只看模型名称</a></li><li><a href=#一个省钱但不冒进的落地顺序>一个省钱但不冒进的落地顺序</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>节约点钱：Magpie 自动路由选择策略</h1></header><time datetime=2026-11-20T14:47:05Z class="post-meta meta-date dt-published">2026年11月20日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/AI%E5%B7%A5%E5%85%B7 target=_blank>AI工具</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=节约点钱magpie-自动路由选择策略>节约点钱：Magpie 自动路由选择策略</h1><p>建议点击 <strong>查看原文</strong> 查看最新内容。</p><blockquote><p><strong>原文链接:</strong>
+<a href=https://typonotes.com/posts/2026/11/20/magpie-route-group/ target=_blank rel=noopener>https://typonotes.com/posts/2026/11/20/magpie-route-group/</a></p></blockquote><p>用 AI Agent 做开发时，并不是每个任务都需要最强模型。搜索一个函数、整理文档、写一个简单测试，如果都交给高价模型，花费自然上去了；但一味使用便宜模型，遇到复杂重构或疑难问题，又可能因为反复返工而更费钱。</p><p>比较实用的办法，是用 Magpie 的路由组，根据任务特点选择模型：简单任务交给轻量模型，复杂任务再升级。重点不是“每次都选最便宜的模型”，而是让模型能力与任务需要相匹配。</p><h2 id=magpie-路由组如何工作>Magpie 路由组如何工作</h2><p>路由组可以包含多个模型，并按配置的规则为请求选择优先模型。规则通常包含触发条件和目标成员，例如：请求包含图片时选择视觉模型，长上下文任务选择大上下文模型，或根据意图把检索任务交给轻量模型。</p><p>带有意图条件的规则，会由路由组配置的意图判断模型对新请求进行分类。规则一般按列表顺序检查；命中后，目标模型成为优先选择，组内其他成员可按路由策略作为后备。意图判断也会带来额外请求，因此应选成本低、响应快且可用性足够的分类模型。</p><p>实际触发时机、回退行为、缓存亲和与策略优先级可能受 Magpie 版本和配置影响。上线前建议通过当前版本的路由结果页面确认实际行为，不要只根据规则名称推断。</p><h2 id=先用任务标签稳定子进程路由>先用任务标签稳定子进程路由</h2><p>主 Agent 创建子进程时，子进程的第一条消息通常是主 Agent 写的任务说明。可以在工作流或项目指令中规定统一的开头标签，让意图分类有更清晰的线索。例如：</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>[文档检索] - 查找 Header 搜索框的数据获取逻辑，并总结相关文件
+</span></span><span style=display:flex><span>[写测试] - 为 Header 搜索框补充数据获取测试
+</span></span><span style=display:flex><span>[代码审查] - 检查这次改动是否存在回归或安全问题
+</span></span></code></pre></td></tr></table></div></div><p>标签要放在任务开头，后面继续写清楚目标和边界。标签能减少分类歧义，但意图判断仍然是分类，不是精确的字符串匹配，因此不能保证每次都命中。路由组的默认成员和回退顺序也要合理配置，避免分类失败时反而落到不合适的模型。</p><p>子进程能否独立命中路由，取决于客户端是否把它作为新的请求发给 Magpie，以及它实际使用的模型名是否指向目标路由组。若客户端允许为子进程配置模型，可以让主进程与子进程使用不同路由组；否则可以先检查 Magpie 的路由日志，确认子进程请求是否进入了预期组。不要假设所有客户端都会自动继承相同的模型配置。</p><h2 id=把任务类型与优先级变成模型阶梯>把任务类型与优先级变成模型阶梯</h2><p>可以先从少量规则开始，再根据实际命中情况调整。下面是一个示例，模型名称和可用渠道需要替换成自己路由组中实际添加的成员：</p><table><thead><tr><th>任务标签</th><th>适用场景</th><th>示例模型层级</th></tr></thead><tbody><tr><td><code>[文档检索]</code></td><td>搜索代码、查定义、收集资料</td><td>Haiku 或其他轻量模型</td></tr><tr><td><code>[普通]</code></td><td>简单问答、单文件小改、格式整理</td><td>Haiku</td></tr><tr><td><code>[紧急]</code></td><td>常规开发、写测试、多文件修改</td><td>Sonnet</td></tr><tr><td><code>[特急]</code></td><td>复杂架构设计、疑难问题、重要代码审查</td><td>Opus</td></tr></tbody></table><p>这只是一个起点，不是固定标准。例如，简单的测试可以交给轻量模型；涉及复杂业务边界的测试，则可以升级给更强的模型。应按照结果质量和返工次数来调整，而不是只看任务名称。</p><p>配置时，把更具体、优先级更高的规则放在前面。比如“代码审查”可能同时符合“普通开发”这类宽泛描述，应先配置明确的审查规则，再配置一般任务规则。意图描述尽量清晰、正向、彼此区分，避免在同一条规则里堆很多相似条件。</p><h3 id=任务类型和优先级是两个维度>任务类型和优先级是两个维度</h3><p><code>[文档检索]</code>描述的是任务类型，<code>[特急]</code>描述的是优先级。它们并不天然等同于两套可以独立组合的路由开关。如果把多个标签都写成互相独立的意图，规则可能出现重叠，最终由先后顺序决定结果。</p><p>最简单的做法是每个子进程只使用一个主要路由标签，并在该标签对应的规则里写清边界。如果确实需要区分组合场景，可以制定明确的组合标签，例如 <code>[特急-代码审查]</code>，并为它配置专门规则；不要指望分类模型总能从多个标签中推断出你心里的优先级。</p><h2 id=多个意图怎么写>多个意图怎么写</h2><p>如果多个描述最终都应该路由到同一个模型，可以在同一条意图描述中写清这些并列场景，例如：</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>请求以 [文档检索] 开头，或主要目的是搜索代码、查找定义、阅读文档和收集上下文。
+</span></span></code></pre></td></tr></table></div></div><p>如果不同场景需要使用不同模型，就分别创建规则，并按优先级排序。路由组界面中的“添加条件”通常用于给一条规则增加组合条件；它与多个规则之间的先后匹配不是一回事。具体的逻辑关系以当前 Magpie 版本的界面说明为准。</p><h2 id=并发时别只看模型名称>并发时别只看模型名称</h2><p>主 Agent 可能同时启动多个检索子进程。若这些请求都依赖同一个意图判断模型，分类服务的 RPM、并发限制或响应延迟都可能成为瓶颈；分类请求被限流时，结果可能回退到默认模型，而不是按预期分配。</p><p>可以考虑：</p><ul><li>为路由组配置响应快、成本低且并发能力足够的意图判断模型。</li><li>为重要任务准备可用的默认模型和后备成员。</li><li>如果需要承接并发，可以配置多个可用账号或渠道；确认路由策略确实会分散请求，或在失败时尝试下一个成员。仅仅添加多个同名模型，不代表 Magpie 一定会自动负载均衡。</li><li>检查首位成员的能力。若客户端根据路由组首位模型探测图片或推理能力，首位模型的能力可能影响对应功能是否可用。</li></ul><h2 id=一个省钱但不冒进的落地顺序>一个省钱但不冒进的落地顺序</h2><ol><li>建立一个常用路由组，先准备轻量模型、主力模型和高能力模型。</li><li>先添加少数容易区分的规则，例如文档检索、普通任务和复杂审查。</li><li>在工作流中统一子进程标签，让分类模型看到稳定、清楚的任务描述。</li><li>用 Magpie 的路由记录检查命中规则、分类结果和回退路径；若当前版本提供 API 查询，也可按其文档查看请求决策。</li><li>观察实际成本、延迟、限流和返工情况，再调整规则顺序、模型成员与默认策略。</li></ol><p>真正省钱的关键，不是把所有任务都塞给 Haiku，也不是只在遇到问题时才切到 Opus，而是让检索、常规执行和高难度判断各自使用合适的模型。先从清晰的标签和少量规则开始，再用真实路由结果迭代，通常比一开始就设计几十条意图规则更稳妥。</p></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://typonotes.com/posts/2026/11/20/magpie-route-group/>https://typonotes.com/posts/2026/11/20/magpie-route-group/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://typonotes.com/>https://typonotes.com/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2026/11/18/claude-with-with-codex/>Claude Code 管道用法与模型选择</a></li><li><a href=/posts/2026/11/18/claude-hook-writing-guide/>Claude Code Hook 编写指南</a></li><li><a href=/posts/2026/11/18/claude-pipeline-usage/>Claude Code 管道用法与模型选择</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/Magpie target=_blank>Magpie</a></li><li><a href=/tags/AI%E6%A8%A1%E5%9E%8B target=_blank>AI模型</a></li><li><a href=/tags/Claude-Code target=_blank>Claude Code</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2026 <a href=https://typonotes.com/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='/cdn/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」</strong></p><a href=https://wx.zsxq.com/ title=（免费星球）「运维成长路线」 target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://typonotes.com/posts/2026/11/20/magpie-route-group/ title="节约点钱：Magpie 自动路由选择策略" target=_blank>节约点钱：Magpie 自动路由选择策略</a></li><li><a href=https://typonotes.com/posts/2026/11/18/claude-with-with-codex/ title="Claude Code 管道用法与模型选择" target=_blank>Claude Code 管道用法与模型选择</a></li><li><a href=https://typonotes.com/posts/2026/11/18/claude-hook-writing-guide/ title="Claude Code Hook 编写指南" target=_blank>Claude Code Hook 编写指南</a></li><li><a href=https://typonotes.com/posts/2026/11/18/claude-pipeline-usage/ title="Claude Code 管道用法与模型选择" target=_blank>Claude Code 管道用法与模型选择</a></li><li><a href=https://typonotes.com/posts/2025/12/15/docker-build-platform/ title="docker buildx - 在单平台编译多平台镜像" target=_blank>docker buildx - 在单平台编译多平台镜像</a></li><li><a href=https://typonotes.com/posts/2025/10/28/aliyun-assume-role/ title="Aliyun 角色 - Assume Role" target=_blank>Aliyun 角色 - Assume Role</a></li><li><a href=https://typonotes.com/posts/2025/05/22/go1.23-iterators/ title="Go1.23 Iterators 迭代器" target=_blank>Go1.23 Iterators 迭代器</a></li><li><a href=https://typonotes.com/posts/2025/05/19/goreleaser-release-app-in-github/ title="Goreleaser: 快速发布 Github 项目" target=_blank>Goreleaser: 快速发布 Github 项目</a></li><li><a href=https://typonotes.com/posts/2025/05/16/read-file-line-by-line-go124/ title="Go1.24 - 按行读取文件" target=_blank>Go1.24 - 按行读取文件</a></li><li><a href=https://typonotes.com/posts/2025/05/16/os-root-in-go124/ title="Go 1.24 - os.Root 锁定工作目录" target=_blank>Go 1.24 - os.Root 锁定工作目录</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://typonotes.com/categories/AI%E5%B7%A5%E5%85%B7/>AI工具 (1)</a></li><li><a href=https://typonotes.com/categories/linux/>linux (1)</a></li><li><a href=https://typonotes.com/categories/aliyun/>aliyun (4)</a></li><li><a href=https://typonotes.com/categories/aws/>aws (2)</a></li><li><a href=https://typonotes.com/categories/blog/>blog (11)</a></li><li><a href=https://typonotes.com/categories/books/>books (13)</a></li><li><a href=https://typonotes.com/categories/cloudnative/>cloudnative (10)</a></li><li><a href=https://typonotes.com/categories/database/>database (6)</a></li><li><a href=https://typonotes.com/categories/devops/>devops (1)</a></li><li><a href=https://typonotes.com/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://typonotes.com/categories/devopscamp/>devopscamp (10)</a></li><li><a href=https://typonotes.com/categories/docker/>docker (12)</a></li><li><a href=https://typonotes.com/categories/dockerize/>dockerize (4)</a></li><li><a href=https://typonotes.com/categories/english/>english (2)</a></li><li><a href=https://typonotes.com/categories/github/>github (1)</a></li><li><a href=https://typonotes.com/categories/gitlab/>gitlab (1)</a></li><li><a href=https://typonotes.com/categories/go/>go (3)</a></li><li><a href=https://typonotes.com/categories/golang/>golang (16)</a></li><li><a href=https://typonotes.com/categories/heroku/>heroku (1)</a></li><li><a href=https://typonotes.com/categories/istio/>istio (16)</a></li><li><a href=https://typonotes.com/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://typonotes.com/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://typonotes.com/categories/kubernetes/>kubernetes (53)</a></li><li><a href=https://typonotes.com/categories/linux/>linux (8)</a></li><li><a href=https://typonotes.com/categories/logging/>logging (3)</a></li><li><a href=https://typonotes.com/categories/monitor/>monitor (8)</a></li><li><a href=https://typonotes.com/categories/nginx/>nginx (2)</a></li><li><a href=https://typonotes.com/categories/node/>node (1)</a></li><li><a href=https://typonotes.com/categories/nodejs/>nodejs (2)</a></li><li><a href=https://typonotes.com/categories/only-one/>only-one (8)</a></li><li><a href=https://typonotes.com/categories/opentelemetry/>opentelemetry (1)</a></li><li><a href=https://typonotes.com/categories/python/>python (8)</a></li><li><a href=https://typonotes.com/categories/redis/>redis (2)</a></li><li><a href=https://typonotes.com/categories/sharing/>sharing (4)</a></li><li><a href=https://typonotes.com/categories/shell/>shell (1)</a></li><li><a href=https://typonotes.com/categories/vue3/>vue3 (2)</a></li><li><a href=https://typonotes.com/categories/%E5%91%BD%E4%BB%A4%E5%B7%A5%E5%85%B7/>命令工具 (1)</a></li><li><a href=https://typonotes.com/categories/%E9%9A%8F%E7%AC%94/>随笔 (1)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://typonotes.com/tags/AI%E6%A8%A1%E5%9E%8B/>AI模型</a>
+<a href=https://typonotes.com/tags/Claude-Code/>Claude Code</a>
+<a href=https://typonotes.com/tags/Hooks/>Hooks</a>
+<a href=https://typonotes.com/tags/MSSQL/>MSSQL</a>
+<a href=https://typonotes.com/tags/Magpie/>Magpie</a>
+<a href=https://typonotes.com/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://typonotes.com/tags/XSS/>XSS</a>
+<a href=https://typonotes.com/tags/XXE/>XXE</a>
+<a href=https://typonotes.com/tags/aliyun/>aliyun</a>
+<a href=https://typonotes.com/tags/ansible/>ansible</a>
+<a href=https://typonotes.com/tags/apt/>apt</a>
+<a href=https://typonotes.com/tags/aws/>aws</a>
+<a href=https://typonotes.com/tags/axios/>axios</a>
+<a href=https://typonotes.com/tags/backup/>backup</a>
+<a href=https://typonotes.com/tags/blog/>blog</a>
+<a href=https://typonotes.com/tags/buildx/>buildx</a>
+<a href=https://typonotes.com/tags/calico/>calico</a>
+<a href=https://typonotes.com/tags/cdn/>cdn</a>
+<a href=https://typonotes.com/tags/cephfs/>cephfs</a>
+<a href=https://typonotes.com/tags/cfssl/>cfssl</a>
+<a href=https://typonotes.com/tags/chatgpt/>chatgpt</a>
+<a href=https://typonotes.com/tags/cicd/>cicd</a>
+<a href=https://typonotes.com/tags/cli/>cli</a>
+<a href=https://typonotes.com/tags/cli-tools/>cli-tools</a>
+<a href=https://typonotes.com/tags/client/>client</a>
+<a href=https://typonotes.com/tags/cloudnative/>cloudnative</a>
+<a href=https://typonotes.com/tags/cobra/>cobra</a>
+<a href=https://typonotes.com/tags/code/>code</a>
+<a href=https://typonotes.com/tags/codex/>codex</a>
+<a href=https://typonotes.com/tags/command/>command</a>
+<a href=https://typonotes.com/tags/config/>config</a>
+<a href=https://typonotes.com/tags/configmap/>configmap</a>
+<a href=https://typonotes.com/tags/context/>context</a>
+<a href=https://typonotes.com/tags/coredns/>coredns</a>
+<a href=https://typonotes.com/tags/database/>database</a>
+<a href=https://typonotes.com/tags/defer/>defer</a>
+<a href=https://typonotes.com/tags/deployment/>deployment</a>
+<a href=https://typonotes.com/tags/devkit/>devkit</a>
+<a href=https://typonotes.com/tags/dict/>dict</a>
+<a href=https://typonotes.com/tags/dind/>dind</a>
+<a href=https://typonotes.com/tags/dns/>dns</a>
+<a href=https://typonotes.com/tags/dnsx/>dnsx</a>
+<a href=https://typonotes.com/tags/docker/>docker</a>
+<a href=https://typonotes.com/tags/docker-compose/>docker-compose</a>
+<a href=https://typonotes.com/tags/dockerfile/>dockerfile</a>
+<a href=https://typonotes.com/tags/download/>download</a>
+<a href=https://typonotes.com/tags/ec2/>ec2</a>
+<a href=https://typonotes.com/tags/english/>english</a>
+<a href=https://typonotes.com/tags/extension/>extension</a>
+<a href=https://typonotes.com/tags/filebeat/>filebeat</a>
+<a href=https://typonotes.com/tags/find/>find</a>
+<a href=https://typonotes.com/tags/gin/>gin</a>
+<a href=https://typonotes.com/tags/git/>git</a>
+<a href=https://typonotes.com/tags/github/>github</a>
+<a href=https://typonotes.com/tags/gitlab/>gitlab</a>
+<a href=https://typonotes.com/tags/glusterfs/>glusterfs</a>
+<a href=https://typonotes.com/tags/go/>go</a>
+<a href=https://typonotes.com/tags/golang/>golang</a>
+<a href=https://typonotes.com/tags/gorm/>gorm</a>
+<a href=https://typonotes.com/tags/grafana/>grafana</a>
+<a href=https://typonotes.com/tags/grep/>grep</a>
+<a href=https://typonotes.com/tags/haproxy/>haproxy</a>
+<a href=https://typonotes.com/tags/hint/>hint</a>
+<a href=https://typonotes.com/tags/html/>html</a>
+<a href=https://typonotes.com/tags/http/>http</a>
+<a href=https://typonotes.com/tags/https/>https</a>
+<a href=https://typonotes.com/tags/hugo/>hugo</a>
+<a href=https://typonotes.com/tags/image/>image</a>
+<a href=https://typonotes.com/tags/informer/>informer</a>
+<a href=https://typonotes.com/tags/ingress/>ingress</a>
+<a href=https://typonotes.com/tags/interface/>interface</a>
+<a href=https://typonotes.com/tags/iptables/>iptables</a>
+<a href=https://typonotes.com/tags/istio/>istio</a>
+<a href=https://typonotes.com/tags/iterator/>iterator</a>
+<a href=https://typonotes.com/tags/jira/>jira</a>
+<a href=https://typonotes.com/tags/json/>json</a>
+<a href=https://typonotes.com/tags/k3s/>k3s</a>
+<a href=https://typonotes.com/tags/k8s/>k8s</a>
+<a href=https://typonotes.com/tags/keywords/>keywords</a>
+<a href=https://typonotes.com/tags/kubebuilder/>kubebuilder</a>
+<a href=https://typonotes.com/tags/kubectl/>kubectl</a>
+<a href=https://typonotes.com/tags/kustomize/>kustomize</a>
+<a href=https://typonotes.com/tags/kustz/>kustz</a>
+<a href=https://typonotes.com/tags/layout/>layout</a>
+<a href=https://typonotes.com/tags/lego/>lego</a>
+<a href=https://typonotes.com/tags/libaray/>libaray</a>
+<a href=https://typonotes.com/tags/library/>library</a>
+<a href=https://typonotes.com/tags/linux/>linux</a>
+<a href=https://typonotes.com/tags/log/>log</a>
+<a href=https://typonotes.com/tags/minio/>minio</a>
+<a href=https://typonotes.com/tags/module/>module</a>
+<a href=https://typonotes.com/tags/mysql/>mysql</a>
+<a href=https://typonotes.com/tags/network/>network</a>
+<a href=https://typonotes.com/tags/nginx/>nginx</a>
+<a href=https://typonotes.com/tags/nodejs/>nodejs</a>
+<a href=https://typonotes.com/tags/npm/>npm</a>
+<a href=https://typonotes.com/tags/openai/>openai</a>
+<a href=https://typonotes.com/tags/opentelemetry/>opentelemetry</a>
+<a href=https://typonotes.com/tags/package/>package</a>
+<a href=https://typonotes.com/tags/pgsql/>pgsql</a>
+<a href=https://typonotes.com/tags/php/>php</a>
+<a href=https://typonotes.com/tags/pigar/>pigar</a>
+<a href=https://typonotes.com/tags/pip/>pip</a>
+<a href=https://typonotes.com/tags/pipreqs/>pipreqs</a>
+<a href=https://typonotes.com/tags/prisma/>prisma</a>
+<a href=https://typonotes.com/tags/prometheus/>prometheus</a>
+<a href=https://typonotes.com/tags/proxy/>proxy</a>
+<a href=https://typonotes.com/tags/python/>python</a>
+<a href=https://typonotes.com/tags/pyyaml/>pyyaml</a>
+<a href=https://typonotes.com/tags/qcloud/>qcloud</a>
+<a href=https://typonotes.com/tags/qiniu/>qiniu</a>
+<a href=https://typonotes.com/tags/qos/>qos</a>
+<a href=https://typonotes.com/tags/react/>react</a>
+<a href=https://typonotes.com/tags/readonly/>readonly</a>
+<a href=https://typonotes.com/tags/redis/>redis</a>
+<a href=https://typonotes.com/tags/reflect/>reflect</a>
+<a href=https://typonotes.com/tags/repo/>repo</a>
+<a href=https://typonotes.com/tags/resetful/>resetful</a>
+<a href=https://typonotes.com/tags/role/>role</a>
+<a href=https://typonotes.com/tags/s3/>s3</a>
+<a href=https://typonotes.com/tags/sap/>sap</a>
+<a href=https://typonotes.com/tags/sap-dockerize/>sap-dockerize</a>
+<a href=https://typonotes.com/tags/scope/>scope</a>
+<a href=https://typonotes.com/tags/security-group/>security-group</a>
+<a href=https://typonotes.com/tags/semimonthly-plan/>semimonthly-plan</a>
+<a href=https://typonotes.com/tags/service/>service</a>
+<a href=https://typonotes.com/tags/shell/>shell</a>
+<a href=https://typonotes.com/tags/slice/>slice</a>
+<a href=https://typonotes.com/tags/sqlmap/>sqlmap</a>
+<a href=https://typonotes.com/tags/ssl/>ssl</a>
+<a href=https://typonotes.com/tags/storage/>storage</a>
+<a href=https://typonotes.com/tags/tag01/>tag01</a>
+<a href=https://typonotes.com/tags/tag02/>tag02</a>
+<a href=https://typonotes.com/tags/tech-sharing/>tech-sharing</a>
+<a href=https://typonotes.com/tags/terminal/>terminal</a>
+<a href=https://typonotes.com/tags/test/>test</a>
+<a href=https://typonotes.com/tags/tidb/>tidb</a>
+<a href=https://typonotes.com/tags/time/>time</a>
+<a href=https://typonotes.com/tags/timezone/>timezone</a>
+<a href=https://typonotes.com/tags/tls/>tls</a>
+<a href=https://typonotes.com/tags/tools/>tools</a>
+<a href=https://typonotes.com/tags/trace/>trace</a>
+<a href=https://typonotes.com/tags/try...catch/>try...catch</a>
+<a href=https://typonotes.com/tags/typescript/>typescript</a>
+<a href=https://typonotes.com/tags/typora/>typora</a>
+<a href=https://typonotes.com/tags/v2ray/>v2ray</a>
+<a href=https://typonotes.com/tags/variable/>variable</a>
+<a href=https://typonotes.com/tags/verbs/>verbs</a>
+<a href=https://typonotes.com/tags/vscode/>vscode</a>
+<a href=https://typonotes.com/tags/vue/>vue</a>
+<a href=https://typonotes.com/tags/vue3/>vue3</a>
+<a href=https://typonotes.com/tags/website/>website</a>
+<a href=https://typonotes.com/tags/workspace/>workspace</a>
+<a href=https://typonotes.com/tags/yaml/>yaml</a>
+<a href=https://typonotes.com/tags/yield/>yield</a>
+<a href=https://typonotes.com/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://typonotes.com/tags/%E5%8F%8D%E5%B0%84/>反射</a>
+<a href=https://typonotes.com/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://typonotes.com/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
+<a href=https://typonotes.com/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://typonotes.com/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
