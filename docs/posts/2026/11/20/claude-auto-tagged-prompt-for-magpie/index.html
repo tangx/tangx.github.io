@@ -1,0 +1,399 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer-when-downgrade"><title>用 Claude Code Hook 和 Codex Wrapper 为 Prompt 自动打标签 | 老麦的书房</title><meta property="og:title" content="用 Claude Code Hook 和 Codex Wrapper 为 Prompt 自动打标签 - 老麦的书房"><meta property="og:type" content="article"><meta property="article:published_time" content="2026-11-20T23:21:00+08:00"><meta property="article:modified_time" content="2026-11-20T23:21:00+08:00"><meta name=Keywords content="golang,go语言,go语言笔记,可视化追踪,运维,DevOps,老麦,博客,项目管理"><meta name=description content="用 Claude Code Hook 和 Codex Wrapper 为 Prompt 自动打标签"><meta name=author content="老麦"><meta property="og:url" content="https://typonotes.com/posts/2026/11/20/claude-auto-tagged-prompt-for-magpie/"><link rel="shortcut icon" href=/favicon.ico type=image/x-icon><link rel=stylesheet href=/css/normalize.css><link rel=stylesheet href=/css/style.css><script type=text/javascript src=https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.4.1/jquery.min.js></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5359126171348711" crossorigin=anonymous></script>
+<script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?fe891ffeb313a7d084b8baf803d87746",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-V3S2RT0KBC"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-V3S2RT0KBC")</script></head><body><header id=header class=clearfix><div class=container><div class=col-group><div class=site-name><a id=logo href=https://typonotes.com/>老麦的书房</a><p class=description>Go语言(golang)、 云原生、 DevOps、 可视化追踪。 React 入门。</p></div><div><nav id=nav-menu class=clearfix><a class=current href=https://typonotes.com/>首页</a>
+<a href=https://typonotes.com/books/ title=开源书>开源书</a>
+<a href=https://typonotes.com/categories/ title=分类>分类</a>
+<a href=https://typonotes.com/tags/ title=标签>标签</a>
+<a href=https://typonotes.com/links/ title=友链>友链</a></nav></div></div></div></header><div id=body><div class=container><div style=margin:10px></div><div class=col-group><div class=col-8 id=main><div style="margin:5px 0"><form id=search action=https://typonotes.com/search method=get accept-charset=utf-8 target=_blank _lpchecked=1><input type=text name=q maxlength=20 placeholder=Search>
+<input type=hidden name=sitesearch value=https://typonotes.com/>
+<button type=submit class="submit icon-search"></button></form></div><div class=res-cons><style type=text/css>.post-toc{position:fixed;width:200px;margin-left:-210px;padding:5px 10px;font-family:Athelas,STHeiti,Microsoft Yahei,serif;font-size:12px;border:1px solid rgba(0,0,0,7%);border-radius:5px;background-color:rgba(255,255,255,.98);background-clip:padding-box;-webkit-box-shadow:1px 1px 2px rgba(0,0,0,.125);box-shadow:1px 1px 2px rgba(0,0,0,.125);word-wrap:break-word;white-space:nowrap;-webkit-box-sizing:border-box;box-sizing:border-box;z-index:999;cursor:pointer;max-height:70%;overflow-y:auto;overflow-x:hidden}.post-toc .post-toc-title{width:100%;margin:0 auto;font-size:20px;font-weight:400;text-transform:uppercase;text-align:center}.post-toc .post-toc-content{font-size:15px}.post-toc .post-toc-content>nav>ul{margin:10px 0}.post-toc .post-toc-content ul{padding-left:20px;list-style:square;margin:.5em;line-height:1.8em}.post-toc .post-toc-content ul ul{padding-left:15px;display:none}@media print,screen and (max-width:1057px){.post-toc{display:none}}</style><div class=post-toc style=position:absolute;top:188px><h2 class=post-toc-title>文章目录</h2><div class=post-toc-content><nav id=TableOfContents><ul><li><a href=#为什么要给-prompt-打标签>为什么要给 Prompt 打标签？</a></li><li><a href=#先定义分类规则>先定义分类规则</a></li><li><a href=#一个脚本两种接入方式>一个脚本，两种接入方式</a></li><li><a href=#claude-code用-userpromptsubmit-hook-注入路由提示>Claude Code：用 UserPromptSubmit Hook 注入路由提示</a></li><li><a href=#codex-cli用-shell-wrapper-改写-exec-prompt>Codex CLI：用 shell wrapper 改写 exec Prompt</a></li><li><a href=#接入后如何验证>接入后如何验证</a></li><li><a href=#小结>小结</a></li></ul></nav></div></div><script type=text/javascript>$(document).ready(function(){if(e=$(".post-toc"),e.length){t=$("#main").offset().left,t<220&&e.css({width:t-10,"margin-left":0-t});var e,t,n=e.offset().top-20,s={start:{position:"absolute",top:n},process:{position:"fixed",top:20}};$(window).scroll(function(){var t=$(window).scrollTop();t<n?e.css(s.start):e.css(s.process)})}$("#TableOfContents").children().length<1&&$(".post-toc").remove()})</script><article class=post><header><h1 class=post-title>用 Claude Code Hook 和 Codex Wrapper 为 Prompt 自动打标签</h1></header><time datetime=2026-11-20T15:21:00Z class="post-meta meta-date dt-published">2026年11月20日</time><div class="post-meta meta-category"><span>&nbsp;|</span>
+<a href=/categories/Maggie target=_blank>Maggie</a>
+<a href=/categories/Claude-Code target=_blank>Claude Code</a></div><div class=post-meta><span id=busuanzi_container_page_pv>&nbsp;|
+<span id=busuanzi_value_page_pv></span> <span>阅读</span></span></div><div class=clear style=display:none><div class=toc-article><div class=toc-title>文章目录</div></div></div><div class=post-content><h1 id=用-claude-code-hook-和-codex-wrapper-为-prompt-自动打标签>用 Claude Code Hook 和 Codex Wrapper 为 Prompt 自动打标签</h1><p>建议点击 <strong>查看原文</strong> 查看最新内容。</p><blockquote><p><strong>原文链接:</strong>
+<a href=https://typonotes.com/posts/2026/11/20/claude-auto-tagged-prompt-for-magpie/ target=_blank rel=noopener>https://typonotes.com/posts/2026/11/20/claude-auto-tagged-prompt-for-magpie/</a></p></blockquote><h2 id=为什么要给-prompt-打标签>为什么要给 Prompt 打标签？</h2><p>我用 Magpie 作为模型代理，希望它根据任务类型选择合适的模型。目前主要有三类任务：</p><ul><li><code>[TASK: CODE_DEV]</code>：编写、修改或重构代码。</li><li><code>[TASK: LOCAL_TEST]</code>：只运行 lint、单元测试、构建或静态检查，不修改代码。</li><li><code>[TASK: VISUAL_TEST]</code>：查看截图、检查页面布局，或进行浏览器视觉验收。</li></ul><p>Magpie 可以通过语义理解判断任务，但明确的标签能让路由规则更稳定。关键是要在请求到达 Magpie、执行路由判断之前添加标签；仅在 Agent 收到请求后再补充，未必能影响代理层已经做出的选择。</p><p>本文用同一个 Python 脚本维护分类规则，再通过 Claude Code 的 <code>UserPromptSubmit</code> Hook 和 Codex CLI 的 shell wrapper 分别接入。</p><h2 id=先定义分类规则>先定义分类规则</h2><p>标签只是路由提示，不是模型名称。模型和标签的对应关系应集中配置在 Magpie 中，例如：</p><table><thead><tr><th>标签</th><th>Magpie 路由目标</th><th>适用任务</th></tr></thead><tbody><tr><td><code>[TASK: CODE_DEV]</code></td><td>代码开发主力模型</td><td>编写、修改或重构代码</td></tr><tr><td><code>[TASK: LOCAL_TEST]</code></td><td>轻量、快速的模型</td><td>运行检查，不改代码</td></tr><tr><td><code>[TASK: VISUAL_TEST]</code></td><td>支持视觉输入的模型</td><td>截图、页面和视觉验收</td></tr></tbody></table><p>建议在 Magpie 中让精确标签规则优先于语义兜底规则。还要确认 Magpie 实际检查请求中的哪个字段：用户消息、系统上下文，还是完整请求体。客户端加上标签，不代表代理一定能在它的匹配字段中看到标签。</p><p>分类时可以采用以下优先级：</p><ol><li>视觉任务优先；如果请求包含截图，或明确要求检查页面视觉效果，标记为 <code>VISUAL_TEST</code>。</li><li>只有“运行测试或检查、且不修改代码”的任务才标记为 <code>LOCAL_TEST</code>。</li><li>包含代码编写、修改或修复的任务标记为 <code>CODE_DEV</code>。例如“修复代码并运行测试”仍属于代码开发，避免把需要改代码的任务路由给只适合快速检查的模型。</li><li>无法确定时不打标签，交给 Magpie 的语义规则兜底。</li></ol><p>本地规则分类不需要再调用一个 LLM，但新增的标签仍会占用少量请求上下文 Token。分类规则是启发式的，应该从简单开始，再根据真实请求日志调整。</p><h2 id=一个脚本两种接入方式>一个脚本，两种接入方式</h2><p>将以下脚本保存为 <code>~/.local/bin/auto_tagger.py</code>：</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">56
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">57
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">58
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">59
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">60
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">61
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">62
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">63
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">64
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">65
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">66
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">67
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">68
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">69
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">70
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">71
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">72
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">73
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">74
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">75
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">76
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">77
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">78
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">79
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">80
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">81
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">82
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">83
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">84
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">85
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">86
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#998;font-style:italic>#!/usr/bin/env python3</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>import</span> <span style=color:#555>json</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>import</span> <span style=color:#555>os</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>import</span> <span style=color:#555>re</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>import</span> <span style=color:#555>sys</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>VISUAL_RE <span style=color:#000;font-weight:700>=</span> re<span style=color:#000;font-weight:700>.</span>compile(
+</span></span><span style=display:flex><span>    <span style=color:#d14>r</span><span style=color:#d14>&#34;(截图|视觉|页面布局|样式|对齐|UI|frontend|browser|screenshot|render)&#34;</span>,
+</span></span><span style=display:flex><span>    re<span style=color:#000;font-weight:700>.</span>I,
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>CODE_EDIT_RE <span style=color:#000;font-weight:700>=</span> re<span style=color:#000;font-weight:700>.</span>compile(
+</span></span><span style=display:flex><span>    <span style=color:#d14>r</span><span style=color:#d14>&#34;(编写|写|实现|新增|修改|重构|修复|开发|implement|write|modify|refactor|fix)&#34;</span>,
+</span></span><span style=display:flex><span>    re<span style=color:#000;font-weight:700>.</span>I,
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>TEST_RE <span style=color:#000;font-weight:700>=</span> re<span style=color:#000;font-weight:700>.</span>compile(
+</span></span><span style=display:flex><span>    <span style=color:#d14>r</span><span style=color:#d14>&#34;(lint|eslint|prettier|pytest|go\s+test|npm\s+test|单测|测试|typecheck|静态检查|编译|build)&#34;</span>,
+</span></span><span style=display:flex><span>    re<span style=color:#000;font-weight:700>.</span>I,
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>TEST_ACTION_RE <span style=color:#000;font-weight:700>=</span> re<span style=color:#000;font-weight:700>.</span>compile(
+</span></span><span style=display:flex><span>    <span style=color:#d14>r</span><span style=color:#d14>&#34;(运行|跑|执行|检查|验证|一下|run|execute|check|verify|lint|pytest|go\s+test|npm\s+test|typecheck|编译|build)&#34;</span>,
+</span></span><span style=display:flex><span>    re<span style=color:#000;font-weight:700>.</span>I,
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>def</span> <span style=color:#900;font-weight:700>classify</span>(prompt: <span style=color:#0086b3>str</span>, has_image: <span style=color:#0086b3>bool</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000;font-weight:700>False</span>):
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>if</span> has_image <span style=color:#000;font-weight:700>or</span> VISUAL_RE<span style=color:#000;font-weight:700>.</span>search(prompt):
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>return</span> <span style=color:#d14>&#34;[TASK: VISUAL_TEST]&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic># 改代码并运行测试仍归为代码开发，不拆散到另一个模型。</span>
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>if</span> CODE_EDIT_RE<span style=color:#000;font-weight:700>.</span>search(prompt):
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>return</span> <span style=color:#d14>&#34;[TASK: CODE_DEV]&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>if</span> TEST_RE<span style=color:#000;font-weight:700>.</span>search(prompt) <span style=color:#000;font-weight:700>and</span> TEST_ACTION_RE<span style=color:#000;font-weight:700>.</span>search(prompt):
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>return</span> <span style=color:#d14>&#34;[TASK: LOCAL_TEST]&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>return</span> <span style=color:#000;font-weight:700>None</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>def</span> <span style=color:#900;font-weight:700>add_tag</span>(prompt: <span style=color:#0086b3>str</span>, tag: <span style=color:#0086b3>str</span>):
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>if</span> re<span style=color:#000;font-weight:700>.</span>match(<span style=color:#d14>r</span><span style=color:#d14>&#34;^\[TASK: [A-Z_]+\]&#34;</span>, prompt):
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>return</span> prompt
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>return</span> <span style=color:#d14>f</span><span style=color:#d14>&#34;</span><span style=color:#d14>{</span>tag<span style=color:#d14>}</span><span style=color:#d14> </span><span style=color:#d14>{</span>prompt<span style=color:#d14>}</span><span style=color:#d14>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>def</span> <span style=color:#900;font-weight:700>handle_codex</span>(real_codex: <span style=color:#0086b3>str</span>, args: <span style=color:#0086b3>list</span>[<span style=color:#0086b3>str</span>]):
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic># 只处理非交互的 `codex exec`；交互式 TUI 中的后续输入不会经过 shell wrapper。</span>
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>if</span> args <span style=color:#000;font-weight:700>and</span> args[<span style=color:#099>0</span>] <span style=color:#000;font-weight:700>==</span> <span style=color:#d14>&#34;exec&#34;</span> <span style=color:#000;font-weight:700>and</span> <span style=color:#0086b3>len</span>(args) <span style=color:#000;font-weight:700>&gt;</span> <span style=color:#099>1</span>:
+</span></span><span style=display:flex><span>        prompt <span style=color:#000;font-weight:700>=</span> args[<span style=color:#000;font-weight:700>-</span><span style=color:#099>1</span>]
+</span></span><span style=display:flex><span>        has_image <span style=color:#000;font-weight:700>=</span> <span style=color:#0086b3>any</span>(
+</span></span><span style=display:flex><span>            arg <span style=color:#000;font-weight:700>in</span> (<span style=color:#d14>&#34;-i&#34;</span>, <span style=color:#d14>&#34;--image&#34;</span>) <span style=color:#000;font-weight:700>or</span> arg<span style=color:#000;font-weight:700>.</span>startswith(<span style=color:#d14>&#34;--image=&#34;</span>)
+</span></span><span style=display:flex><span>            <span style=color:#000;font-weight:700>for</span> arg <span style=color:#000;font-weight:700>in</span> args
+</span></span><span style=display:flex><span>        )
+</span></span><span style=display:flex><span>        <span style=color:#998;font-style:italic># 假设 Prompt 是最后一个位置参数，且 CLI 选项放在 Prompt 前面。</span>
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>if</span> prompt <span style=color:#000;font-weight:700>and</span> <span style=color:#000;font-weight:700>not</span> prompt<span style=color:#000;font-weight:700>.</span>startswith(<span style=color:#d14>&#34;-&#34;</span>):
+</span></span><span style=display:flex><span>            tag <span style=color:#000;font-weight:700>=</span> classify(prompt, has_image)
+</span></span><span style=display:flex><span>            <span style=color:#000;font-weight:700>if</span> tag:
+</span></span><span style=display:flex><span>                args[<span style=color:#000;font-weight:700>-</span><span style=color:#099>1</span>] <span style=color:#000;font-weight:700>=</span> add_tag(prompt, tag)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic># 用 exec 保留 Codex 的退出码、信号行为和参数边界。</span>
+</span></span><span style=display:flex><span>    os<span style=color:#000;font-weight:700>.</span>execv(real_codex, [real_codex, <span style=color:#000;font-weight:700>*</span>args])
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>def</span> <span style=color:#900;font-weight:700>handle_claude_code</span>():
+</span></span><span style=display:flex><span>    data <span style=color:#000;font-weight:700>=</span> json<span style=color:#000;font-weight:700>.</span>load(sys<span style=color:#000;font-weight:700>.</span>stdin)
+</span></span><span style=display:flex><span>    prompt <span style=color:#000;font-weight:700>=</span> data<span style=color:#000;font-weight:700>.</span>get(<span style=color:#d14>&#34;prompt&#34;</span>, <span style=color:#d14>&#34;&#34;</span>)
+</span></span><span style=display:flex><span>    tag <span style=color:#000;font-weight:700>=</span> classify(prompt)
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>if</span> <span style=color:#000;font-weight:700>not</span> tag:
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>return</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#998;font-style:italic># Hook 通过 additionalContext 提供提示；它不是对原始 prompt 的原地改写。</span>
+</span></span><span style=display:flex><span>    <span style=color:#0086b3>print</span>(json<span style=color:#000;font-weight:700>.</span>dumps({
+</span></span><span style=display:flex><span>        <span style=color:#d14>&#34;hookSpecificOutput&#34;</span>: {
+</span></span><span style=display:flex><span>            <span style=color:#d14>&#34;hookEventName&#34;</span>: <span style=color:#d14>&#34;UserPromptSubmit&#34;</span>,
+</span></span><span style=display:flex><span>            <span style=color:#d14>&#34;additionalContext&#34;</span>: <span style=color:#d14>f</span><span style=color:#d14>&#34;Magpie route hint: </span><span style=color:#d14>{</span>tag<span style=color:#d14>}</span><span style=color:#d14>&#34;</span>,
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }, ensure_ascii<span style=color:#000;font-weight:700>=</span><span style=color:#000;font-weight:700>False</span>))
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>def</span> <span style=color:#900;font-weight:700>main</span>():
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>if</span> <span style=color:#0086b3>len</span>(sys<span style=color:#000;font-weight:700>.</span>argv) <span style=color:#000;font-weight:700>&gt;</span> <span style=color:#099>1</span> <span style=color:#000;font-weight:700>and</span> sys<span style=color:#000;font-weight:700>.</span>argv[<span style=color:#099>1</span>] <span style=color:#000;font-weight:700>==</span> <span style=color:#d14>&#34;--codex&#34;</span>:
+</span></span><span style=display:flex><span>        <span style=color:#000;font-weight:700>if</span> <span style=color:#0086b3>len</span>(sys<span style=color:#000;font-weight:700>.</span>argv) <span style=color:#000;font-weight:700>&lt;</span> <span style=color:#099>3</span>:
+</span></span><span style=display:flex><span>            <span style=color:#000;font-weight:700>raise</span> <span style=color:#900;font-weight:700>SystemExit</span>(<span style=color:#d14>&#34;usage: auto_tagger.py --codex /path/to/codex [args...]&#34;</span>)
+</span></span><span style=display:flex><span>        handle_codex(sys<span style=color:#000;font-weight:700>.</span>argv[<span style=color:#099>2</span>], sys<span style=color:#000;font-weight:700>.</span>argv[<span style=color:#099>3</span>:])
+</span></span><span style=display:flex><span>    <span style=color:#000;font-weight:700>else</span>:
+</span></span><span style=display:flex><span>        handle_claude_code()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>if</span> __name__ <span style=color:#000;font-weight:700>==</span> <span style=color:#d14>&#34;__main__&#34;</span>:
+</span></span><span style=display:flex><span>    main()
+</span></span></code></pre></td></tr></table></div></div><p>这个分类器刻意保持简单：含糊的请求不贴标签；“修改代码并运行测试”优先按代码开发处理；视觉关键词优先级最高。上线前应按自己的表达习惯调整关键词，并用实际请求验证结果。</p><h2 id=claude-code用-userpromptsubmit-hook-注入路由提示>Claude Code：用 UserPromptSubmit Hook 注入路由提示</h2><p>在 <code>~/.claude/settings.json</code> 中添加 Hook 配置：</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:navy>&#34;hooks&#34;</span>: {
+</span></span><span style=display:flex><span>    <span style=color:navy>&#34;UserPromptSubmit&#34;</span>: [
+</span></span><span style=display:flex><span>      {
+</span></span><span style=display:flex><span>        <span style=color:navy>&#34;hooks&#34;</span>: [
+</span></span><span style=display:flex><span>          {
+</span></span><span style=display:flex><span>            <span style=color:navy>&#34;type&#34;</span>: <span style=color:#d14>&#34;command&#34;</span>,
+</span></span><span style=display:flex><span>            <span style=color:navy>&#34;command&#34;</span>: <span style=color:#d14>&#34;python3 ~/.local/bin/auto_tagger.py&#34;</span>
+</span></span><span style=display:flex><span>          }
+</span></span><span style=display:flex><span>        ]
+</span></span><span style=display:flex><span>      }
+</span></span><span style=display:flex><span>    ]
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></td></tr></table></div></div><p>Hook 收到 Claude Code 传来的 JSON，从 <code>prompt</code> 字段进行分类，并按 Hook 协议在标准输出中返回 JSON。这里使用 <code>additionalContext</code> 告诉 Claude 当前任务的路由标签；它不会像 Codex wrapper 那样直接重写原始 Prompt 字符串。</p><p>因此，接入后要特别验证 Magpie 是否能从实际请求中读到这段 <code>additionalContext</code>。如果 Magpie 只匹配用户消息文本，或在 Hook 执行之前已经完成路由，这种接法就不能保证命中标签规则。此时应改用 Magpie 前面的请求预处理层，或使用能在请求发送前修改用户消息的客户端 wrapper。</p><p>另外，Claude Code Hook 输入里的 <code>prompt</code> 不一定包含图片文件本身。视觉路由最好由 Magpie 根据真实图像输入判断；如需客户端识别附件，应先确认当前 Hook 版本实际提供的字段，不要假设存在 <code>images</code> 或 <code>attachments</code> 字段。</p><h2 id=codex-cli用-shell-wrapper-改写-exec-prompt>Codex CLI：用 shell wrapper 改写 exec Prompt</h2><p>Codex CLI 的 shell wrapper 可以在调用真实 Codex 可执行文件之前修改参数。下面的 Zsh 函数只把 <code>codex exec</code> 交给 Python 脚本处理；交互模式、帮助参数等会原样传给 Codex。将它添加到 <code>~/.zshrc</code>：</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-zsh data-lang=zsh><span style=display:flex><span>codex<span style=color:#000;font-weight:700>()</span> <span style=color:#000;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#0086b3>local</span> real_codex
+</span></span><span style=display:flex><span>  <span style=color:teal>real_codex</span><span style=color:#000;font-weight:700>=</span><span style=color:#000;font-weight:700>$(</span>whence -p codex<span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>||</span> <span style=color:#000;font-weight:700>return</span> <span style=color:#099>127</span>
+</span></span><span style=display:flex><span>  python3 <span style=color:#d14>&#34;</span><span style=color:teal>$HOME</span><span style=color:#d14>/.local/bin/auto_tagger.py&#34;</span> --codex <span style=color:#d14>&#34;</span><span style=color:teal>$real_codex</span><span style=color:#d14>&#34;</span> <span style=color:#d14>&#34;</span><span style=color:teal>$@</span><span style=color:#d14>&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>重新加载配置：</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-zsh data-lang=zsh><span style=display:flex><span><span style=color:#0086b3>source</span> ~/.zshrc
+</span></span></code></pre></td></tr></table></div></div><p>Codex 模式通过 <code>os.execv</code> 直接替换 Python 进程，不需要把参数拼成一条 shell 命令，也不会因空格或引号而重新拆分参数。示例实现假设 <code>codex exec</code> 的 Prompt 是最后一个位置参数，CLI 选项放在 Prompt 前面；如果你使用的 Codex 版本支持不同的位置参数形式，先确认 CLI 用法，再调整参数定位逻辑。</p><p>例如：</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>codex exec &#34;帮我用 Go 写一个 Redis 连接池健康检查&#34;
+</span></span></code></pre></td></tr></table></div></div><p>脚本会把最后一个 Prompt 参数改成：</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>[TASK: CODE_DEV] 帮我用 Go 写一个 Redis 连接池健康检查
+</span></span></code></pre></td></tr></table></div></div><p>而下面的检查请求会变为：</p><div class=highlight><div style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text><span style=display:flex><span>[TASK: LOCAL_TEST] 运行 eslint 检查当前目录
+</span></span></code></pre></td></tr></table></div></div><p>如果请求通过 <code>-i</code> 或 <code>--image</code> 附带图片，或者 Prompt 命中视觉关键词，则会加上 <code>[TASK: VISUAL_TEST]</code>。脚本不会处理 Codex 交互式 TUI 内输入的每一轮 Prompt，因为这些输入不会重新经过 shell 函数。</p><h2 id=接入后如何验证>接入后如何验证</h2><p>不要只看客户端有没有打印标签，要确认 Magpie 最终收到什么、匹配了哪条规则，以及实际选择了哪个模型。可以按下面的用例逐一检查：</p><table><thead><tr><th>输入</th><th>预期标签</th></tr></thead><tbody><tr><td><code>帮我实现一个 Go HTTP 接口</code></td><td><code>[TASK: CODE_DEV]</code></td></tr><tr><td><code>运行 eslint 检查当前目录</code></td><td><code>[TASK: LOCAL_TEST]</code></td></tr><tr><td><code>对比截图里的按钮和页面边距</code></td><td><code>[TASK: VISUAL_TEST]</code></td></tr><tr><td><code>修改代码并运行单测</code></td><td><code>[TASK: CODE_DEV]</code></td></tr><tr><td>无法确定类别的普通问题</td><td>不加标签，使用 Magpie 语义兜底</td></tr></tbody></table><p>确认 Claude Code 和 Codex 两条链路都能在 Magpie 的请求记录中看到预期标签后，再逐步扩大自动分类范围。如果日志中看不到 Hook 的 <code>additionalContext</code>，不要继续调整正则；问题在标签到达路由层之前的链路，需要更换注入位置。</p><h2 id=小结>小结</h2><ul><li>Codex wrapper 可以在调用 CLI 前改写 <code>codex exec</code> 的 Prompt 参数，适合需要把标签放进用户消息文本的场景。</li><li>Claude Code 的 <code>UserPromptSubmit</code> Hook 可以返回 <code>additionalContext</code>，但它不等同于原地修改 Prompt；必须验证 Magpie 是否能读取这段上下文。</li><li>分类器应优先处理明确任务，对混合任务和不确定输入保守处理，并保留 Magpie 的语义兜底。</li><li>标签路由最终是否生效，取决于 Magpie 的匹配字段和规则配置，而不只是客户端脚本。</li></ul></div><div class=post-archive><ul class=post-copyright><img src=/mp/qrcode.png><br><li><strong>原文链接：</strong><a href=https://typonotes.com/posts/2026/11/20/claude-auto-tagged-prompt-for-magpie/>https://typonotes.com/posts/2026/11/20/claude-auto-tagged-prompt-for-magpie/</a></li><li>本文为原创文章，转载注明出处。</li><li>欢迎 <strong>扫码关注公众号</strong>
+<span style=background-color:#e8e8e9><code>Go与云原生</code></span>
+或 <strong>订阅网站</strong>
+<span style=background-color:#e8e8e9><a href=https://typonotes.com/>https://typonotes.com/</a></span>
+。</li><li>第一时间看后续精彩文章。觉得好的话，请猛击文章右下角「在看」，感谢支持。</li><li style=word-break:break-all></li></ul><br></div><div class=post-archive><h2>相关文章</h2><ul class=listing><li><a href=/posts/2026/11/20/magpie-route-group/>节约点钱：Magpie 自动路由选择策略</a></li><li><a href=/posts/2025/12/15/docker-build-platform/>docker buildx - 在单平台编译多平台镜像</a></li><li><a href=/posts/2025/10/28/aliyun-assume-role/>Aliyun 角色 - Assume Role</a></li><li><a href=/posts/2025/05/22/go1.23-iterators/>Go1.23 Iterators 迭代器</a></li><li><a href=/posts/2025/05/19/goreleaser-release-app-in-github/>Goreleaser: 快速发布 Github 项目</a></li></ul></div><div class="post-meta meta-tags"><ul class=clearfix><li><a href=/tags/Claude-Code target=_blank>Claude Code</a></li><li><a href=/tags/Codex target=_blank>Codex</a></li><li><a href=/tags/Magpie target=_blank>Magpie</a></li></ul></div></article><div class="post bg-white"><script src=https://utteranc.es/client.js repo=tangx/tangx.github.io issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></div><footer id=footer><div>&copy; 2026 <a href=https://typonotes.com/>老麦的书房 By 老麦</a>
+| <a rel=nofollow target=_blank href=http://beian.miit.gov.cn/>蜀ICP备16002016号</a></div><br><div><div class=github-badge><a href=https://gohugo.io/ target=_black rel=nofollow><span class=badge-subject>Powered by</span><span class="badge-value bg-blue">Hugo</span></a></div><div class=github-badge><a href=https://tangx.in/ target=_black><span class=badge-subject>Design by</span><span class="badge-value bg-brightgreen">老麦</span></a></div><div class=github-badge><a href=https://github.com/tangx/maupassant-hugo target=_black><span class=badge-subject>Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a></div></div></footer><script type=text/javascript>window.MathJax={tex2jax:{inlineMath:[["$","$"]],processEscapes:!0}}</script><script src='/cdn/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+<a id=rocket href=#top></a>
+<script type=text/javascript src='/js/totop.js?v=0.0.0' async></script><style type=text/css>div.highlight{position:relative;margin:1em 0}.copy-code{display:none;position:absolute;top:4px;right:4px;color:rgba(255,255,255,.8);background:rgba(78,78,78,.8);border-radius:var(--radius);padding:0 5px;font:inherit;user-select:none;cursor:pointer;border:0;--radius:8px}div.highlight:hover .copy-code,pre:hover .copy-code{display:block}</style><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script><script type=text/javascript src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js async></script></div><div id=secondary><section class=widget></section><section class=widget><section class=widget><h3 class=widget-title style=color:red>福利派送</h3><ul class=widget-list><li><p style=color:red><strong>（免费星球）「运维成长路线」</strong></p><a href=https://wx.zsxq.com/ title=（免费星球）「运维成长路线」 target=_blank style=color:red><img src=/assets/tttuigguang/devops-camp-01.jpeg></a></li><li><p style=color:red><strong>又拍云免费 CDN</strong></p><a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" title="又拍云免费 CDN" target=_blank style=color:red><img src=/assets/tttuigguang/upyun.png></a></li></ul></section></section><section class=widget><h3 class=widget-title>最近文章</h3><ul class=widget-list><li><a href=https://typonotes.com/posts/2026/11/20/claude-auto-tagged-prompt-for-magpie/ title="用 Claude Code Hook 和 Codex Wrapper 为 Prompt 自动打标签" target=_blank>用 Claude Code Hook 和 Codex Wrapper 为 Prompt 自动打标签</a></li><li><a href=https://typonotes.com/posts/2026/11/20/magpie-route-group/ title="节约点钱：Magpie 自动路由选择策略" target=_blank>节约点钱：Magpie 自动路由选择策略</a></li><li><a href=https://typonotes.com/posts/2026/11/18/claude-with-with-codex/ title="Claude Code 管道用法与模型选择" target=_blank>Claude Code 管道用法与模型选择</a></li><li><a href=https://typonotes.com/posts/2026/11/18/claude-hook-writing-guide/ title="Claude Code Hook 编写指南" target=_blank>Claude Code Hook 编写指南</a></li><li><a href=https://typonotes.com/posts/2026/11/18/claude-pipeline-usage/ title="Claude Code 管道用法与模型选择" target=_blank>Claude Code 管道用法与模型选择</a></li><li><a href=https://typonotes.com/posts/2025/12/15/docker-build-platform/ title="docker buildx - 在单平台编译多平台镜像" target=_blank>docker buildx - 在单平台编译多平台镜像</a></li><li><a href=https://typonotes.com/posts/2025/10/28/aliyun-assume-role/ title="Aliyun 角色 - Assume Role" target=_blank>Aliyun 角色 - Assume Role</a></li><li><a href=https://typonotes.com/posts/2025/05/22/go1.23-iterators/ title="Go1.23 Iterators 迭代器" target=_blank>Go1.23 Iterators 迭代器</a></li><li><a href=https://typonotes.com/posts/2025/05/19/goreleaser-release-app-in-github/ title="Goreleaser: 快速发布 Github 项目" target=_blank>Goreleaser: 快速发布 Github 项目</a></li><li><a href=https://typonotes.com/posts/2025/05/16/read-file-line-by-line-go124/ title="Go1.24 - 按行读取文件" target=_blank>Go1.24 - 按行读取文件</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/categories/>分类</a></h3><ul class=widget-list><li><a href=https://typonotes.com/categories/AI%E5%B7%A5%E5%85%B7/>AI工具 (1)</a></li><li><a href=https://typonotes.com/categories/Claude-Code/>Claude Code (1)</a></li><li><a href=https://typonotes.com/categories/linux/>linux (1)</a></li><li><a href=https://typonotes.com/categories/Maggie/>Maggie (1)</a></li><li><a href=https://typonotes.com/categories/aliyun/>aliyun (4)</a></li><li><a href=https://typonotes.com/categories/aws/>aws (2)</a></li><li><a href=https://typonotes.com/categories/blog/>blog (11)</a></li><li><a href=https://typonotes.com/categories/books/>books (13)</a></li><li><a href=https://typonotes.com/categories/cloudnative/>cloudnative (10)</a></li><li><a href=https://typonotes.com/categories/database/>database (6)</a></li><li><a href=https://typonotes.com/categories/devops/>devops (1)</a></li><li><a href=https://typonotes.com/categories/devops-camp/>devops-camp (2)</a></li><li><a href=https://typonotes.com/categories/devopscamp/>devopscamp (10)</a></li><li><a href=https://typonotes.com/categories/docker/>docker (12)</a></li><li><a href=https://typonotes.com/categories/dockerize/>dockerize (4)</a></li><li><a href=https://typonotes.com/categories/english/>english (2)</a></li><li><a href=https://typonotes.com/categories/github/>github (1)</a></li><li><a href=https://typonotes.com/categories/gitlab/>gitlab (1)</a></li><li><a href=https://typonotes.com/categories/go/>go (3)</a></li><li><a href=https://typonotes.com/categories/golang/>golang (16)</a></li><li><a href=https://typonotes.com/categories/heroku/>heroku (1)</a></li><li><a href=https://typonotes.com/categories/istio/>istio (16)</a></li><li><a href=https://typonotes.com/categories/k8sailor/>k8sailor (19)</a></li><li><a href=https://typonotes.com/categories/kubebuilder-zero-to-one/>kubebuilder-zero-to-one (15)</a></li><li><a href=https://typonotes.com/categories/kubernetes/>kubernetes (53)</a></li><li><a href=https://typonotes.com/categories/linux/>linux (8)</a></li><li><a href=https://typonotes.com/categories/logging/>logging (3)</a></li><li><a href=https://typonotes.com/categories/monitor/>monitor (8)</a></li><li><a href=https://typonotes.com/categories/nginx/>nginx (2)</a></li><li><a href=https://typonotes.com/categories/node/>node (1)</a></li><li><a href=https://typonotes.com/categories/nodejs/>nodejs (2)</a></li><li><a href=https://typonotes.com/categories/only-one/>only-one (8)</a></li><li><a href=https://typonotes.com/categories/opentelemetry/>opentelemetry (1)</a></li><li><a href=https://typonotes.com/categories/python/>python (8)</a></li><li><a href=https://typonotes.com/categories/redis/>redis (2)</a></li><li><a href=https://typonotes.com/categories/sharing/>sharing (4)</a></li><li><a href=https://typonotes.com/categories/shell/>shell (1)</a></li><li><a href=https://typonotes.com/categories/vue3/>vue3 (2)</a></li><li><a href=https://typonotes.com/categories/%E5%91%BD%E4%BB%A4%E5%B7%A5%E5%85%B7/>命令工具 (1)</a></li><li><a href=https://typonotes.com/categories/%E9%9A%8F%E7%AC%94/>随笔 (1)</a></li></ul></section><section class=widget><h3 class=widget-title><a href=/tags/>标签</a></h3><div class=tagcloud><a href=https://typonotes.com/tags/AI%E6%A8%A1%E5%9E%8B/>AI模型</a>
+<a href=https://typonotes.com/tags/Claude-Code/>Claude Code</a>
+<a href=https://typonotes.com/tags/codex/>codex</a>
+<a href=https://typonotes.com/tags/Hooks/>Hooks</a>
+<a href=https://typonotes.com/tags/MSSQL/>MSSQL</a>
+<a href=https://typonotes.com/tags/Magpie/>Magpie</a>
+<a href=https://typonotes.com/tags/SQL%E6%B3%A8%E5%85%A5/>SQL注入</a>
+<a href=https://typonotes.com/tags/XSS/>XSS</a>
+<a href=https://typonotes.com/tags/XXE/>XXE</a>
+<a href=https://typonotes.com/tags/aliyun/>aliyun</a>
+<a href=https://typonotes.com/tags/ansible/>ansible</a>
+<a href=https://typonotes.com/tags/apt/>apt</a>
+<a href=https://typonotes.com/tags/aws/>aws</a>
+<a href=https://typonotes.com/tags/axios/>axios</a>
+<a href=https://typonotes.com/tags/backup/>backup</a>
+<a href=https://typonotes.com/tags/blog/>blog</a>
+<a href=https://typonotes.com/tags/buildx/>buildx</a>
+<a href=https://typonotes.com/tags/calico/>calico</a>
+<a href=https://typonotes.com/tags/cdn/>cdn</a>
+<a href=https://typonotes.com/tags/cephfs/>cephfs</a>
+<a href=https://typonotes.com/tags/cfssl/>cfssl</a>
+<a href=https://typonotes.com/tags/chatgpt/>chatgpt</a>
+<a href=https://typonotes.com/tags/cicd/>cicd</a>
+<a href=https://typonotes.com/tags/cli/>cli</a>
+<a href=https://typonotes.com/tags/cli-tools/>cli-tools</a>
+<a href=https://typonotes.com/tags/client/>client</a>
+<a href=https://typonotes.com/tags/cloudnative/>cloudnative</a>
+<a href=https://typonotes.com/tags/cobra/>cobra</a>
+<a href=https://typonotes.com/tags/code/>code</a>
+<a href=https://typonotes.com/tags/codex/>codex</a>
+<a href=https://typonotes.com/tags/command/>command</a>
+<a href=https://typonotes.com/tags/config/>config</a>
+<a href=https://typonotes.com/tags/configmap/>configmap</a>
+<a href=https://typonotes.com/tags/context/>context</a>
+<a href=https://typonotes.com/tags/coredns/>coredns</a>
+<a href=https://typonotes.com/tags/database/>database</a>
+<a href=https://typonotes.com/tags/defer/>defer</a>
+<a href=https://typonotes.com/tags/deployment/>deployment</a>
+<a href=https://typonotes.com/tags/devkit/>devkit</a>
+<a href=https://typonotes.com/tags/dict/>dict</a>
+<a href=https://typonotes.com/tags/dind/>dind</a>
+<a href=https://typonotes.com/tags/dns/>dns</a>
+<a href=https://typonotes.com/tags/dnsx/>dnsx</a>
+<a href=https://typonotes.com/tags/docker/>docker</a>
+<a href=https://typonotes.com/tags/docker-compose/>docker-compose</a>
+<a href=https://typonotes.com/tags/dockerfile/>dockerfile</a>
+<a href=https://typonotes.com/tags/download/>download</a>
+<a href=https://typonotes.com/tags/ec2/>ec2</a>
+<a href=https://typonotes.com/tags/english/>english</a>
+<a href=https://typonotes.com/tags/extension/>extension</a>
+<a href=https://typonotes.com/tags/filebeat/>filebeat</a>
+<a href=https://typonotes.com/tags/find/>find</a>
+<a href=https://typonotes.com/tags/gin/>gin</a>
+<a href=https://typonotes.com/tags/git/>git</a>
+<a href=https://typonotes.com/tags/github/>github</a>
+<a href=https://typonotes.com/tags/gitlab/>gitlab</a>
+<a href=https://typonotes.com/tags/glusterfs/>glusterfs</a>
+<a href=https://typonotes.com/tags/go/>go</a>
+<a href=https://typonotes.com/tags/golang/>golang</a>
+<a href=https://typonotes.com/tags/gorm/>gorm</a>
+<a href=https://typonotes.com/tags/grafana/>grafana</a>
+<a href=https://typonotes.com/tags/grep/>grep</a>
+<a href=https://typonotes.com/tags/haproxy/>haproxy</a>
+<a href=https://typonotes.com/tags/hint/>hint</a>
+<a href=https://typonotes.com/tags/html/>html</a>
+<a href=https://typonotes.com/tags/http/>http</a>
+<a href=https://typonotes.com/tags/https/>https</a>
+<a href=https://typonotes.com/tags/hugo/>hugo</a>
+<a href=https://typonotes.com/tags/image/>image</a>
+<a href=https://typonotes.com/tags/informer/>informer</a>
+<a href=https://typonotes.com/tags/ingress/>ingress</a>
+<a href=https://typonotes.com/tags/interface/>interface</a>
+<a href=https://typonotes.com/tags/iptables/>iptables</a>
+<a href=https://typonotes.com/tags/istio/>istio</a>
+<a href=https://typonotes.com/tags/iterator/>iterator</a>
+<a href=https://typonotes.com/tags/jira/>jira</a>
+<a href=https://typonotes.com/tags/json/>json</a>
+<a href=https://typonotes.com/tags/k3s/>k3s</a>
+<a href=https://typonotes.com/tags/k8s/>k8s</a>
+<a href=https://typonotes.com/tags/keywords/>keywords</a>
+<a href=https://typonotes.com/tags/kubebuilder/>kubebuilder</a>
+<a href=https://typonotes.com/tags/kubectl/>kubectl</a>
+<a href=https://typonotes.com/tags/kustomize/>kustomize</a>
+<a href=https://typonotes.com/tags/kustz/>kustz</a>
+<a href=https://typonotes.com/tags/layout/>layout</a>
+<a href=https://typonotes.com/tags/lego/>lego</a>
+<a href=https://typonotes.com/tags/libaray/>libaray</a>
+<a href=https://typonotes.com/tags/library/>library</a>
+<a href=https://typonotes.com/tags/linux/>linux</a>
+<a href=https://typonotes.com/tags/log/>log</a>
+<a href=https://typonotes.com/tags/minio/>minio</a>
+<a href=https://typonotes.com/tags/module/>module</a>
+<a href=https://typonotes.com/tags/mysql/>mysql</a>
+<a href=https://typonotes.com/tags/network/>network</a>
+<a href=https://typonotes.com/tags/nginx/>nginx</a>
+<a href=https://typonotes.com/tags/nodejs/>nodejs</a>
+<a href=https://typonotes.com/tags/npm/>npm</a>
+<a href=https://typonotes.com/tags/openai/>openai</a>
+<a href=https://typonotes.com/tags/opentelemetry/>opentelemetry</a>
+<a href=https://typonotes.com/tags/package/>package</a>
+<a href=https://typonotes.com/tags/pgsql/>pgsql</a>
+<a href=https://typonotes.com/tags/php/>php</a>
+<a href=https://typonotes.com/tags/pigar/>pigar</a>
+<a href=https://typonotes.com/tags/pip/>pip</a>
+<a href=https://typonotes.com/tags/pipreqs/>pipreqs</a>
+<a href=https://typonotes.com/tags/prisma/>prisma</a>
+<a href=https://typonotes.com/tags/prometheus/>prometheus</a>
+<a href=https://typonotes.com/tags/proxy/>proxy</a>
+<a href=https://typonotes.com/tags/python/>python</a>
+<a href=https://typonotes.com/tags/pyyaml/>pyyaml</a>
+<a href=https://typonotes.com/tags/qcloud/>qcloud</a>
+<a href=https://typonotes.com/tags/qiniu/>qiniu</a>
+<a href=https://typonotes.com/tags/qos/>qos</a>
+<a href=https://typonotes.com/tags/react/>react</a>
+<a href=https://typonotes.com/tags/readonly/>readonly</a>
+<a href=https://typonotes.com/tags/redis/>redis</a>
+<a href=https://typonotes.com/tags/reflect/>reflect</a>
+<a href=https://typonotes.com/tags/repo/>repo</a>
+<a href=https://typonotes.com/tags/resetful/>resetful</a>
+<a href=https://typonotes.com/tags/role/>role</a>
+<a href=https://typonotes.com/tags/s3/>s3</a>
+<a href=https://typonotes.com/tags/sap/>sap</a>
+<a href=https://typonotes.com/tags/sap-dockerize/>sap-dockerize</a>
+<a href=https://typonotes.com/tags/scope/>scope</a>
+<a href=https://typonotes.com/tags/security-group/>security-group</a>
+<a href=https://typonotes.com/tags/semimonthly-plan/>semimonthly-plan</a>
+<a href=https://typonotes.com/tags/service/>service</a>
+<a href=https://typonotes.com/tags/shell/>shell</a>
+<a href=https://typonotes.com/tags/slice/>slice</a>
+<a href=https://typonotes.com/tags/sqlmap/>sqlmap</a>
+<a href=https://typonotes.com/tags/ssl/>ssl</a>
+<a href=https://typonotes.com/tags/storage/>storage</a>
+<a href=https://typonotes.com/tags/tag01/>tag01</a>
+<a href=https://typonotes.com/tags/tag02/>tag02</a>
+<a href=https://typonotes.com/tags/tech-sharing/>tech-sharing</a>
+<a href=https://typonotes.com/tags/terminal/>terminal</a>
+<a href=https://typonotes.com/tags/test/>test</a>
+<a href=https://typonotes.com/tags/tidb/>tidb</a>
+<a href=https://typonotes.com/tags/time/>time</a>
+<a href=https://typonotes.com/tags/timezone/>timezone</a>
+<a href=https://typonotes.com/tags/tls/>tls</a>
+<a href=https://typonotes.com/tags/tools/>tools</a>
+<a href=https://typonotes.com/tags/trace/>trace</a>
+<a href=https://typonotes.com/tags/try...catch/>try...catch</a>
+<a href=https://typonotes.com/tags/typescript/>typescript</a>
+<a href=https://typonotes.com/tags/typora/>typora</a>
+<a href=https://typonotes.com/tags/v2ray/>v2ray</a>
+<a href=https://typonotes.com/tags/variable/>variable</a>
+<a href=https://typonotes.com/tags/verbs/>verbs</a>
+<a href=https://typonotes.com/tags/vscode/>vscode</a>
+<a href=https://typonotes.com/tags/vue/>vue</a>
+<a href=https://typonotes.com/tags/vue3/>vue3</a>
+<a href=https://typonotes.com/tags/website/>website</a>
+<a href=https://typonotes.com/tags/workspace/>workspace</a>
+<a href=https://typonotes.com/tags/yaml/>yaml</a>
+<a href=https://typonotes.com/tags/yield/>yield</a>
+<a href=https://typonotes.com/tags/%E5%89%8D%E7%AB%AF/>前端</a>
+<a href=https://typonotes.com/tags/%E5%8F%8D%E5%B0%84/>反射</a>
+<a href=https://typonotes.com/tags/%E5%AE%89%E5%85%A8/>安全</a>
+<a href=https://typonotes.com/tags/%E7%9F%A5%E8%AF%86%E6%98%9F%E7%90%83/>知识星球</a>
+<a href=https://typonotes.com/tags/%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86/>配置管理</a></div></section><section class=widget><h3 class=widget-title>其它</h3><ul class=widget-list><li><a href=https://typonotes.com/%20index.xml>文章 RSS</a></li></ul></section></div></div></div></div></body></html>
